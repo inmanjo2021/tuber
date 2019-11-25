@@ -8,6 +8,7 @@ const AUTH_BASE:      &str = "https://auth.docker.io";
 const AUTH_SERVICE:   &str = "registry.docker.io";
 const IMAGE:          &str = "library/node";
 const TAG:            &str = "latest";
+const MATCHER:        &str = "COPY";
 
 #[derive(Deserialize)]
 struct AuthResponse {
@@ -92,7 +93,7 @@ pub fn get_layers() -> Result<(), Box<dyn Error>> {
 
     // print!("{}", response.text()?);
     let parsed: Manifest = response.json()?;
-    let index = parsed.history.into_iter().position(|x| x.command.contains("COPY")).unwrap();
+    let index = parsed.history.into_iter().position(|x| x.command.contains(MATCHER)).unwrap();
     let layer = parsed.fs_layers[index].blob_sum.clone();
 
     print!("{}", layer);
