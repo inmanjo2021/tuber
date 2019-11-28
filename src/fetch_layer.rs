@@ -22,10 +22,7 @@ use std::io::Read;
 // const AUTH_BASE:      &str = "https://auth.docker.io";
 // const AUTH_SERVICE:   &str = "registry.docker.io";
 
-const REGISTRY_BASE:  &str = "https://us.gcr.io";
-const AUTH_BASE:      &str = "https://us.gcr.io";
 // const AUTH_SERVICE:   &str = "registry.docker.io";
-const IMAGE:          &str = "freshly-docker/address-service";
 const TAG:            &str = "master";
 const MATCHER:        &str = "COPY";
 
@@ -105,8 +102,8 @@ fn get_token() -> Result<AuthResponse, Box<dyn Error>> {
     // It also needs basic auth, which makes sense i guess?
     let request_url = format!(
         "{auth_base}/v2/token?scope=repository:{image}:pull",
-        auth_base = AUTH_BASE,
-        image = IMAGE,
+        auth_base = env::var("AUTH_BASE")?,
+        image = env::var("IMAGE_NAME")?,
     );
 
     let client = reqwest::Client::new();
@@ -134,8 +131,8 @@ pub fn download_layer() -> Result<String, Box<dyn Error>> {
 
     let request_url = format!(
         "{registry_base}/v2/{image}/blobs/{layer}",
-        image = IMAGE,
-        registry_base = REGISTRY_BASE,
+        image = env::var("IMAGE_NAME")?,
+        registry_base = env::var("REGISTRY_BASE")?,
         layer = layer,
     );
 
@@ -165,8 +162,8 @@ fn get_layer_sha() -> Result<String, Box<dyn Error>> {
 
     let request_url = format!(
         "{registry_base}/v2/{image}/manifests/{tag}",
-        image = IMAGE,
-        registry_base = REGISTRY_BASE,
+        image = env::var("IMAGE_NAME")?,
+        registry_base = env::var("REGISTRY_BASE")?,
         tag = TAG,
     );
 
