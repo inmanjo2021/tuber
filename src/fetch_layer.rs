@@ -4,11 +4,12 @@ extern crate hyper;
 extern crate reqwest;
 
 use std::error::Error;
-use serde::{Deserialize, Deserializer};
-use serde::de::{self, Visitor};
-use serde_json;
-use std::fmt;
+use serde::{Deserialize};
+// use serde::de::{self, Visitor};
+// use serde_json;
+// use std::fmt;
 use std::env;
+
 // use std::io::copy;
 // use std::fs::File;
 // use std::path::Path;
@@ -22,11 +23,10 @@ use std::io::Read;
 // const AUTH_BASE:      &str = "https://auth.docker.io";
 // const AUTH_SERVICE:   &str = "registry.docker.io";
 
-// const AUTH_SERVICE:   &str = "registry.docker.io";
-const TAG:            &str = "master";
-const MATCHER:        &str = "COPY";
+const MEGABYTE: u32 = 1_000_000;
+const MAX_SIZE: u32 = MEGABYTE * 1;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct AuthResponse {
     pub token: String,
 }
@@ -34,72 +34,29 @@ struct AuthResponse {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Layer {
-    blob_sum: String,
-}
-
-#[derive(Deserialize)]
-struct History {
-    #[serde(deserialize_with = "deserialize_layer_command")]
-    #[serde(rename(deserialize = "v1Compatibility"))]
-    command: String,
-}
-
-#[derive(Deserialize)]
-struct HistoryData {
-    container_config: ContainerConfig,
-}
-
-#[derive(Deserialize)]
-struct ContainerConfig {
-    #[serde(rename(deserialize = "Cmd"))]
-    cmd: Vec<String>,
+    digest: String,
+    size:   u32,
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Manifest {
-    fs_layers: Vec<Layer>,
-    history:   Vec<History>,
+    layers: Vec<Layer>,
 }
 
-fn deserialize_layer_command<'de, D>(deserializer: D) -> Result<String, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct LayerCommandVisitor;
+#[derive(Debug)]
+pub struct DownloadLayerResponse {
+    should_continue: bool,
+    pub yamls: Vec<Yaml>,
+}
 
-    impl<'de> Visitor<'de> for LayerCommandVisitor {
-        type Value = String;
-
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("an integer or string containing an integer")
-        }
-
-        #[inline]
-        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-        where
-            E: de::Error,
-        {
-            let deserialized: HistoryData = serde_json::from_str(&value).unwrap();
-            Ok(deserialized.container_config.cmd.join(" ").clone())
-        }
-    }
-
-    deserializer.deserialize_string(LayerCommandVisitor)
+#[derive(Debug)]
+pub struct Yaml {
+    pub content: String,
+    pub filename: String,
 }
 
 fn get_token() -> Result<AuthResponse, Box<dyn Error>> {
-    // This is the auth format for docker hub.
-    // Unsure where the distinctions between these two are specified.
-    // let request_url = format!(
-    //     "{auth_base}/token?service={auth_service}&scope=repository:{image}:pull",
-    //     auth_base = AUTH_BASE,
-    //     auth_service = "registry.docker.io",
-    //     image = IMAGE,
-    // );
-
-    // GCP does not use the service query string param.
-    // It also needs basic auth, which makes sense i guess?
     let request_url = format!(
         "{auth_base}/v2/token?scope=repository:{image}:pull",
         auth_base = env::var("AUTH_BASE")?,
@@ -114,20 +71,59 @@ fn get_token() -> Result<AuthResponse, Box<dyn Error>> {
         .unwrap();
 
     let auth_response: AuthResponse = response.json()?;
-
-    println!("TOKEN IS !!!! : ");
-    println!("{}", auth_response.token);
+    // println!("{:?}", auth_response);
 
     Ok(auth_response)
 }
 
-pub fn find_layer() -> Result<String, Box<dyn Error>> {
-    download_layer()
+fn get_layers() -> Result<Vec<Layer>, Box<dyn Error>> {
+    let token = get_token()?.token;
+
+    let request_url = format!(
+        "{registry_base}/v2/{image}/manifests/{tag}",
+        image = env::var("IMAGE_NAME")?,
+        registry_base = env::var("REGISTRY_BASE")?,
+        tag = env::var("IMAGE_TAG")?,
+    );
+
+    let client = reqwest::Client::new();
+
+    // println!("{}", token);
+
+    let mut response = client.get(&request_url)
+        .header("Authorization", format!("Bearer {}", token))
+        // .header("Accept", "application/vnd.docker.container.image.v2+json")
+        .send()?
+        .error_for_status()
+        .unwrap();
+
+    let parsed: Manifest = response.json()?;
+
+    Ok(parsed.layers)
 }
 
-pub fn download_layer() -> Result<String, Box<dyn Error>> {
+pub fn find_layer<'a>() -> Result<DownloadLayerResponse, Box<dyn Error>> {
+    let layers = get_layers()?;
+
+    for layer in layers.into_iter().rev() {
+        if layer.size > MAX_SIZE {
+            println!("Layer to large, skipping...");
+            continue;
+        }
+
+        let res = download_layer(&layer).unwrap();
+
+        if !res.should_continue {
+            return Ok(res);
+        }
+    };
+
+    panic!("No tuber layer found")
+}
+
+fn download_layer(layer: &Layer) -> Result<DownloadLayerResponse, Box<dyn Error>> {
     let token = get_token()?.token;
-    let layer = get_layer_sha().unwrap();
+    let layer = &layer.digest;
 
     let request_url = format!(
         "{registry_base}/v2/{image}/blobs/{layer}",
@@ -144,45 +140,38 @@ pub fn download_layer() -> Result<String, Box<dyn Error>> {
 
     let tar = GzDecoder::new(response);
     let mut archive = Archive::new(tar);
+    let mut should_continue = true;
+    let mut yamls: Vec<Yaml> = vec![];
 
     for file in archive.entries().unwrap() {
         let mut file = file.unwrap();
+        let mut yaml = String::new();
 
-        // files implement the Read trait
-        let mut s = String::new();
-        file.read_to_string(&mut s).unwrap();
-        println!("{}", s);
+        // this read happens here, before the early exits because `rustc --explain E0502`
+        file.read_to_string(&mut yaml).unwrap_or(0);
+
+        let path = file.path().unwrap().clone();
+        let ext = path.extension().unwrap_or(::std::ffi::OsStr::new(""));
+        let filename = path.file_name().unwrap();
+
+        if !path.starts_with(".tuber") {
+            break;
+        }
+
+        should_continue = false;
+
+        if ext != "yaml" {
+            continue;
+        }
+
+        yamls.push(Yaml {
+            content:  yaml,
+            filename: filename.to_string_lossy().to_string(),
+        });
     }
 
-    Ok(layer)
-}
-
-fn get_layer_sha() -> Result<String, Box<dyn Error>> {
-    let token = get_token()?.token;
-
-    let request_url = format!(
-        "{registry_base}/v2/{image}/manifests/{tag}",
-        image = env::var("IMAGE_NAME")?,
-        registry_base = env::var("REGISTRY_BASE")?,
-        tag = TAG,
-    );
-
-    let client = reqwest::Client::new();
-
-    // println!("{}", token);
-
-    let mut response = client.get(&request_url)
-        .header("Authorization", format!("Bearer {}", token))
-        // .header("Accept", "application/vnd.docker.container.image.v1+json")
-        .send()?
-        .error_for_status()
-        .unwrap();
-
-    println!("{}", response.text().unwrap());
-
-    let parsed: Manifest = response.json()?;
-    let index = parsed.history.into_iter().position(|x| x.command.contains(MATCHER)).unwrap();
-    let layer = parsed.fs_layers[index].blob_sum.clone();
-
-    Ok(layer)
+    Ok(DownloadLayerResponse {
+        should_continue: should_continue,
+        yamls:           yamls,
+    })
 }
