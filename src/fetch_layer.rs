@@ -151,12 +151,13 @@ fn download_layer(layer: &Layer) -> Result<DownloadLayerResponse, Box<dyn Error>
         file.read_to_string(&mut yaml).unwrap_or(0);
 
         let path = file.path().unwrap().clone();
-        let ext = path.extension().unwrap_or(::std::ffi::OsStr::new(""));
-        let filename = path.file_name().unwrap();
 
         if !path.starts_with(".tuber") {
             break;
         }
+
+        let ext = path.extension().unwrap_or(::std::ffi::OsStr::new(""));
+        let filename = path.file_name().unwrap();
 
         should_continue = false;
 
