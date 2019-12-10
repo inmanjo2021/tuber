@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
+	"tuber/pkg/util"
 )
 
 const MEGABYTE = 1_000_000
@@ -114,12 +115,7 @@ func getLayers() []Layer {
 	return obj.Layers
 }
 
-type Yaml struct {
-	Content  string
-	Filename string
-}
-
-func DownloadLayer(layerObj *Layer) ([]Yaml, error) {
+func DownloadLayer(layerObj *Layer) ([]util.Yaml, error) {
 	token := getToken().Token
 	layer := layerObj.Digest
 
@@ -142,7 +138,7 @@ func DownloadLayer(layerObj *Layer) ([]Yaml, error) {
 
 	gzipped, _ := gzip.NewReader(res.Body)
 	archive := tar.NewReader(gzipped)
-	var yamls []Yaml
+	var yamls []util.Yaml
 
 	for {
 		header, err := archive.Next()
@@ -165,7 +161,7 @@ func DownloadLayer(layerObj *Layer) ([]Yaml, error) {
 
 		bytes, _ := ioutil.ReadAll(archive)
 
-		var yaml Yaml
+		var yaml util.Yaml
 		yaml.Filename = header.Name
 		yaml.Content = string(bytes)
 
@@ -175,7 +171,7 @@ func DownloadLayer(layerObj *Layer) ([]Yaml, error) {
 	return yamls, nil
 }
 
-func FindLayer() ([]Yaml, error) {
+func FindLayer() ([]util.Yaml, error) {
 	layers := getLayers()
 
 	for _, layer := range layers {
