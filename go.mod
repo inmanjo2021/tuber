@@ -1,4 +1,4 @@
-module tuber.freshly/main
+module tuber
 
 go 1.13
 
