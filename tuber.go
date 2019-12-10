@@ -7,7 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/joho/godotenv"
-	"tuber/yamldownloader"
+	"tuber/pkg/yamldownloader"
 )
 
 func main() {
