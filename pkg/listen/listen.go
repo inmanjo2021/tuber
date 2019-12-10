@@ -1,23 +1,43 @@
 package listen
 
 import (
-	"cloud.google.com/go/pubsub"
 	"context"
+	"encoding/json"
 	"log"
-	"tuber/pkg/yamldownloader"
+
+	"cloud.google.com/go/pubsub"
+	"google.golang.org/api/option"
 )
 
-// Listen it listens
-func Listen() {
-	ctx := context.Background()
-	client, _ := pubsub.NewClient(ctx, "freshly-docker")
-	subscription := client.Subscription("freshly-docker-gcr-events")
+// RegistryEvent json deserialize target for pubsub
+type RegistryEvent struct {
+	Action string `json:"action"`
+	Digest string `json:"digest"`
+}
 
-	err := subscription.Receive(context.Background(), func(ctx context.Context, message *pubsub.Message) {
-		yamldownloader.FindLayer()
-	})
+type callback func(*RegistryEvent, error)
+
+// Listen it listens
+func Listen(listener callback) error {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	ctx := context.Background()
+	client, err := pubsub.NewClient(ctx, "freshly-docker", option.WithCredentialsFile("./credentials.json"))
 
 	if err != nil {
 		log.Fatal(err) // Error will always be not nil. and not always an error.
 	}
+
+	subscription := client.Subscription("freshly-docker-gcr-events")
+
+	err = subscription.Receive(context.Background(), func(ctx context.Context, message *pubsub.Message) {
+		// log.Printf("Got message: %s", message.Data)
+
+		var obj = new(RegistryEvent)
+		err := json.Unmarshal(message.Data, obj)
+
+		listener(obj, err)
+	})
+
+	return err
 }

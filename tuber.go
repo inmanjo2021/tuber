@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"tuber/pkg/apply"
+	"tuber/pkg/listen"
 	"tuber/pkg/yamldownloader"
 
 	"github.com/joho/godotenv"
@@ -16,6 +17,8 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+
+	listen.Listen()
 
 	yamls, err := yamldownloader.FindLayer()
 
