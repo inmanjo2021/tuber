@@ -163,6 +163,10 @@ func DownloadLayer(layerObj *Layer) ([]Yaml, error) {
 			return nil, &NotTuberLayerError{"Contains stuff other than .tuber"}
 		}
 
+		if !strings.HasSuffix(header.Name, ".yaml") {
+			continue
+		}
+
 		if _, err := io.Copy(os.Stdout, archive); err != nil {
 			log.Fatal(err)
 		}
