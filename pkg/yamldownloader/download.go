@@ -16,30 +16,30 @@ import (
 	"tuber/pkg/util"
 )
 
-const MEGABYTE = 1_000_000
-const MAX_SIZE = MEGABYTE * 1
+const megabyte = 1_000_000
+const maxSize = megabyte * 1
 
-type AuthResponse struct {
-	Token string `json:"token"`
+type authResponse struct {
+	token string
 }
 
-type Layer struct {
-	Digest string `json:"digest"`
-	Size   int32  `json:"size"`
+type layer struct {
+	digest string
+	size   int32
 }
 
-type Manifest struct {
-	Layers []Layer `json:"layers"`
+type manifest struct {
+	layers []layer
 }
 
-type NotTuberLayerError struct {
+type notTuberLayerError struct {
 	message string
 }
 
-func (e *NotTuberLayerError) Error() string { return e.message }
+func (e *notTuberLayerError) Error() string { return e.message }
 
-func getToken() *AuthResponse {
-	requestUrl := fmt.Sprintf(
+func getToken() *authResponse {
+	requestURL := fmt.Sprintf(
 		"%s/v2/token?scope=repository:%s:pull",
 		os.Getenv("AUTH_BASE"),
 		os.Getenv("IMAGE_NAME"),
@@ -47,7 +47,7 @@ func getToken() *AuthResponse {
 
 	client := &http.Client{}
 
-	req, err := http.NewRequest("GET", requestUrl, nil)
+	req, err := http.NewRequest("GET", requestURL, nil)
 
 	if err != nil {
 		log.Fatal(err)
@@ -66,7 +66,7 @@ func getToken() *AuthResponse {
 		log.Fatal(err)
 	}
 
-	var obj = new(AuthResponse)
+	var obj = new(authResponse)
 	err = json.Unmarshal(body, &obj)
 
 	if err != nil {
@@ -77,10 +77,10 @@ func getToken() *AuthResponse {
 	return obj
 }
 
-func getLayers() []Layer {
-	token := getToken().Token
+func getLayers() []layer {
+	token := getToken().token
 
-	requestUrl := fmt.Sprintf(
+	requestURL := fmt.Sprintf(
 		"%s/v2/%s/manifests/%s",
 		os.Getenv("REGISTRY_BASE"),
 		os.Getenv("IMAGE_NAME"),
@@ -89,7 +89,7 @@ func getLayers() []Layer {
 
 	client := &http.Client{}
 
-	req, _ := http.NewRequest("GET", requestUrl, nil)
+	req, _ := http.NewRequest("GET", requestURL, nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
 	res, err := client.Do(req)
@@ -104,7 +104,7 @@ func getLayers() []Layer {
 		log.Fatal(err)
 	}
 
-	var obj = new(Manifest)
+	var obj = new(manifest)
 	err = json.Unmarshal(body, &obj)
 
 	if err != nil {
@@ -112,14 +112,14 @@ func getLayers() []Layer {
 	}
 
 	spew.Dump(obj)
-	return obj.Layers
+	return obj.layers
 }
 
-func DownloadLayer(layerObj *Layer) ([]util.Yaml, error) {
-	token := getToken().Token
-	layer := layerObj.Digest
+func downloadLayer(layerObj *layer) ([]util.Yaml, error) {
+	token := getToken().token
+	layer := layerObj.digest
 
-	requestUrl := fmt.Sprintf(
+	requestURL := fmt.Sprintf(
 		"%s/v2/%s/blobs/%s",
 		os.Getenv("REGISTRY_BASE"),
 		os.Getenv("IMAGE_NAME"),
@@ -127,7 +127,7 @@ func DownloadLayer(layerObj *Layer) ([]util.Yaml, error) {
 	)
 
 	client := &http.Client{}
-	req, _ := http.NewRequest("GET", requestUrl, nil)
+	req, _ := http.NewRequest("GET", requestURL, nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	res, err := client.Do(req)
@@ -152,7 +152,7 @@ func DownloadLayer(layerObj *Layer) ([]util.Yaml, error) {
 		}
 
 		if !strings.HasPrefix(header.Name, ".tuber") {
-			return nil, &NotTuberLayerError{"Contains stuff other than .tuber"}
+			return nil, &notTuberLayerError{"contains stuff other than .tuber"}
 		}
 
 		if !strings.HasSuffix(header.Name, ".yaml") {
@@ -171,19 +171,20 @@ func DownloadLayer(layerObj *Layer) ([]util.Yaml, error) {
 	return yamls, nil
 }
 
+// FindLayer should be called DownloadYamls or something
 func FindLayer() ([]util.Yaml, error) {
 	layers := getLayers()
 
 	for _, layer := range layers {
-		if layer.Size > MAX_SIZE {
+		if layer.size > maxSize {
 			log.Println("Layer to large, skipping...")
 			continue
 		}
 
-		yamls, err := DownloadLayer(&layer)
+		yamls, err := downloadLayer(&layer)
 
 		if err != nil {
-			if _, ok := err.(*NotTuberLayerError); ok {
+			if _, ok := err.(*notTuberLayerError); ok {
 				continue
 			}
 
@@ -193,5 +194,5 @@ func FindLayer() ([]util.Yaml, error) {
 		return yamls, nil
 	}
 
-	return nil, fmt.Errorf("No tuber layer found.")
+	return nil, fmt.Errorf("no tuber layer found")
 }
