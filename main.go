@@ -2,7 +2,6 @@ package main
 
 import (
 	"archive/tar"
-	"bytes"
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
@@ -167,16 +166,11 @@ func DownloadLayer(layerObj *Layer) ([]Yaml, error) {
 			continue
 		}
 
-		if _, err := io.Copy(os.Stdout, archive); err != nil {
-			log.Fatal(err)
-		}
-
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(archive)
+		bytes, _ := ioutil.ReadAll(archive)
 
 		var yaml Yaml
 		yaml.filename = header.Name
-		yaml.content = buf.String()
+		yaml.content = string(bytes)
 
 		yamls = append(yamls, yaml)
 
