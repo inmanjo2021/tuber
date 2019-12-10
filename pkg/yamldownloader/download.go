@@ -20,16 +20,16 @@ const megabyte = 1_000_000
 const maxSize = megabyte * 1
 
 type authResponse struct {
-	token string
+	Token string `json:"token"`
 }
 
 type layer struct {
-	digest string
-	size   int32
+	Digest string `json:"digest"`
+	Size   int32  `json:"size"`
 }
 
 type manifest struct {
-	layers []layer
+	Layers []layer `json:"layers"`
 }
 
 type notTuberLayerError struct {
@@ -73,12 +73,16 @@ func getToken() *authResponse {
 		log.Fatal(err)
 	}
 
+	if obj.Token == "" {
+		log.Fatal(fmt.Errorf("no token"))
+	}
+
 	spew.Dump(obj)
 	return obj
 }
 
 func getLayers() []layer {
-	token := getToken().token
+	token := getToken().Token
 
 	requestURL := fmt.Sprintf(
 		"%s/v2/%s/manifests/%s",
@@ -112,12 +116,12 @@ func getLayers() []layer {
 	}
 
 	spew.Dump(obj)
-	return obj.layers
+	return obj.Layers
 }
 
 func downloadLayer(layerObj *layer) ([]util.Yaml, error) {
-	token := getToken().token
-	layer := layerObj.digest
+	token := getToken().Token
+	layer := layerObj.Digest
 
 	requestURL := fmt.Sprintf(
 		"%s/v2/%s/blobs/%s",
@@ -176,7 +180,7 @@ func FindLayer() ([]util.Yaml, error) {
 	layers := getLayers()
 
 	for _, layer := range layers {
-		if layer.size > maxSize {
+		if layer.Size > maxSize {
 			log.Println("Layer to large, skipping...")
 			continue
 		}
