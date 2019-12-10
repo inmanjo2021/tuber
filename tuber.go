@@ -8,6 +8,7 @@ import (
 	"tuber/pkg/listen"
 	"tuber/pkg/yamldownloader"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/joho/godotenv"
 )
 
@@ -18,7 +19,9 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	listen.Listen()
+	listen.Listen(func(event *listen.RegistryEvent, err error) {
+		spew.Dump(event)
+	})
 
 	yamls, err := yamldownloader.FindLayer()
 
