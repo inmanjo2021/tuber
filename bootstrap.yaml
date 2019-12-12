@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tuber
+  name: tuber
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tuber
+  template:
+    metadata:
+      labels:
+        app: tuber
+    spec:
+      containers:
+      - image: us.gcr.io/freshly-docker/tuber:c70a1d3c90aa20ab135317d2e8a848c746398835
+        name: tuber
