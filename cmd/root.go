@@ -1,16 +1,16 @@
 package cmd
 
-import (      
-        "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
 )
 
 var (
-        rootCmd = &cobra.Command{
-                Use:   "tuber",
-                Short: "",
-        }
+	rootCmd = &cobra.Command{
+		Use:   "tuber",
+		Short: "",
+	}
 )
 
 func Execute() error {
-        return rootCmd.Execute()
+	return rootCmd.Execute()
 }

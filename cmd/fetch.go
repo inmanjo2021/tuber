@@ -5,11 +5,10 @@ import (
 	"log"
 	"os"
 
-	"tuber/pkg/yamldownloader"
-
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 
-	"github.com/joho/godotenv"
+	"tuber/pkg/yamldownloader"
 )
 
 func init() {
