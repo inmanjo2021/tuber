@@ -11,10 +11,11 @@ COPY go.mod   ./go.mod
 COPY go.sum   ./go.sum
 COPY justfile ./justfile
 COPY pkg      ./pkg
-COPY tuber.go ./tuber.go
+COPY cmd      ./cmd
+COPY main.go  ./main.go
 
 ENV GO111MODULE on
 
 RUN go build
 
-CMD ["/app/tuber"]
+CMD ["/app/tuber", "start"]
