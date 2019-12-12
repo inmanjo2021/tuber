@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
@@ -28,73 +27,116 @@ type layer struct {
 	Size   int32  `json:"size"`
 }
 
+type apiError struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+func (a apiError) Error() string {
+	return a.Message
+}
+
 type manifest struct {
-	Layers []layer `json:"layers"`
+	Layers []layer    `json:"layers"`
+	Errors []apiError `json:errors`
 }
 
 type notTuberLayerError struct {
 	message string
 }
 
-func (e *notTuberLayerError) Error() string { return e.message }
+func (n *notTuberLayerError) Error() string {
+	return n.message
+}
 
-func getToken() *authResponse {
-	requestURL := fmt.Sprintf(
-		"%s/v2/token?scope=repository:%s:pull",
-		os.Getenv("AUTH_BASE"),
-		os.Getenv("IMAGE_NAME"),
-	)
+type Registry struct {
+	baseUrl  string
+	username string
+	password string
+}
 
-	client := &http.Client{}
+func NewGoogleRegistry(googleToken string) *Registry {
+	return &Registry{
+		baseUrl:  "https://us.gcr.io",
+		username: "_token",
+		password: googleToken,
+	}
+}
+
+func (r *Registry) GetToken(repository string, scope string) (string, error) {
+	requestURL := fmt.Sprintf("%s/v2/token?scope=repository:%s:%s",
+		r.baseUrl, repository, scope)
+
+	var client = &http.Client{}
+	var obj = new(authResponse)
 
 	req, err := http.NewRequest("GET", requestURL, nil)
 
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
-	req.SetBasicAuth("_token", os.Getenv("GCLOUD_TOKEN"))
+	req.SetBasicAuth(r.username, r.password)
 	res, err := client.Do(req)
 
 	if err != nil {
-		log.Fatal(err)
+		return "", err
+
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
-	var obj = new(authResponse)
 	err = json.Unmarshal(body, &obj)
 
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	if obj.Token == "" {
-		log.Fatal(fmt.Errorf("no token"))
+		return "", fmt.Errorf("no token")
 	}
 
 	spew.Dump(obj)
-	return obj
+	return obj.Token, nil
 }
 
-func getLayers() []layer {
-	token := getToken().Token
+type Repository struct {
+	registry *Registry
+	image    string
+	token    string
+}
+
+func (r *Registry) GetRepository(image string, scope string) (*Repository, error) {
+	token, err := r.GetToken(image, scope)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Repository{
+		r,
+		image,
+		token,
+	}, nil
+
+}
+
+func (r *Repository) getLayers(tag string) ([]layer, error) {
 
 	requestURL := fmt.Sprintf(
 		"%s/v2/%s/manifests/%s",
-		os.Getenv("REGISTRY_BASE"),
-		os.Getenv("IMAGE_NAME"),
-		os.Getenv("IMAGE_TAG"),
+		r.registry.baseUrl,
+		r.image,
+		tag,
 	)
 
 	client := &http.Client{}
 
 	req, _ := http.NewRequest("GET", requestURL, nil)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", r.token))
 	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
 	res, err := client.Do(req)
 
@@ -105,34 +147,38 @@ func getLayers() []layer {
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
+
 	}
 
 	var obj = new(manifest)
 	err = json.Unmarshal(body, &obj)
 
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
+	}
+
+	if len(obj.Errors) > 0 {
+		return nil, obj.Errors[0]
 	}
 
 	spew.Dump(obj)
-	return obj.Layers
+	return obj.Layers, nil
 }
 
-func downloadLayer(layerObj *layer) ([]util.Yaml, error) {
-	token := getToken().Token
+func (r *Repository) downloadLayer(layerObj *layer) ([]util.Yaml, error) {
 	layer := layerObj.Digest
 
 	requestURL := fmt.Sprintf(
 		"%s/v2/%s/blobs/%s",
-		os.Getenv("REGISTRY_BASE"),
-		os.Getenv("IMAGE_NAME"),
+		r.registry.baseUrl,
+		r.image,
 		layer,
 	)
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", requestURL, nil)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", r.token))
 
 	res, err := client.Do(req)
 
@@ -176,8 +222,12 @@ func downloadLayer(layerObj *layer) ([]util.Yaml, error) {
 }
 
 // FindLayer should be called DownloadYamls or something
-func FindLayer() ([]util.Yaml, error) {
-	layers := getLayers()
+func (r *Repository) FindLayer(tag string) ([]util.Yaml, error) {
+	layers, err := r.getLayers(tag)
+
+	if err != nil {
+		return nil, err
+	}
 
 	for _, layer := range layers {
 		if layer.Size > maxSize {
@@ -185,14 +235,14 @@ func FindLayer() ([]util.Yaml, error) {
 			continue
 		}
 
-		yamls, err := downloadLayer(&layer)
+		yamls, err := r.downloadLayer(&layer)
 
 		if err != nil {
 			if _, ok := err.(*notTuberLayerError); ok {
 				continue
 			}
 
-			log.Fatal(err)
+			return nil, err
 		}
 
 		return yamls, nil
