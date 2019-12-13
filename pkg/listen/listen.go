@@ -47,8 +47,15 @@ func NewSubscription(projectId string, subscription string, options ...Subscript
 func (s *Subscription) Listen(ctx context.Context, events chan *RegistryEvent) error {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	client, err := pubsub.NewClient(ctx,
-		s.projectId, s.clientOptions...)
+	ctx := context.Background()
+	var client *pubsub.Client
+	var err error
+
+	client, err = pubsub.NewClient(ctx, "freshly-docker", option.WithCredentialsFile("./credentials.json"))
+
+	if err != nil {
+		client, err = pubsub.NewClient(ctx, "freshly-docker")
+	}
 
 	if err != nil {
 		return err
