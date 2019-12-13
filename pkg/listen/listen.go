@@ -13,6 +13,7 @@ import (
 type RegistryEvent struct {
 	Action string `json:"action"`
 	Digest string `json:"digest"`
+	Tag string `json:"tag"`
 }
 
 type callback func(*RegistryEvent, error)
