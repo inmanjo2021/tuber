@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tuber
+    test: tuberfied
+  name: tuber
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tuber
+  template:
+    metadata:
+      labels:
+        app: tuber
+    spec:
+      containers:
+      - image: gcr.io/freshly-docker/tuber:30f9efab987c7df585f8526d2c2fd015cf06cf48
+        name: tuber
+volumes:
+  - name: credentials
+    secret:
+      secretName: credentials.json

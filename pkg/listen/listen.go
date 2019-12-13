@@ -22,10 +22,17 @@ func Listen(listener callback) error {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	ctx := context.Background()
-	client, err := pubsub.NewClient(ctx, "freshly-docker", option.WithCredentialsFile("./credentials.json"))
+	var client *pubsub.Client
+	var err error
+
+	client, err = pubsub.NewClient(ctx, "freshly-docker", option.WithCredentialsFile("./credentials.json"))
 
 	if err != nil {
-		log.Fatal(err) // Error will always be not nil. and not always an error.
+		client, err = pubsub.NewClient(ctx, "freshly-docker")
+	}
+
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	subscription := client.Subscription("freshly-docker-gcr-events")
