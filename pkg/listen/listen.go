@@ -3,6 +3,7 @@ package listen
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"cloud.google.com/go/pubsub"
@@ -21,33 +22,10 @@ type Subscription struct {
 	clientOptions []option.ClientOption
 }
 
-type SubscriptionOption func(*Subscription)
-
-func WithCredentialsFile(credentials string) SubscriptionOption {
-	return func(s *Subscription) {
-		s.clientOptions = append(s.clientOptions, option.WithCredentialsFile(credentials))
-	}
-
-}
-
-func NewSubscription(projectId string, subscription string, options ...SubscriptionOption) *Subscription {
-	var s = &Subscription{
-		projectId,
-		subscription,
-		[]option.ClientOption{},
-	}
-	for _, option := range options {
-		option(s)
-	}
-
-	return s
-}
-
 // Listen it listens
-func (s *Subscription) Listen(ctx context.Context, events chan *RegistryEvent) error {
+func Listen(ctx context.Context, events chan *RegistryEvent) error {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	ctx := context.Background()
 	var client *pubsub.Client
 	var err error
 
@@ -61,16 +39,16 @@ func (s *Subscription) Listen(ctx context.Context, events chan *RegistryEvent) e
 		return err
 	}
 
-	subscription := client.Subscription(s.subscription)
+	subscription := client.Subscription("freshly-docker-gcr-events")
 
 	err = subscription.Receive(ctx,
 		func(ctx context.Context, message *pubsub.Message) {
 			var obj = new(RegistryEvent)
 			err := json.Unmarshal(message.Data, obj)
 			if err != nil {
-				events <- obj
+				fmt.Println("errors and stuff")
 			} else {
-				// log errors?
+				events <- obj
 			}
 		})
 	return err

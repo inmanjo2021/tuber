@@ -4,6 +4,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
+	"log"
 
 	"context"
 	"tuber/pkg/listen"
@@ -21,15 +22,20 @@ var startCmd = &cobra.Command{
 
 func start(cmd *cobra.Command, args []string) {
 	godotenv.Load()
-	var ctx = context.Background()
+	var ctx, cancel = context.WithCancel(context.Background())
 
 	var ch = make(chan *listen.RegistryEvent, 20)
-	var s = listen.NewSubscription("freshly-docker",
-		"freshly-docker-gcr-events",
-		listen.WithCredentialsFile("./credentials.json"))
-	s.Listen(ctx, ch)
 
-	for event := range ch {
-		spew.Dump(event)
+	go func(ch chan *listen.RegistryEvent) {
+		for event := range ch {
+			spew.Dump(event)
+			cancel()
+		}
+	}(ch)
+
+	err := listen.Listen(ctx, ch)
+	
+	if err != nil {
+		log.Fatal("yes")
 	}
 }
