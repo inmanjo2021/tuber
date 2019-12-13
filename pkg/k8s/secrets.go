@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"tuber/pkg/apply"
-	"tuber/pkg/util"
 )
 
 type metadata struct {
@@ -45,16 +44,9 @@ func CreateFromFile(path string, mountpoint string) (dat []byte, err error) {
 		Metadata:   meta,
 	}
 
-	var yamls []util.Yaml
 	var jsondata []byte
-
 	json.Unmarshal(jsondata, &config)
-
-	yamls = append(yamls, util.Yaml{
-		Content: string(jsondata),
-	})
-
-	apply.Apply(yamls)
+	apply.Write(jsondata)
 
 	return
 }
