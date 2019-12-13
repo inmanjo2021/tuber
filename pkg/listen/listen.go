@@ -15,10 +15,36 @@ type RegistryEvent struct {
 	Digest string `json:"digest"`
 }
 
-type callback func(*RegistryEvent, error)
+type Subscription struct {
+	projectId     string
+	subscription  string
+	clientOptions []option.ClientOption
+}
+
+type SubscriptionOption func(*Subscription)
+
+func WithCredentialsFile(credentials string) SubscriptionOption {
+	return func(s *Subscription) {
+		s.clientOptions = append(s.clientOptions, option.WithCredentialsFile(credentials))
+	}
+
+}
+
+func NewSubscription(projectId string, subscription string, options ...SubscriptionOption) *Subscription {
+	var s = &Subscription{
+		projectId,
+		subscription,
+		[]option.ClientOption{},
+	}
+	for _, option := range options {
+		option(s)
+	}
+
+	return s
+}
 
 // Listen it listens
-func Listen(listener callback) error {
+func (s *Subscription) Listen(ctx context.Context, events chan *RegistryEvent) error {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	ctx := context.Background()
@@ -32,17 +58,20 @@ func Listen(listener callback) error {
 	}
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	subscription := client.Subscription("freshly-docker-gcr-events")
+	subscription := client.Subscription(s.subscription)
 
-	err = subscription.Receive(context.Background(), func(ctx context.Context, message *pubsub.Message) {
-		var obj = new(RegistryEvent)
-		err := json.Unmarshal(message.Data, obj)
-
-		listener(obj, err)
-	})
-
+	err = subscription.Receive(ctx,
+		func(ctx context.Context, message *pubsub.Message) {
+			var obj = new(RegistryEvent)
+			err := json.Unmarshal(message.Data, obj)
+			if err != nil {
+				events <- obj
+			} else {
+				// log errors?
+			}
+		})
 	return err
 }
