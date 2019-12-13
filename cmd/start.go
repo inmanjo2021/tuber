@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 
+	"context"
 	"tuber/pkg/listen"
 )
 
@@ -20,13 +21,19 @@ var startCmd = &cobra.Command{
 }
 
 func start(cmd *cobra.Command, args []string) {
-	err := godotenv.Load()
+	godotenv.Load()
+	var ctx = context.Background()
 
+	var ch = make(chan *listen.RegistryEvent, 20)
+
+	go func(ch chan *listen.RegistryEvent) {
+		for event := range ch {
+			spew.Dump(event)
+		}
+	}(ch)
+
+	err := listen.Listen(ctx, ch)
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("yes")
 	}
-
-	listen.Listen(func(event *listen.RegistryEvent, err error) {
-		spew.Dump(event)
-	})
 }
