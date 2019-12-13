@@ -12,11 +12,11 @@ type image struct {
 
 func filter(e *util.RegistryEvent) (qualified bool, event *image) {
 	imageNameRegex := regexp.MustCompile(`us\.gcr\.io\/(.*):`)
-	imageName := imageNameRegex.FindString(e.Tag)
+	name := imageNameRegex.FindString(e.Tag)
 	branchRegex := regexp.MustCompile(`us\.gcr\.io\/.*:(.*)`)
-	branchName := branchRegex.FindString(e.Tag)
-	if imageName == "tuber" && branchName == "master" {
-		event := &image{imageName: imageName, branchName: branchName}
+	branch := branchRegex.FindString(e.Tag)
+	if name == "tuber" && branch == "master" {
+		event := &image{name: name, branch: branch}
 		return true, event
 	}
 	return
