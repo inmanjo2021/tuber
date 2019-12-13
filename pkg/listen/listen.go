@@ -15,27 +15,56 @@ type RegistryEvent struct {
 	Digest string `json:"digest"`
 }
 
-type callback func(*RegistryEvent, error)
+type Subscription struct {
+	projectId     string
+	subscription  string
+	clientOptions []option.ClientOption
+}
 
-// Listen it listens
-func Listen(listener callback) error {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+type SubscriptionOption func(*Subscription)
 
-	ctx := context.Background()
-	client, err := pubsub.NewClient(ctx, "freshly-docker", option.WithCredentialsFile("./credentials.json"))
-
-	if err != nil {
-		log.Fatal(err) // Error will always be not nil. and not always an error.
+func WithCredentialsFile(credentials string) SubscriptionOption {
+	return func(s *Subscription) {
+		s.clientOptions = append(s.clientOptions, option.WithCredentialsFile(credentials))
 	}
 
-	subscription := client.Subscription("freshly-docker-gcr-events")
+}
 
-	err = subscription.Receive(context.Background(), func(ctx context.Context, message *pubsub.Message) {
-		var obj = new(RegistryEvent)
-		err := json.Unmarshal(message.Data, obj)
+func NewSubscription(projectId string, subscription string, options ...SubscriptionOption) *Subscription {
+	var s = &Subscription{
+		projectId,
+		subscription,
+		[]option.ClientOption{},
+	}
+	for _, option := range options {
+		option(s)
+	}
 
-		listener(obj, err)
-	})
+	return s
+}
 
+// Listen it listens
+func (s *Subscription) Listen(ctx context.Context, events chan *RegistryEvent) error {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	client, err := pubsub.NewClient(ctx,
+		s.projectId, s.clientOptions...)
+
+	if err != nil {
+		return err
+	}
+
+	subscription := client.Subscription(s.subscription)
+
+	err = subscription.Receive(ctx,
+		func(ctx context.Context, message *pubsub.Message) {
+			var obj = new(RegistryEvent)
+			err := json.Unmarshal(message.Data, obj)
+			if err != nil {
+				events <- obj
+			} else {
+				// log errors?
+			}
+		})
 	return err
 }

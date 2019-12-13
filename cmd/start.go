@@ -5,6 +5,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 
+	"context"
 	"tuber/pkg/listen"
 )
 
@@ -20,8 +21,15 @@ var startCmd = &cobra.Command{
 
 func start(cmd *cobra.Command, args []string) {
 	godotenv.Load()
+	var ctx = context.Background()
 
-	listen.Listen(func(event *listen.RegistryEvent, err error) {
+	var ch = make(chan *listen.RegistryEvent, 20)
+	var s = listen.NewSubscription("freshly-docker",
+		"freshly-docker-gcr-events",
+		listen.WithCredentialsFile("./credentials.json"))
+	s.Listen(ctx, ch)
+
+	for event := range ch {
 		spew.Dump(event)
-	})
+	}
 }
