@@ -221,7 +221,6 @@ func (r *Repository) downloadLayer(layerObj *layer) ([]util.Yaml, error) {
 	return yamls, nil
 }
 
-// FindLayer should be called DownloadYamls or something
 func (r *Repository) FindLayer(tag string) ([]util.Yaml, error) {
 	layers, err := r.getLayers(tag)
 
