@@ -2,6 +2,7 @@ package events
 
 import (
 	"os"
+	"tuber/pkg/release"
 	"tuber/pkg/util"
 )
 
