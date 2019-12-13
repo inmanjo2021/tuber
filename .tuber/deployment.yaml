@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   labels:
     app: tuber
+    test: tuberfied
   name: tuber
   namespace: default
 spec:
