@@ -22,19 +22,17 @@ var startCmd = &cobra.Command{
 
 func start(cmd *cobra.Command, args []string) {
 	godotenv.Load()
-	var ctx, cancel = context.WithCancel(context.Background())
+	var ctx = context.Background()
 
 	var ch = make(chan *listen.RegistryEvent, 20)
 
 	go func(ch chan *listen.RegistryEvent) {
 		for event := range ch {
 			spew.Dump(event)
-			cancel()
 		}
 	}(ch)
 
 	err := listen.Listen(ctx, ch)
-	
 	if err != nil {
 		log.Fatal("yes")
 	}
