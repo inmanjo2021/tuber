@@ -1,27 +1,26 @@
-package listen
+package listener
 
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
+	"tuber/pkg/util"
 
 	"cloud.google.com/go/pubsub"
 	"google.golang.org/api/option"
 )
 
-// RegistryEvent json deserialize target for pubsub
-type RegistryEvent struct {
-	Action string `json:"action"`
-	Digest string `json:"digest"`
+type Subscription struct {
+	projectId     string
+	subscription  string
+	clientOptions []option.ClientOption
 }
 
-type callback func(*RegistryEvent, error)
-
 // Listen it listens
-func Listen(listener callback) error {
+func Listen(ctx context.Context, events chan *util.RegistryEvent) error {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	ctx := context.Background()
 	var client *pubsub.Client
 	var err error
 
@@ -32,17 +31,20 @@ func Listen(listener callback) error {
 	}
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	subscription := client.Subscription("freshly-docker-gcr-events")
 
-	err = subscription.Receive(context.Background(), func(ctx context.Context, message *pubsub.Message) {
-		var obj = new(RegistryEvent)
-		err := json.Unmarshal(message.Data, obj)
-
-		listener(obj, err)
-	})
-
+	err = subscription.Receive(ctx,
+		func(ctx context.Context, message *pubsub.Message) {
+			var obj = new(util.RegistryEvent)
+			err := json.Unmarshal(message.Data, obj)
+			if err != nil {
+				fmt.Println("errors and stuff")
+			} else {
+				events <- obj
+			}
+		})
 	return err
 }

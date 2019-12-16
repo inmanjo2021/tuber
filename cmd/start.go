@@ -1,15 +1,22 @@
 package cmd
 
 import (
-	"github.com/davecgh/go-spew/spew"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
+	"log"
+	"tuber/pkg/events"
+	"tuber/pkg/listener"
+	"tuber/pkg/util"
 
-	"tuber/pkg/listen"
+	"context"
 )
 
 func init() {
 	rootCmd.AddCommand(startCmd)
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 }
 
 var startCmd = &cobra.Command{
@@ -19,9 +26,11 @@ var startCmd = &cobra.Command{
 }
 
 func start(cmd *cobra.Command, args []string) {
-	godotenv.Load()
+	var ctx = context.Background()
+	var ch = make(chan *util.RegistryEvent, 20)
 
-	listen.Listen(func(event *listen.RegistryEvent, err error) {
-		spew.Dump(event)
-	})
+	go events.Stream(ch)
+	go listener.Listen(ctx, ch)
+
+	select {}
 }
