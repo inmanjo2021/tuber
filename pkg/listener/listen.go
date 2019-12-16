@@ -36,9 +36,10 @@ func Listen(ctx context.Context, events chan *util.RegistryEvent) error {
 
 	subscription := client.Subscription("freshly-docker-gcr-events")
 
+	fmt.Println("Listening...")
 	err = subscription.Receive(ctx,
 		func(ctx context.Context, message *pubsub.Message) {
-			var obj = new(util.RegistryEvent)
+			obj := &util.RegistryEvent { Message: message }
 			err := json.Unmarshal(message.Data, obj)
 			if err != nil {
 				fmt.Println("errors and stuff")
