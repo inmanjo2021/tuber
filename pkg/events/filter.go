@@ -1,23 +1,26 @@
 package events
 
 import (
+	"fmt"
 	"regexp"
 	"tuber/pkg/util"
 )
 
-type image struct {
+type pendingRelease struct {
 	name string
 	branch string
 }
 
-func filter(e *util.RegistryEvent) (event *image) {
-	imageNameRegex := regexp.MustCompile(`us\.gcr\.io\/(.*):`)
-	name := imageNameRegex.FindString(e.Tag)
-	branchRegex := regexp.MustCompile(`us\.gcr\.io\/.*:(.*)`)
-	branch := branchRegex.FindString(e.Tag)
+func filter(e *util.RegistryEvent) (event *pendingRelease) {
+	filterRegex := regexp.MustCompile(`us\.gcr\.io\/(.*):(.*)`)
+	slicedTag := filterRegex.FindStringSubmatch(e.Tag)
+	name := slicedTag[1]
+	branch := slicedTag[2]
+
 	if name == "tuber" && branch == "master" {
-		event := &image{name: name, branch: branch}
-		return event
+		return &pendingRelease { name: name, branch: branch }
+	} else {
+		fmt.Println("Ignoring", name, branch)
 	}
 	return
 }
