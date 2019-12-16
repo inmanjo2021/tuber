@@ -21,6 +21,7 @@ func filter(e *util.RegistryEvent) (event *pendingRelease) {
 		return &pendingRelease { name: name, branch: branch }
 	} else {
 		fmt.Println("Ignoring", name, branch)
+		e.Message.Ack()
 	}
 	return
 }
