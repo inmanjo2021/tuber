@@ -5,19 +5,21 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+
 	"tuber/pkg/apply"
 )
 
-type metadata struct {
+type k8sMetadata struct {
 	Name string `json:"name"`
 }
 
-type secretsConfig struct {
+type k8sConfig struct {
 	APIVersion string            `json:"apiVersion"`
 	Kind       string            `json:"kind"`
-	Metadata   metadata          `json:"metadata"`
-	Type       string            `json:"type"`
-	Data       map[string]string `json:"stringData"`
+	Metadata   k8sMetadata       `json:"metadata"`
+	Type       string            `json:"type,omitempty"`
+	Data       map[string]string `json:"data"`
+	StringData map[string]string `json:"stringData,omitempty"`
 }
 
 // CreateFromFile creates a secret based on the contents of a file
@@ -32,20 +34,25 @@ func CreateFromFile(path string, mountpoint string) (dat []byte, err error) {
 	str := string(dat)
 	filename := filepath.Base(path)
 	data := map[string]string{filename: str}
-	meta := metadata{
-		Name: fmt.Sprintf("%s/%s", projectName, filename),
+	meta := k8sMetadata{
+		Name: fmt.Sprintf("%s-%s", projectName, filename),
 	}
 
-	config := secretsConfig{
+	config := k8sConfig{
 		APIVersion: "v1",
 		Kind:       "Secret",
 		Type:       "Opaque",
-		Data:       data,
+		StringData: data,
 		Metadata:   meta,
 	}
 
 	var jsondata []byte
-	json.Unmarshal(jsondata, &config)
+	jsondata, err = json.Marshal(config)
+
+	if err != nil {
+		return
+	}
+
 	apply.Write(jsondata)
 
 	return
