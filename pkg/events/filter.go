@@ -10,14 +10,14 @@ type image struct {
 	branch string
 }
 
-func filter(e *util.RegistryEvent) (qualified bool, event *image) {
+func filter(e *util.RegistryEvent) (event *image) {
 	imageNameRegex := regexp.MustCompile(`us\.gcr\.io\/(.*):`)
 	name := imageNameRegex.FindString(e.Tag)
 	branchRegex := regexp.MustCompile(`us\.gcr\.io\/.*:(.*)`)
 	branch := branchRegex.FindString(e.Tag)
 	if name == "tuber" && branch == "master" {
 		event := &image{name: name, branch: branch}
-		return true, event
+		return event
 	}
 	return
 }

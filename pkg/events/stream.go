@@ -8,10 +8,10 @@ import (
 
 func Stream(ch chan *util.RegistryEvent) {
 	for event := range ch {
-		qualified, e := filter(event)
-		if qualified {
+		event := filter(event)
+		if event != nil {
 			token := os.Getenv("GCLOUD_TOKEN")
-			release.New(e.name, e.branch, token)
+			release.New(event.name, event.branch, token)
 		}
 	}
 }
