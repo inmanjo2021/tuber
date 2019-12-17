@@ -1,4 +1,4 @@
-package layer
+package layers
 
 import (
 	"encoding/json"
@@ -25,7 +25,7 @@ func newGoogleRegistry(googleToken string) *registry {
 		baseURL:  "https://us.gcr.io",
 		username: "_token",
 		password: googleToken,
-		scope: "pull",
+		scope:    "pull",
 	}
 }
 
@@ -37,7 +37,7 @@ func (r *registry) getRepository(image string) (repo *repository, err error) {
 		return
 	}
 
-	repo = &repository { registry: r, image: image, token: token }
+	repo = &repository{registry: r, image: image, token: token}
 	return
 }
 

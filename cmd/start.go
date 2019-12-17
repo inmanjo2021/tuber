@@ -39,6 +39,7 @@ func start(cmd *cobra.Command, args []string) {
 	var errorChan = make(chan error, 1)
 
 	streamer := events.NewStreamer(os.Getenv("GCLOUD_TOKEN"), logger)
+
 	go func() {
 		for error := range errorChan {
 			log.Fatal(error)

@@ -10,8 +10,8 @@ type Yaml struct {
 
 // RegistryEvent json deserialize target for pubsub
 type RegistryEvent struct {
-	Action string `json:"action"`
-	Digest string `json:"digest"`
-	Tag string `json:"tag"`
+	Action  string `json:"action"`
+	Digest  string `json:"digest"`
+	Tag     string `json:"tag"`
 	Message *pubsub.Message
 }
