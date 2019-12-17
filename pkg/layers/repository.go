@@ -1,4 +1,4 @@
-package layer
+package layers
 
 import (
 	"archive/tar"
@@ -168,7 +168,7 @@ func convertResponse(response *http.Response) (yamls []util.Yaml, err error) {
 			return
 		}
 
-		yaml := util.Yaml { Filename: header.Name, Content: string(bytes) }
+		yaml := util.Yaml{Filename: header.Name, Content: string(bytes)}
 
 		yamls = append(yamls, yaml)
 	}
