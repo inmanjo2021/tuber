@@ -11,12 +11,6 @@ import (
 	"google.golang.org/api/option"
 )
 
-// type Subscription struct {
-// 	projectID     string
-// 	subscription  string
-// 	clientOptions []option.ClientOption
-// }
-
 // Listen it listens
 func Listen(ctx context.Context, events chan *util.RegistryEvent) error {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
