@@ -49,23 +49,26 @@ func (n *notTuberLayerError) Error() string {
 	return n.message
 }
 
+// Registry struct
 type Registry struct {
-	baseUrl  string
+	baseURL  string
 	username string
 	password string
 }
 
+// NewGoogleRegistry creates Registry struct
 func NewGoogleRegistry(googleToken string) *Registry {
 	return &Registry{
-		baseUrl:  "https://us.gcr.io",
+		baseURL:  "https://us.gcr.io",
 		username: "_token",
 		password: googleToken,
 	}
 }
 
-func (r *Registry) GetToken(repository string, scope string) (string, error) {
+// GetToken using access token, retrieves request token for registry
+func (r *Registry) GetToken(repository string, scope string) (token string, err error) {
 	requestURL := fmt.Sprintf("%s/v2/token?scope=repository:%s:%s",
-		r.baseUrl, repository, scope)
+		r.baseURL, repository, scope)
 
 	var client = &http.Client{}
 	var obj = new(authResponse)
@@ -73,47 +76,49 @@ func (r *Registry) GetToken(repository string, scope string) (string, error) {
 	req, err := http.NewRequest("GET", requestURL, nil)
 
 	if err != nil {
-		return "", err
+		return
 	}
 
 	req.SetBasicAuth(r.username, r.password)
 	res, err := client.Do(req)
 
 	if err != nil {
-		return "", err
+		return
 
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		return "", err
+		return
 	}
 
 	err = json.Unmarshal(body, &obj)
 
 	if err != nil {
-		return "", err
+		return
 	}
 
 	if obj.Token == "" {
 		return "", fmt.Errorf("no token")
 	}
 
-	spew.Dump(obj)
 	return obj.Token, nil
 }
 
+// Repository struct for repo
 type Repository struct {
 	registry *Registry
 	image    string
 	token    string
 }
 
-func (r *Registry) GetRepository(image string, scope string) (*Repository, error) {
+// GetRepository returns repo for image
+func (r *Registry) GetRepository(image string, scope string) (repo *Repository, err error) {
 	token, err := r.GetToken(image, scope)
+
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	return &Repository{
@@ -125,10 +130,9 @@ func (r *Registry) GetRepository(image string, scope string) (*Repository, error
 }
 
 func (r *Repository) getLayers(tag string) ([]layer, error) {
-
 	requestURL := fmt.Sprintf(
 		"%s/v2/%s/manifests/%s",
-		r.registry.baseUrl,
+		r.registry.baseURL,
 		r.image,
 		tag,
 	)
@@ -171,7 +175,7 @@ func (r *Repository) downloadLayer(layerObj *layer) ([]util.Yaml, error) {
 
 	requestURL := fmt.Sprintf(
 		"%s/v2/%s/blobs/%s",
-		r.registry.baseUrl,
+		r.registry.baseURL,
 		r.image,
 		layer,
 	)
@@ -221,6 +225,7 @@ func (r *Repository) downloadLayer(layerObj *layer) ([]util.Yaml, error) {
 	return yamls, nil
 }
 
+// FindLayer finds the .tuber layer containing deploy info for tuber
 func (r *Repository) FindLayer(tag string) ([]util.Yaml, error) {
 	layers, err := r.getLayers(tag)
 
