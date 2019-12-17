@@ -3,11 +3,12 @@ package events
 import (
 	"fmt"
 	"regexp"
+
 	"tuber/pkg/util"
 )
 
 type pendingRelease struct {
-	name string
+	name   string
 	branch string
 }
 
@@ -18,9 +19,9 @@ func filter(e *util.RegistryEvent) (event *pendingRelease) {
 	branch := slicedTag[2]
 
 	if name == "tuber" && branch == "master" {
-		return &pendingRelease { name: name, branch: branch }
-	} else {
-		fmt.Println("Ignoring", name, branch)
+		return &pendingRelease{name: name, branch: branch}
 	}
+
+	fmt.Println("Ignoring", name, branch)
 	return
 }
