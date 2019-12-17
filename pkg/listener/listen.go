@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"log"
 	"tuber/pkg/util"
 
@@ -60,6 +59,6 @@ func startListener(ctx context.Context, unprocessedEvents chan *util.RegistryEve
 func startAcker(processedEvents chan *util.RegistryEvent) {
 	for event := range processedEvents {
 		//event.Message.Ack()
-		spew.Dump(event)
+		fmt.Println("would have acked", event.Tag)
 	}
 }

@@ -62,10 +62,19 @@ type TuberApp struct {
 
 type appsCache struct {
 	apps      []TuberApp
-	timestamp int64
+	expiry    time.Time
 }
 
 var cache *appsCache
+
+func (a appsCache) isExpired() bool {
+	return cache.expiry.Before(time.Now())
+}
+
+func refreshAppsCache(apps []TuberApp) {
+	expiry := time.Now().Add(time.Minute * 5)
+	cache = &appsCache { apps: apps, expiry: expiry }
+}
 
 func getTuberApps() (apps []TuberApp, err error) {
 	config, err := getConfig("tuber-apps")
@@ -90,16 +99,13 @@ func getTuberApps() (apps []TuberApp, err error) {
 
 // TuberApps returns a list of tuber apps
 func TuberApps() (apps []TuberApp, err error) {
-	if cache == nil || cache.timestamp < time.Now().Unix()-60*5 {
+	if cache == nil || cache.isExpired() {
 		apps, err = getTuberApps()
 
-		cache = &appsCache{
-			apps:      apps,
-			timestamp: time.Now().Unix(),
+		if err == nil {
+			refreshAppsCache(apps)
 		}
-	} else {
-		apps = cache.apps
 	}
-
+	apps = cache.apps
 	return
 }
