@@ -3,19 +3,12 @@ package release
 import (
 	"fmt"
 	"tuber/pkg/apply"
-	"tuber/pkg/yamldownloader"
+	"tuber/pkg/layer"
 )
 
 // New create or update app in kubernetes
 func New(name string, tag string, token string) (out []byte, err error) {
-	var registry = yamldownloader.NewGoogleRegistry(token)
-	repository, err := registry.GetRepository(name, "pull")
-
-	if err != nil {
-		return
-	}
-
-	yamls, err := repository.FindLayer(tag)
+	yamls, err := layer.GetGoogleLayer(name, tag, token)
 
 	if err != nil {
 		return

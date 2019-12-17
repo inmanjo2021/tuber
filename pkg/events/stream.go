@@ -2,32 +2,36 @@ package events
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"tuber/pkg/release"
 	"tuber/pkg/util"
 )
 
+type Streamer struct {
+	Token string
+}
+
 // Stream streams a stream
-func Stream(ch chan *util.RegistryEvent, token string) {
-	for event := range ch {
+func (s *Streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.RegistryEvent, chErr chan<- error) {
+	for event := range chIn {
 		pendingRelease, err := filter(event)
 
 		if err != nil {
-			panic(err)
+			chErr <- err
 		}
 
 		if pendingRelease == nil {
-			event.Message.Ack()
-			return
+			chOut <- event
+			continue
 		}
 
 		fmt.Println("Starting release for", pendingRelease.name, pendingRelease.branch)
-		_, err = release.New(pendingRelease.name, pendingRelease.branch, token)
-
-		if err != nil {
-			spew.Dump(err)
-		} else {
-			event.Message.Ack()
-		}
+		go func() {
+			_, err = release.New(pendingRelease.name, pendingRelease.branch, s.Token)
+			if err != nil {
+				chErr <- err
+			} else {
+				chOut <- event
+			}
+		}()
 	}
 }

@@ -1,15 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
 	"tuber/pkg/events"
 	"tuber/pkg/listener"
-	"tuber/pkg/util"
-
-	"context"
 )
 
 func init() {
@@ -28,11 +26,21 @@ var startCmd = &cobra.Command{
 
 func start(cmd *cobra.Command, args []string) {
 	var ctx = context.Background()
-	var ch = make(chan *util.RegistryEvent, 20)
-	token := os.Getenv("GCLOUD_TOKEN")
 
-	go events.Stream(ch, token)
-	go listener.Listen(ctx, ch)
+	unprocessedEvents, processedEvents, err := listener.Listen(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	var errorChan = make(chan error, 1)
+
+  streamer := &events.Streamer{ Token: os.Getenv("GCLOUD_TOKEN") }
+	go func() {
+		for error := range errorChan {
+			log.Fatal(error)
+		}
+	}()
+	go streamer.Stream(unprocessedEvents, processedEvents, errorChan)
 
 	select {}
 }
