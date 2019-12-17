@@ -11,11 +11,11 @@ import (
 	"google.golang.org/api/option"
 )
 
-type Subscription struct {
-	projectId     string
-	subscription  string
-	clientOptions []option.ClientOption
-}
+// type Subscription struct {
+// 	projectID     string
+// 	subscription  string
+// 	clientOptions []option.ClientOption
+// }
 
 // Listen it listens
 func Listen(ctx context.Context, events chan *util.RegistryEvent) error {
@@ -39,7 +39,7 @@ func Listen(ctx context.Context, events chan *util.RegistryEvent) error {
 	fmt.Println("Listening...")
 	err = subscription.Receive(ctx,
 		func(ctx context.Context, message *pubsub.Message) {
-			obj := &util.RegistryEvent { Message: message }
+			obj := &util.RegistryEvent{Message: message}
 			err := json.Unmarshal(message.Data, obj)
 			if err != nil {
 				fmt.Println("errors and stuff")

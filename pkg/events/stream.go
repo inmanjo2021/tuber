@@ -10,7 +10,11 @@ import (
 // Stream streams a stream
 func Stream(ch chan *util.RegistryEvent, token string) {
 	for event := range ch {
-		pendingRelease := filter(event)
+		pendingRelease, err := filter(event)
+
+		if err != nil {
+			panic(err)
+		}
 
 		if pendingRelease == nil {
 			event.Message.Ack()
@@ -18,7 +22,7 @@ func Stream(ch chan *util.RegistryEvent, token string) {
 		}
 
 		fmt.Println("Starting release for", pendingRelease.name, pendingRelease.branch)
-		_, err := release.New(pendingRelease.name, pendingRelease.branch, token)
+		_, err = release.New(pendingRelease.name, pendingRelease.branch, token)
 
 		if err != nil {
 			spew.Dump(err)

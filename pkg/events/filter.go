@@ -12,7 +12,7 @@ type pendingRelease struct {
 	branch string
 }
 
-func filter(e *util.RegistryEvent) (event pendingRelease, err error) {
+func filter(e *util.RegistryEvent) (event *pendingRelease, err error) {
 	apps, err := k8s.TuberApps()
 	var matchApp k8s.TuberApp
 	found := false
@@ -30,6 +30,6 @@ func filter(e *util.RegistryEvent) (event pendingRelease, err error) {
 		return
 	}
 
-	event = pendingRelease{name: matchApp.Name, branch: matchApp.Tag}
+	event = &pendingRelease{name: matchApp.Name, branch: matchApp.Tag}
 	return
 }

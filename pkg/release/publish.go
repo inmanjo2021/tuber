@@ -6,6 +6,7 @@ import (
 	"tuber/pkg/yamldownloader"
 )
 
+// New create or update app in kubernetes
 func New(name string, tag string, token string) (out []byte, err error) {
 	var registry = yamldownloader.NewGoogleRegistry(token)
 	repository, err := registry.GetRepository(name, "pull")
