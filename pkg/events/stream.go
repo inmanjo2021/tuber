@@ -22,6 +22,7 @@ func (s *Streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.Re
 
 		if err != nil {
 			chErr <- err
+			continue
 		}
 
 		if pendingRelease == nil {

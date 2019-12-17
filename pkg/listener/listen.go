@@ -3,8 +3,7 @@ package listener
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/davecgh/go-spew/spew"
+	"go.uber.org/zap"
 	"log"
 	"tuber/pkg/util"
 
@@ -12,20 +11,31 @@ import (
 	"google.golang.org/api/option"
 )
 
-// Listen it listens
-func Listen(ctx context.Context) (in chan *util.RegistryEvent, out chan *util.RegistryEvent, err error) {
-	in = make(chan *util.RegistryEvent, 1)
-	out = make(chan *util.RegistryEvent, 1)
 
-	err = startListener(ctx, in)
-	if err != nil {
-		return
-	}
-	go startAcker(out)
-	return
+type listener struct {
+	logger *zap.Logger
+	in chan *util.RegistryEvent
+	out chan *util.RegistryEvent
 }
 
-func startListener(ctx context.Context, unprocessedEvents chan *util.RegistryEvent) error {
+// Listen it listens
+func Listen(ctx context.Context, logger *zap.Logger) (<-chan *util.RegistryEvent, chan<- *util.RegistryEvent, error) {
+	var l = &listener{
+		logger: logger,
+		in: make(chan *util.RegistryEvent, 1),
+		out: make(chan *util.RegistryEvent, 1),
+	}
+
+	var err = l.startListener(ctx)
+
+	if err != nil {
+		return l.in, l.out, err
+	}
+	go l.startAcker()
+	return l.in, l.out, err
+}
+
+func (l *listener) startListener(ctx context.Context) error {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	var client *pubsub.Client
@@ -43,23 +53,26 @@ func startListener(ctx context.Context, unprocessedEvents chan *util.RegistryEve
 
 	subscription := client.Subscription("freshly-docker-gcr-events")
 
-	fmt.Println("Listening...")
+	l.logger.Info("Listener: starting")
 	go subscription.Receive(ctx,
 		func(ctx context.Context, message *pubsub.Message) {
 			obj := &util.RegistryEvent{Message: message}
 			err := json.Unmarshal(message.Data, obj)
 			if err != nil {
-				fmt.Println("errors and stuff")
+				l.logger.Warn("Could not unmarshal message")
 			} else {
-				unprocessedEvents <- obj
+				l.in <- obj
 			}
 		})
+	l.logger.Info("Listener: started")
 	return err
 }
 
-func startAcker(processedEvents chan *util.RegistryEvent) {
-	for event := range processedEvents {
+func (l *listener) startAcker() {
+	l.logger.Info("Acknowledge loop: starting")
+	for event := range l.out {
 		//event.Message.Ack()
-		spew.Dump(event)
+		l.logger.With(zap.Reflect("event", event)).Info("Did not ack")
 	}
+	l.logger.Info("Acknowledge loop: stopped")
 }

@@ -31,7 +31,7 @@ func start(cmd *cobra.Command, args []string) {
 
 	var ctx = context.Background()
 
-	unprocessedEvents, processedEvents, err := listener.Listen(ctx)
+	unprocessedEvents, processedEvents, err := listener.Listen(ctx, logger)
 	if err != nil {
 		panic(err)
 	}
