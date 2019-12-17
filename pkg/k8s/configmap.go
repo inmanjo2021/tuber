@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"tuber/pkg/apply"
 )
@@ -59,8 +60,14 @@ type TuberApp struct {
 	Name     string
 }
 
-// TuberApps returns a list of tuber apps
-func TuberApps() (apps []TuberApp, err error) {
+type appsCache struct {
+	apps      []TuberApp
+	timestamp int64
+}
+
+var cache *appsCache
+
+func getTuberApps() (apps []TuberApp, err error) {
 	config, err := getConfig("tuber-apps")
 
 	if err != nil {
@@ -76,6 +83,22 @@ func TuberApps() (apps []TuberApp, err error) {
 			Tag:      split[1],
 			Repo:     split[0],
 		})
+	}
+
+	return
+}
+
+// TuberApps returns a list of tuber apps
+func TuberApps() (apps []TuberApp, err error) {
+	if cache == nil || cache.timestamp < time.Now().Unix()-60*5 {
+		apps, err = getTuberApps()
+
+		cache = &appsCache{
+			apps:      apps,
+			timestamp: time.Now().Unix(),
+		}
+	} else {
+		apps = cache.apps
 	}
 
 	return
