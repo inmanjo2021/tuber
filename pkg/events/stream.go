@@ -1,13 +1,18 @@
 package events
 
 import (
-	"fmt"
+	"go.uber.org/zap"
 	"tuber/pkg/release"
 	"tuber/pkg/util"
 )
 
 type Streamer struct {
-	Token string
+	token string
+	logger *zap.Logger
+}
+
+func NewStreamer(token string, logger *zap.Logger) *Streamer {
+	return &Streamer{token, logger}
 }
 
 // Stream streams a stream
@@ -24,12 +29,19 @@ func (s *Streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.Re
 			continue
 		}
 
-		fmt.Println("Starting release for", pendingRelease.name, pendingRelease.branch)
+		var releaseLog = s.logger.With(
+			zap.String("releaseName", pendingRelease.name),
+			zap.String("releaseBranch", pendingRelease.branch))
+
 		go func() {
-			_, err = release.New(pendingRelease.name, pendingRelease.branch, s.Token)
+			releaseLog.Info("Release: starting")
+
+			_, err = release.New(pendingRelease.name, pendingRelease.branch, s.token)
 			if err != nil {
+				releaseLog.Warn("Release: error", zap.Error(err))
 				chErr <- err
 			} else {
+				releaseLog.Info("Release: done")
 				chOut <- event
 			}
 		}()

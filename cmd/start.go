@@ -8,6 +8,7 @@ import (
 	"os"
 	"tuber/pkg/events"
 	"tuber/pkg/listener"
+	"go.uber.org/zap"
 )
 
 func init() {
@@ -25,6 +26,9 @@ var startCmd = &cobra.Command{
 }
 
 func start(cmd *cobra.Command, args []string) {
+	logger, _ := zap.NewDevelopment();
+	defer logger.Sync()
+
 	var ctx = context.Background()
 
 	unprocessedEvents, processedEvents, err := listener.Listen(ctx)
@@ -34,7 +38,7 @@ func start(cmd *cobra.Command, args []string) {
 
 	var errorChan = make(chan error, 1)
 
-  streamer := &events.Streamer{ Token: os.Getenv("GCLOUD_TOKEN") }
+	streamer := &events.Streamer{Token: os.Getenv("GCLOUD_TOKEN"), Logger: logger}
 	go func() {
 		for error := range errorChan {
 			log.Fatal(error)
