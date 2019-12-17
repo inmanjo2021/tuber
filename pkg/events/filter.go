@@ -2,25 +2,34 @@ package events
 
 import (
 	"fmt"
-	"regexp"
+
+	"tuber/pkg/k8s"
 	"tuber/pkg/util"
 )
 
 type pendingRelease struct {
-	name string
+	name   string
 	branch string
 }
 
-func filter(e *util.RegistryEvent) (event *pendingRelease) {
-	filterRegex := regexp.MustCompile(`us\.gcr\.io\/(.*):(.*)`)
-	slicedTag := filterRegex.FindStringSubmatch(e.Tag)
-	name := slicedTag[1]
-	branch := slicedTag[2]
+func filter(e *util.RegistryEvent) (event pendingRelease, err error) {
+	apps, err := k8s.TuberApps()
+	var matchApp k8s.TuberApp
+	found := false
 
-	if name == "tuber" && branch == "master" {
-		return &pendingRelease { name: name, branch: branch }
-	} else {
-		fmt.Println("Ignoring", name, branch)
+	for _, app := range apps {
+		if app.ImageTag == e.Tag {
+			found = true
+			matchApp = app
+			break
+		}
 	}
+
+	if !found {
+		fmt.Println("Ignoring", e.Tag)
+		return
+	}
+
+	event = pendingRelease{name: matchApp.Name, branch: matchApp.Tag}
 	return
 }
