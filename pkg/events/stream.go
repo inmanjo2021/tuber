@@ -7,7 +7,7 @@ import (
 )
 
 type Streamer struct {
-	token string
+	token  string
 	logger *zap.Logger
 }
 
@@ -47,4 +47,7 @@ func (s *Streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.Re
 			}
 		}()
 	}
+
+	close(chOut)
+	close(chErr)
 }
