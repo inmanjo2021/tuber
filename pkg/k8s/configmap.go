@@ -85,11 +85,13 @@ func getTuberApps() (apps []TuberApp, err error) {
 		return
 	}
 
-	for name, imageTag := range config.Data {
+	for _, imageTag := range config.Data {
 		split := strings.SplitN(imageTag, ":", 2)
+		repoSplit := strings.SplitN(split[0], "/", 2)
+		repoName := repoSplit[1]
 
 		apps = append(apps, TuberApp{
-			Name:     name,
+			Name:     repoName,
 			ImageTag: imageTag,
 			Tag:      split[1],
 			Repo:     split[0],

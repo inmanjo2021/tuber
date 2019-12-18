@@ -22,7 +22,7 @@ type registry struct {
 // NewGoogleRegistry creates registry struct
 func newGoogleRegistry(googleToken string) *registry {
 	return &registry{
-		baseURL:  "https://us.gcr.io",
+		baseURL:  "https://gcr.io",
 		username: "_token",
 		password: googleToken,
 		scope:    "pull",
