@@ -6,38 +6,43 @@ import (
 	"tuber/pkg/util"
 )
 
-type Streamer struct {
+type streamer struct {
 	token  string
 	logger *zap.Logger
 }
 
-func NewStreamer(token string, logger *zap.Logger) *Streamer {
-	return &Streamer{token, logger}
+// NewStreamer creates a new Streamer struct
+func NewStreamer(token string, logger *zap.Logger) *streamer {
+	return &streamer{token, logger}
 }
 
 // Stream streams a stream
-func (s *Streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.RegistryEvent, chErr chan<- error) {
+func (s *streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.RegistryEvent, chErr chan<- error) {
+	defer close(chOut)
+	defer close(chErr)
+
 	for event := range chIn {
-		pendingRelease, err := filter(event)
+		pending, err := filter(event)
 
 		if err != nil {
 			chErr <- err
 			continue
 		}
 
-		if pendingRelease == nil {
+		if pending == nil {
 			chOut <- event
 			continue
 		}
 
 		var releaseLog = s.logger.With(
-			zap.String("releaseName", pendingRelease.name),
-			zap.String("releaseBranch", pendingRelease.branch))
+			zap.String("releaseName", pending.name),
+			zap.String("releaseBranch", pending.branch))
 
 		go func() {
 			releaseLog.Info("Release: starting")
 
-			_, err = release.New(pendingRelease.name, pendingRelease.branch, s.token)
+			_, err = release.New(pending.name, pending.branch, s.token)
+
 			if err != nil {
 				releaseLog.Warn("Release: error", zap.Error(err))
 				chErr <- err
@@ -47,7 +52,4 @@ func (s *Streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.Re
 			}
 		}()
 	}
-
-	close(chOut)
-	close(chErr)
 }

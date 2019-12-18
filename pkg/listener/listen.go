@@ -19,6 +19,7 @@ type listener struct {
 	wait   *sync.WaitGroup
 }
 
+// NewListener creates a new PubSub listener
 func NewListener(logger *zap.Logger) *listener {
 	var l = &listener{
 		logger: logger,
@@ -55,6 +56,7 @@ func (l *listener) startListener(ctx context.Context) error {
 
 	subscription := client.Subscription("freshly-docker-gcr-events")
 	cfg, err := subscription.Config(ctx)
+
 	if err != nil {
 		return err
 	}
@@ -76,8 +78,9 @@ func (l *listener) startListener(ctx context.Context) error {
 		err = subscription.Receive(ctx,
 			func(ctx context.Context, message *pubsub.Message) {
 				obj := &util.RegistryEvent{Message: message}
-				err := json.Unmarshal(message.Data, obj)
-				if err != nil {
+				jsonErr := json.Unmarshal(message.Data, obj)
+
+				if jsonErr != nil {
 					l.logger.Warn("Could not unmarshal message")
 				} else {
 					in <- obj

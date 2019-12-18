@@ -44,8 +44,8 @@ func createErrorChannel(logger *zap.Logger) chan<- error {
 	var errorChan = make(chan error, 1)
 	go func() {
 		logger.Info("Error listener: started")
-		for error := range errorChan {
-			logger.With(zap.Error(error)).Warn("Error while processing")
+		for err := range errorChan {
+			logger.With(zap.Error(err)).Warn("Error while processing")
 		}
 		logger.Info("Error listener: shutdown")
 	}()
