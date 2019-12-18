@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"tuber/pkg/apply"
 )
@@ -59,8 +61,24 @@ type TuberApp struct {
 	Name     string
 }
 
-// TuberApps returns a list of tuber apps
-func TuberApps() (apps []TuberApp, err error) {
+type appsCache struct {
+	apps      []TuberApp
+	expiry    time.Time
+}
+
+var cache *appsCache
+var mutex sync.Mutex
+
+func (a appsCache) isExpired() bool {
+	return cache.expiry.Before(time.Now())
+}
+
+func refreshAppsCache(apps []TuberApp) {
+	expiry := time.Now().Add(time.Minute * 5)
+	cache = &appsCache { apps: apps, expiry: expiry }
+}
+
+func getTuberApps() (apps []TuberApp, err error) {
 	config, err := getConfig("tuber-apps")
 
 	if err != nil {
@@ -78,5 +96,20 @@ func TuberApps() (apps []TuberApp, err error) {
 		})
 	}
 
+	return
+}
+
+// TuberApps returns a list of tuber apps
+func TuberApps() (apps []TuberApp, err error) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if cache == nil || cache.isExpired() {
+		apps, err = getTuberApps()
+
+		if err == nil {
+			refreshAppsCache(apps)
+		}
+	}
+	apps = cache.apps
 	return
 }
