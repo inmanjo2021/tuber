@@ -19,3 +19,6 @@ ENV GO111MODULE on
 RUN go build
 
 CMD ["/app/tuber", "start"]
+
+# tuber
+COPY .tuber /.tuber
