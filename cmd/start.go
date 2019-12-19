@@ -66,7 +66,7 @@ func start(cmd *cobra.Command, args []string) {
 	if viper.IsSet("max-accept") {
 		options = append(options, listener.WithMaxAccept(viper.GetInt("max-accept")))
 	}
-	
+
 	if viper.IsSet("max-timeout") {
 		options = append(options, listener.WithMaxTimeout(viper.GetDuration("max-timeout")))
 	}

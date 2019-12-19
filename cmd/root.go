@@ -17,7 +17,11 @@ var (
 )
 
 func init() {
+	// Environment variables prefixed with `TUBER_` are immediately available
+	// to Viper with '-' substitution. E.g., `TUBER_DEBUG=true` is available as
+	// `viper.GetBool("debug")`
 	viper.AutomaticEnv()
+	viper.SetEnvPrefix("TUBER")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
 	rootCmd.PersistentFlags().BoolP("debug", "d", false, "debug")
