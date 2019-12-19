@@ -25,7 +25,7 @@ func init() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
 	rootCmd.PersistentFlags().BoolP("debug", "d", false, "debug")
-	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
+	_ = viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
 }
 
 func createLogger() (logger *zap.Logger) {
