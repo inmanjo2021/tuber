@@ -81,6 +81,7 @@ func start(cmd *cobra.Command, args []string) {
 	// Create error channel
 	var errorChan = createErrorChannel(logger)
 
+	viper.BindEnv("gcloud-token", "GCLOUD_TOKEN")
 	var token = viper.GetString("gcloud-token")
 
 	// Create a new streamer
