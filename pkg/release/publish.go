@@ -15,6 +15,7 @@ func New(app *k8s.TuberApp, token string) (out []byte, err error) {
 		return
 	}
 
+	fmt.Println("Starting Apply for", app.Name, app.Tag)
 	out, err = apply.Apply(yamls)
 
 	if err != nil {
