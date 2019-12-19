@@ -2,11 +2,9 @@ package cmd
 
 import (
 	"context"
-	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,10 +14,7 @@ import (
 
 func init() {
 	rootCmd.AddCommand(startCmd)
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+
 }
 
 var startCmd = &cobra.Command{
@@ -31,7 +26,9 @@ var startCmd = &cobra.Command{
 // Attaches interrupt and terminate signals to a cancel function
 func bindShutdown(logger *zap.Logger, cancel func()) {
 	var signals = make(chan os.Signal, 1)
+
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+
 	go func() {
 		s := <-signals
 		logger.With(zap.Reflect("signal", s)).Info("Signal received")
@@ -43,18 +40,18 @@ func bindShutdown(logger *zap.Logger, cancel func()) {
 func createErrorChannel(logger *zap.Logger) chan<- error {
 	var errorChan = make(chan error, 1)
 	go func() {
-		logger.Info("Error listener: started")
+		logger.Info("error listener: started")
 		for err := range errorChan {
-			logger.With(zap.Error(err)).Warn("Error while processing")
+			logger.Warn("error while processing", zap.Error(err))
 		}
-		logger.Info("Error listener: shutdown")
+		logger.Info("error listener: shutdown")
 	}()
 	return errorChan
 }
 
 func start(cmd *cobra.Command, args []string) {
 	// Create a logger and defer an final sync (os.flush())
-	logger, _ := zap.NewDevelopment()
+	logger := createLogger()
 	defer logger.Sync()
 
 	// calling cancel() will signal to the rest of the application
@@ -66,7 +63,16 @@ func start(cmd *cobra.Command, args []string) {
 	bindShutdown(logger, cancel)
 
 	// create a new PubSub listener
-	var l = listener.NewListener(logger)
+	var options = make([]listener.ListenerOption, 0)
+	if viper.IsSet("max-accept") {
+		options = append(options, listener.WithMaxAccept(viper.GetInt("max-accept")))
+	}
+	if viper.IsSet("max-timeout") {
+		options = append(options, listener.WithMaxTimeout(viper.GetDuration("max-timeout")))
+	}
+
+	var l = listener.NewListener(logger, options...)
+
 	unprocessedEvents, processedEvents, err := l.Listen(ctx)
 	if err != nil {
 		panic(err)
@@ -87,5 +93,4 @@ func start(cmd *cobra.Command, args []string) {
 
 	// Wait for queues to drain
 	l.Wait()
-
 }
