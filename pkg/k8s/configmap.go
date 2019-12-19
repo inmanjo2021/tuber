@@ -57,13 +57,14 @@ func AddAppConfig(name string, repo string, tag string) (err error) {
 type TuberApp struct {
 	Tag      string
 	ImageTag string
-	Repo     string
+	RepoPath string
+	RepoHost string
 	Name     string
 }
 
 type appsCache struct {
-	apps      []TuberApp
-	expiry    time.Time
+	apps   []TuberApp
+	expiry time.Time
 }
 
 var cache *appsCache
@@ -87,12 +88,14 @@ func getTuberApps() (apps []TuberApp, err error) {
 
 	for name, imageTag := range config.Data {
 		split := strings.SplitN(imageTag, ":", 2)
+		repoSplit := strings.SplitN(split[0], "/", 2)
 
 		apps = append(apps, TuberApp{
 			Name:     name,
 			ImageTag: imageTag,
 			Tag:      split[1],
-			Repo:     split[0],
+			RepoPath: repoSplit[1],
+			RepoHost: repoSplit[0],
 		})
 	}
 

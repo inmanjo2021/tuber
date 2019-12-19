@@ -3,18 +3,19 @@ package release
 import (
 	"fmt"
 	"tuber/pkg/apply"
-	"tuber/pkg/layers"
+	"tuber/pkg/containers"
+	"tuber/pkg/k8s"
 )
 
 // New create or update app in kubernetes
-func New(name string, tag string, token string) (out []byte, err error) {
-	yamls, err := layers.GetGoogleLayer(name, tag, token)
+func New(app *k8s.TuberApp, token string) (out []byte, err error) {
+	yamls, err := containers.GetTuberLayer(app, token)
 
 	if err != nil {
 		return
 	}
 
-	fmt.Println("Starting Apply for", name, tag)
+	fmt.Println("Starting Apply for", app.Name, app.Tag)
 	out, err = apply.Apply(yamls)
 
 	if err != nil {

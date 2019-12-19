@@ -1,35 +1,21 @@
 package events
 
 import (
-	"fmt"
-
 	"tuber/pkg/k8s"
 	"tuber/pkg/util"
 )
 
-type pendingRelease struct {
-	name   string
-	branch string
-}
-
-func filter(e *util.RegistryEvent) (event *pendingRelease, err error) {
+func filter(e *util.RegistryEvent) (event *k8s.TuberApp, err error) {
 	apps, err := k8s.TuberApps()
-	var matchApp k8s.TuberApp
-	found := false
 
-	for _, app := range apps {
-		if app.ImageTag == e.Tag {
-			found = true
-			matchApp = app
-			break
-		}
-	}
-
-	if !found {
-		fmt.Println("Ignoring", e.Tag)
+	if err != nil {
 		return
 	}
 
-	event = &pendingRelease{name: matchApp.Name, branch: matchApp.Tag}
+	for _, app := range apps {
+		if app.ImageTag == e.Tag {
+			return &app, nil
+		}
+	}
 	return
 }

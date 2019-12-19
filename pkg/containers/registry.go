@@ -1,4 +1,4 @@
-package layers
+package containers
 
 import (
 	"encoding/json"
@@ -14,37 +14,36 @@ type authResponse struct {
 // registry struct
 type registry struct {
 	baseURL  string
+	scope    string
 	username string
 	password string
-	scope    string
 }
 
-// NewGoogleRegistry creates registry struct
-func newGoogleRegistry(googleToken string) *registry {
+func newRegistry(domain string, password string) *registry {
 	return &registry{
-		baseURL:  "https://us.gcr.io",
-		username: "_token",
-		password: googleToken,
+		baseURL:  "https://" + domain,
 		scope:    "pull",
+		username: "_token",
+		password: password,
 	}
 }
 
 // getRepository returns repo for image
-func (r *registry) getRepository(image string) (repo *repository, err error) {
-	token, err := r.getToken(image)
+func (r *registry) getRepository(path string) (repo *repository, err error) {
+	token, err := r.getToken(path)
 
 	if err != nil {
 		return
 	}
 
-	repo = &repository{registry: r, image: image, token: token}
+	repo = &repository{registry: r, path: path, token: token}
 	return
 }
 
 // getToken using access token, retrieves request token for registry
-func (r *registry) getToken(repository string) (token string, err error) {
+func (r *registry) getToken(path string) (token string, err error) {
 	requestURL := fmt.Sprintf("%s/v2/token?scope=repository:%s:%s",
-		r.baseURL, repository, r.scope)
+		r.baseURL, path, r.scope)
 
 	var client = &http.Client{}
 	var obj = new(authResponse)
