@@ -22,26 +22,26 @@ func (s *streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.Re
 	defer close(chErr)
 
 	for event := range chIn {
-		pending, err := filter(event)
+		pendingRelease, err := filter(event)
 
 		if err != nil {
 			chErr <- err
 			continue
 		}
 
-		if pending == nil {
+		if pendingRelease == nil {
 			chOut <- event
 			continue
 		}
 
 		var releaseLog = s.logger.With(
-			zap.String("releaseName", pending.name),
-			zap.String("releaseBranch", pending.branch))
+			zap.String("releaseName", pendingRelease.Name),
+			zap.String("releaseBranch", pendingRelease.Tag))
 
 		go func() {
 			releaseLog.Info("Release: starting")
 
-			_, err = release.New(pending.name, pending.branch, s.token)
+			_, err = release.New(pendingRelease, s.token)
 
 			if err != nil {
 				releaseLog.Warn("Release: error", zap.Error(err))
