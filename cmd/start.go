@@ -14,7 +14,6 @@ import (
 
 func init() {
 	rootCmd.AddCommand(startCmd)
-
 }
 
 var startCmd = &cobra.Command{
@@ -63,10 +62,11 @@ func start(cmd *cobra.Command, args []string) {
 	bindShutdown(logger, cancel)
 
 	// create a new PubSub listener
-	var options = make([]listener.ListenerOption, 0)
+	var options = make([]listener.Option, 0)
 	if viper.IsSet("max-accept") {
 		options = append(options, listener.WithMaxAccept(viper.GetInt("max-accept")))
 	}
+	
 	if viper.IsSet("max-timeout") {
 		options = append(options, listener.WithMaxTimeout(viper.GetDuration("max-timeout")))
 	}
