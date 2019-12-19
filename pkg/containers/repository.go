@@ -1,4 +1,4 @@
-package layers
+package containers
 
 import (
 	"archive/tar"
@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"tuber/pkg/k8s"
 	"tuber/pkg/util"
 )
 
@@ -46,19 +47,19 @@ type manifest struct {
 // repository struct for repo
 type repository struct {
 	registry *registry
-	image    string
+	path     string
 	token    string
 }
 
-// GetGoogleLayer downloads yamls for an image
-func GetGoogleLayer(name string, tag string, googleToken string) (yamls []util.Yaml, err error) {
-	registry := newGoogleRegistry(googleToken)
-	repository, err := registry.getRepository(name)
+// GetLayer downloads yamls for an image
+func GetTuberLayer(app *k8s.TuberApp, password string) (yamls []util.Yaml, err error) {
+	registry := newRegistry(app.RepoHost, password)
+	repository, err := registry.getRepository(app.RepoPath)
 	if err != nil {
 		return
 	}
 
-	yamls, err = repository.findLayer(tag)
+	yamls, err = repository.findLayer(app.Tag)
 	return
 }
 
@@ -66,7 +67,7 @@ func (r *repository) getLayers(tag string) (layers []layer, err error) {
 	requestURL := fmt.Sprintf(
 		"%s/v2/%s/manifests/%s",
 		r.registry.baseURL,
-		r.image,
+		r.path,
 		tag,
 	)
 
@@ -109,7 +110,7 @@ func (r *repository) downloadLayer(layerObj *layer) (yamls []util.Yaml, err erro
 	requestURL := fmt.Sprintf(
 		"%s/v2/%s/blobs/%s",
 		r.registry.baseURL,
-		r.image,
+		r.path,
 		layer,
 	)
 
@@ -145,7 +146,8 @@ func convertResponse(response *http.Response) (yamls []util.Yaml, err error) {
 		header, err = archive.Next()
 
 		if err == io.EOF {
-			break // End of archive
+			err = nil
+			return
 		}
 
 		if err != nil {
@@ -192,11 +194,12 @@ func (r *repository) findLayer(tag string) (yamls []util.Yaml, err error) {
 		yamls, err = r.downloadLayer(&layer)
 
 		if err != nil {
-			if _, ok := err.(*notTuberLayerError); ok {
+			switch err.(type) {
+			case *notTuberLayerError:
 				continue
+			default:
+				return
 			}
-
-			return
 		}
 
 		return

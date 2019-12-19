@@ -64,7 +64,7 @@ func (l *listener) startListener(ctx context.Context) error {
 	// Set a fixed deadline and small outstanding message count for testing
 	// TODO: Remove or make configurable
 	subscription.ReceiveSettings.MaxExtension = cfg.AckDeadline
-	subscription.ReceiveSettings.MaxOutstandingMessages = 5
+	//subscription.ReceiveSettings.MaxOutstandingMessages = 5
 
 	go func(in chan<- *util.RegistryEvent, logger *zap.Logger) {
 		// Register this goroutine in the waiter
