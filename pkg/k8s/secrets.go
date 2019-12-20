@@ -10,7 +10,7 @@ import (
 // CreateFromFile creates a secret based on the contents of a file
 func CreateFromFile(path string, mountpoint string) (dat []byte, err error) {
 	dat, err = ioutil.ReadFile(path)
-	projectName := "pulp"
+	projectName := "tuber"
 
 	if err != nil {
 		return

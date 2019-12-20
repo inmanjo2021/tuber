@@ -165,7 +165,7 @@ func convertResponse(response *http.Response) (yamls []util.Yaml, err error) {
 		}
 
 		if !strings.HasPrefix(header.Name, ".tuber") {
-			err = &notTuberLayerError{"contains stuff other than .pulp"}
+			err = &notTuberLayerError{"contains stuff other than .tuber"}
 			return
 		}
 
@@ -187,7 +187,7 @@ func convertResponse(response *http.Response) (yamls []util.Yaml, err error) {
 	return
 }
 
-// findLayer finds the .pulp layer containing deploy info for pulp
+// findLayer finds the .tuber layer containing deploy info for Tuber
 func (r *repository) findLayer(tag string) (yamls []util.Yaml, err error) {
 	layers, err := r.getLayers(tag)
 

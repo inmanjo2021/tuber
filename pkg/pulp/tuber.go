@@ -12,7 +12,7 @@ import (
 
 const tuberConfig = "tuber-apps"
 
-// TuberApp type for pulp app
+// TuberApp type for Tuber app
 type TuberApp struct {
 	Tag      string
 	ImageTag string
@@ -85,7 +85,7 @@ func (ta AppList) FindApp(name string, tag string) *TuberApp {
 	return nil
 }
 
-// TuberApps returns a list of pulp apps
+// TuberApps returns a list of Tuber apps
 func TuberApps() (apps AppList, err error) {
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -102,7 +102,7 @@ func TuberApps() (apps AppList, err error) {
 	return
 }
 
-// AddAppConfig add a new configuration to pulp's config map
+// AddAppConfig add a new configuration to Tuber's config map
 func AddAppConfig(name string, repo string, tag string) (err error) {
 	config, err := k8s.GetConfig(tuberConfig)
 
