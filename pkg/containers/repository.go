@@ -10,9 +10,19 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"tuber/pkg/k8s"
+
 	"tuber/pkg/util"
 )
+
+type RepositoryLocation struct {
+	Host string
+	Path string
+	Tag  string
+}
+
+type RepositoryContainer interface {
+	GetRepositoryLocation() RepositoryLocation
+}
 
 const megabyte = 1_000_000
 const maxSize = megabyte * 1
@@ -52,14 +62,14 @@ type repository struct {
 }
 
 // GetLayer downloads yamls for an image
-func GetTuberLayer(app *k8s.TuberApp, password string) (yamls []util.Yaml, err error) {
-	registry := newRegistry(app.RepoHost, password)
-	repository, err := registry.getRepository(app.RepoPath)
+func GetTuberLayer(location RepositoryLocation, password string) (yamls []util.Yaml, err error) {
+	registry := newRegistry(location.Host, password)
+	repository, err := registry.getRepository(location.Path)
 	if err != nil {
 		return
 	}
 
-	yamls, err = repository.findLayer(app.Tag)
+	yamls, err = repository.findLayer(location.Tag)
 	return
 }
 
@@ -177,7 +187,7 @@ func convertResponse(response *http.Response) (yamls []util.Yaml, err error) {
 	return
 }
 
-// findLayer finds the .tuber layer containing deploy info for tuber
+// findLayer finds the .tuber layer containing deploy info for Tuber
 func (r *repository) findLayer(tag string) (yamls []util.Yaml, err error) {
 	layers, err := r.getLayers(tag)
 
@@ -187,7 +197,7 @@ func (r *repository) findLayer(tag string) (yamls []util.Yaml, err error) {
 
 	for _, layer := range layers {
 		if layer.Size > maxSize {
-			log.Println("Layer to large, skipping...")
+			log.Println("Layer too large, skipping...")
 			continue
 		}
 

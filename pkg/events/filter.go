@@ -1,12 +1,12 @@
 package events
 
 import (
-	"tuber/pkg/k8s"
+	"tuber/pkg/pulp"
 	"tuber/pkg/util"
 )
 
-func filter(e *util.RegistryEvent) (event *k8s.TuberApp, err error) {
-	apps, err := k8s.TuberApps()
+func filter(e *util.RegistryEvent) (event *pulp.TuberApp, err error) {
+	apps, err := pulp.TuberApps()
 
 	if err != nil {
 		return

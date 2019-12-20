@@ -5,22 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-
-	"tuber/pkg/apply"
 )
-
-type k8sMetadata struct {
-	Name string `json:"name"`
-}
-
-type k8sConfig struct {
-	APIVersion string            `json:"apiVersion"`
-	Kind       string            `json:"kind"`
-	Metadata   k8sMetadata       `json:"metadata"`
-	Type       string            `json:"type,omitempty"`
-	Data       map[string]string `json:"data"`
-	StringData map[string]string `json:"stringData,omitempty"`
-}
 
 // CreateFromFile creates a secret based on the contents of a file
 func CreateFromFile(path string, mountpoint string) (dat []byte, err error) {
@@ -53,7 +38,7 @@ func CreateFromFile(path string, mountpoint string) (dat []byte, err error) {
 		return
 	}
 
-	apply.Write(jsondata)
+	write(jsondata)
 
 	return
 }

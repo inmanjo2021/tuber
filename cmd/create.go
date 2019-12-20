@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"tuber/pkg/k8s"
+	"tuber/pkg/pulp"
 )
 
 // createCmd represents the create command
@@ -20,7 +20,7 @@ to quickly create a Cobra application.`,
 		repo := args[1]
 		tag := args[2]
 
-		k8s.AddAppConfig(appName, repo, tag)
+		pulp.AddAppConfig(appName, repo, tag)
 	},
 }
 

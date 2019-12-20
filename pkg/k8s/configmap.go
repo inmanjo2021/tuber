@@ -2,44 +2,31 @@ package k8s
 
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
-	"sync"
-	"time"
-
-	"tuber/pkg/apply"
 )
 
-func getConfig(name string) (config k8sConfig, err error) {
-	result, err := apply.Get("configmap", name)
-
-	if err != nil {
-		return
-	}
-
-	if result == nil {
-		config = k8sConfig{
-			APIVersion: "v1",
-			Kind:       "ConfigMap",
-			Data:       map[string]string{},
-			Metadata:   k8sMetadata{Name: name},
-		}
-	} else {
-		json.Unmarshal(result, &config)
-	}
-
-	return
+type k8sMetadata struct {
+	Name string `json:"name"`
 }
 
-// AddAppConfig add a new configuration to tuber's config map
-func AddAppConfig(name string, repo string, tag string) (err error) {
-	config, err := getConfig("tuber-apps")
+type k8sConfig struct {
+	APIVersion string            `json:"apiVersion"`
+	Kind       string            `json:"kind"`
+	Metadata   k8sMetadata       `json:"metadata"`
+	Type       string            `json:"type,omitempty"`
+	Data       map[string]string `json:"data"`
+	StringData map[string]string `json:"stringData,omitempty"`
+}
 
-	if err != nil {
-		return
-	}
+// Config represents the editable portion of a configmap
+type Config struct {
+	config *k8sConfig
+	Data   map[string]string
+}
 
-	config.Data[name] = fmt.Sprintf("%s:%s", repo, tag)
+// Save persists updates to a configmap to k8s
+func (c *Config) Save() (err error) {
+	config := c.config
+	config.Data = c.Data
 
 	var jsondata []byte
 	jsondata, err = json.Marshal(config)
@@ -48,71 +35,35 @@ func AddAppConfig(name string, repo string, tag string) (err error) {
 		return
 	}
 
-	apply.Write(jsondata)
+	write(jsondata)
 
 	return
+
 }
 
-// TuberApp type for tuber app
-type TuberApp struct {
-	Tag      string
-	ImageTag string
-	RepoPath string
-	RepoHost string
-	Name     string
-}
-
-type appsCache struct {
-	apps   []TuberApp
-	expiry time.Time
-}
-
-var cache *appsCache
-var mutex sync.Mutex
-
-func (a appsCache) isExpired() bool {
-	return cache.expiry.Before(time.Now())
-}
-
-func refreshAppsCache(apps []TuberApp) {
-	expiry := time.Now().Add(time.Minute * 5)
-	cache = &appsCache { apps: apps, expiry: expiry }
-}
-
-func getTuberApps() (apps []TuberApp, err error) {
-	config, err := getConfig("tuber-apps")
+// GetConfig returns a Config struct with a Data element containing config map entries
+func GetConfig(name string) (config *Config, err error) {
+	result, err := Get("configmap", name)
 
 	if err != nil {
 		return
 	}
+	var k8sc k8sConfig
 
-	for name, imageTag := range config.Data {
-		split := strings.SplitN(imageTag, ":", 2)
-		repoSplit := strings.SplitN(split[0], "/", 2)
-
-		apps = append(apps, TuberApp{
-			Name:     name,
-			ImageTag: imageTag,
-			Tag:      split[1],
-			RepoPath: repoSplit[1],
-			RepoHost: repoSplit[0],
-		})
-	}
-
-	return
-}
-
-// TuberApps returns a list of tuber apps
-func TuberApps() (apps []TuberApp, err error) {
-	mutex.Lock()
-	defer mutex.Unlock()
-	if cache == nil || cache.isExpired() {
-		apps, err = getTuberApps()
-
-		if err == nil {
-			refreshAppsCache(apps)
+	if result == nil {
+		k8sc = k8sConfig{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+			Data:       map[string]string{},
+			Metadata:   k8sMetadata{Name: name},
 		}
+	} else {
+		json.Unmarshal(result, &k8sc)
 	}
-	apps = cache.apps
+
+	config = &Config{
+		config: &k8sc,
+		Data:   k8sc.Data,
+	}
 	return
 }
