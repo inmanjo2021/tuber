@@ -1,14 +1,15 @@
-package apply
+package k8s
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os/exec"
 	"tuber/pkg/util"
 )
 
-// Write apply a string using kubectl
-func Write(bytes []byte) (out []byte, err error) {
+// write apply a string using kubectl
+func write(bytes []byte) (out []byte, err error) {
 	cmd := exec.Command("kubectl", "apply", "-f", "-")
 	stdin, err := cmd.StdinPipe()
 
@@ -39,7 +40,10 @@ func Get(kind string, name string) (out []byte, err error) {
 	out, err = cmd.CombinedOutput()
 
 	if cmd.ProcessState.ExitCode() != 0 {
-		return nil, nil
+		println(out)
+		println("SFDSFDSF")
+		println(cmd.ProcessState.ExitCode())
+		return nil, fmt.Errorf("%s", out)
 	}
 
 	if err != nil {

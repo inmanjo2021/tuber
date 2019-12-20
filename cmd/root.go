@@ -11,7 +11,7 @@ import (
 
 var (
 	rootCmd = &cobra.Command{
-		Use:   "tuber",
+		Use:   "pulp",
 		Short: "",
 	}
 )
