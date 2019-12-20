@@ -59,8 +59,8 @@ func (s *streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.Re
 			}
 			chOut<- event
 		}(event)
-
-		// Wait for all publish goroutines to be done.
-		wait.Wait()
 	}
+
+	// Wait for all publish goroutines to be done.
+	wait.Wait()
 }
