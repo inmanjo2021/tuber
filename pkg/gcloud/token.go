@@ -24,7 +24,6 @@ func GetAccessToken() (accessToken string, err error) {
 	}
 
 	ctx := context.Background()
-
 	token, err := config.TokenSource(ctx).Token()
 
 	return token.AccessToken, nil
