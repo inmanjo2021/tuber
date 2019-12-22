@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 	"tuber/pkg/events"
+	"tuber/pkg/gcloud"
 	"tuber/pkg/listener"
 )
 
@@ -81,8 +82,11 @@ func start(cmd *cobra.Command, args []string) {
 	// Create error channel
 	var errorChan = createErrorChannel(logger)
 
-	viper.BindEnv("gcloud-token", "GCLOUD_TOKEN")
-	var token = viper.GetString("gcloud-token")
+	token, err := gcloud.GetAccessToken()
+
+	if err != nil {
+		panic(err)
+	}
 
 	// Create a new streamer
 	streamer := events.NewStreamer(token, logger)
