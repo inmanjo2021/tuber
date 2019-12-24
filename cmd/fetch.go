@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"tuber/pkg/containers"
+	"tuber/pkg/gcloud"
 	"tuber/pkg/pulp"
+
+	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -20,14 +21,20 @@ var fetchCmd = &cobra.Command{
 }
 
 func fetch(cmd *cobra.Command, args []string) error {
-	viper.BindEnv("gcloud-token", "GCLOUD_TOKEN")
-	var token = viper.GetString("gcloud-token")
+	token, err := gcloud.GetAccessToken()
 
-	apps, err := pulp.TuberApps()
 	if err != nil {
 		return err
 	}
+
+	apps, err := pulp.TuberApps()
+
+	if err != nil {
+		return err
+	}
+
 	app := apps.FindApp(args[0], args[1])
+
 	if app == nil {
 		return fmt.Errorf("not found %s:%s", args[0], args[1])
 	}
