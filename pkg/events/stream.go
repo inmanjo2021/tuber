@@ -2,6 +2,7 @@ package events
 
 import (
 	"go.uber.org/zap"
+	"sync"
 	"tuber/pkg/release"
 	"tuber/pkg/util"
 )
@@ -21,35 +22,44 @@ func (s *streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.Re
 	defer close(chOut)
 	defer close(chErr)
 
+	var wait = &sync.WaitGroup{}
+
 	for event := range chIn {
-		pendingRelease, err := filter(event)
+		go func(event *util.RegistryEvent) {
+			wait.Add(1)
+			defer wait.Done()
 
-		if err != nil {
-			chErr <- err
-			continue
-		}
+			var err error
+			defer func() {
+				if err != nil {
+					chErr <- err
+				} else {
+					chOut <- event
+				}
+			}()
 
-		if pendingRelease == nil {
-			chOut <- event
-			continue
-		}
+			pendingRelease, err := filter(event)
 
-		var releaseLog = s.logger.With(
-			zap.String("releaseName", pendingRelease.Name),
-			zap.String("releaseBranch", pendingRelease.Tag))
+			if err != nil || pendingRelease == nil {
+				return
+			}
 
-		go func() {
-			releaseLog.Info("Release: starting")
+			var releaseLog = s.logger.With(
+				zap.String("releaseName", pendingRelease.Name),
+				zap.String("releaseBranch", pendingRelease.Tag))
+
+			releaseLog.Info("release: starting")
 
 			_, err = release.New(pendingRelease, s.token)
 
 			if err != nil {
-				releaseLog.Warn("Release: error", zap.Error(err))
-				chErr <- err
+				releaseLog.Warn("release: error", zap.Error(err))
 			} else {
-				releaseLog.Info("Release: done")
-				chOut <- event
+				releaseLog.Info("release: done")
 			}
-		}()
+		}(event)
 	}
+
+	// Wait for all publish goroutines to be done.
+	wait.Wait()
 }
