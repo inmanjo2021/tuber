@@ -35,7 +35,8 @@ func (s *streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.Re
 					chErr <- err
 				} else {
 					chOut <- event
-				}}()
+				}
+			}()
 
 			pendingRelease, err := filter(event)
 
