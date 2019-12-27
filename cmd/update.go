@@ -22,7 +22,7 @@ func init() {
 
 func update(cmd *cobra.Command, args []string) {
 	dir := ".tuber/"
-	files, err := ioutil.ReadDir(".tuber/")
+	files, err := ioutil.ReadDir(".tuber")
 	if err != nil {
 		fmt.Println(err)
 		return
