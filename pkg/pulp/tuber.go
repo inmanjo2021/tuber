@@ -74,14 +74,13 @@ func getTuberApps() (apps []TuberApp, err error) {
 type AppList []TuberApp
 
 // FindApp locates a Tuber app within an app-list
-func (ta AppList) FindApp(name string, tag string) *TuberApp {
-	fullTag := fmt.Sprintf("%s:%s", name, tag)
-
+func (ta AppList) FindApp(name string) *TuberApp {
 	for _, app := range ta {
-		if app.ImageTag == fullTag {
+		if app.Name == name {
 			return &app
 		}
 	}
+
 	return nil
 }
 
