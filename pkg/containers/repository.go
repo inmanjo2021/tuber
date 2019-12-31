@@ -49,22 +49,22 @@ func (n *notTuberLayerError) Error() string {
 	return n.message
 }
 
-type manifest struct {
+type Manifest struct {
+	Digest string
 	Layers []layer    `json:"layers"`
-	Errors []apiError `json:errors`
+	Errors []apiError `json:"errors"`
 }
 
-// repository struct for repo
-type repository struct {
-	registry *registry
+type Repository struct {
+	registry *Registry
 	path     string
 	token    string
 }
 
-// GetLayer downloads yamls for an image
+// GetTuberLayer downloads yamls for an image
 func GetTuberLayer(location RepositoryLocation, password string) (yamls []util.Yaml, err error) {
-	registry := newRegistry(location.Host, password)
-	repository, err := registry.getRepository(location.Path)
+	registry := NewRegistry(location.Host, password)
+	repository, err := registry.GetRepository(location.Path)
 	if err != nil {
 		return
 	}
@@ -73,7 +73,7 @@ func GetTuberLayer(location RepositoryLocation, password string) (yamls []util.Y
 	return
 }
 
-func (r *repository) getLayers(tag string) (layers []layer, err error) {
+func (r *Repository) GetManifest(tag string) (manifest Manifest, err error) {
 	requestURL := fmt.Sprintf(
 		"%s/v2/%s/manifests/%s",
 		r.registry.baseURL,
@@ -98,23 +98,34 @@ func (r *repository) getLayers(tag string) (layers []layer, err error) {
 		return
 	}
 
-	var obj = new(manifest)
-	err = json.Unmarshal(body, &obj)
+	digest := res.Header["Docker-Content-Digest"][0]
+
+	manifest = Manifest{Digest: digest}
+	err = json.Unmarshal(body, &manifest)
 
 	if err != nil {
 		return
 	}
 
-	if len(obj.Errors) > 0 {
-		err = obj.Errors[0]
+	if len(manifest.Errors) > 0 {
+		err = manifest.Errors[0]
 		return
 	}
 
-	layers = obj.Layers
-	return
+	return manifest, nil
 }
 
-func (r *repository) downloadLayer(layerObj *layer) (yamls []util.Yaml, err error) {
+func (r *Repository) getLayers(tag string) (layers []layer, err error) {
+	manifest, err := r.GetManifest(tag)
+
+	if err != nil {
+		return
+	}
+
+	return manifest.Layers, nil
+}
+
+func (r *Repository) downloadLayer(layerObj *layer) (yamls []util.Yaml, err error) {
 	layer := layerObj.Digest
 
 	requestURL := fmt.Sprintf(
@@ -188,7 +199,7 @@ func convertResponse(response *http.Response) (yamls []util.Yaml, err error) {
 }
 
 // findLayer finds the .tuber layer containing deploy info for Tuber
-func (r *repository) findLayer(tag string) (yamls []util.Yaml, err error) {
+func (r *Repository) findLayer(tag string) (yamls []util.Yaml, err error) {
 	layers, err := r.getLayers(tag)
 
 	if err != nil {
