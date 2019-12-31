@@ -1,10 +1,11 @@
 package events
 
 import (
-	"go.uber.org/zap"
 	"sync"
 	"tuber/pkg/release"
 	"tuber/pkg/util"
+
+	"go.uber.org/zap"
 )
 
 type streamer struct {
@@ -50,10 +51,10 @@ func (s *streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.Re
 
 			releaseLog.Info("release: starting")
 
-			_, err = release.New(pendingRelease, s.token)
+			output, err := release.New(pendingRelease, s.token)
 
 			if err != nil {
-				releaseLog.Warn("release: error", zap.Error(err))
+				releaseLog.Warn("release: error", zap.Error(err), zap.String("output", string(output)))
 			} else {
 				releaseLog.Info("release: done")
 			}

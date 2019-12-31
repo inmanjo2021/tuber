@@ -11,16 +11,16 @@ type authResponse struct {
 	Token string `json:"token"`
 }
 
-// Registry struct
-type Registry struct {
+// registry struct
+type registry struct {
 	baseURL  string
 	scope    string
 	username string
 	password string
 }
 
-func NewRegistry(domain string, password string) *Registry {
-	return &Registry{
+func newRegistry(domain string, password string) *registry {
+	return &registry{
 		baseURL:  "https://" + domain,
 		scope:    "pull",
 		username: "_token",
@@ -28,20 +28,20 @@ func NewRegistry(domain string, password string) *Registry {
 	}
 }
 
-// GetRepository returns repo for image
-func (r *Registry) GetRepository(path string) (repo *Repository, err error) {
+// getRepository returns repo for image
+func (r *registry) getRepository(path string) (repo *repository, err error) {
 	token, err := r.getToken(path)
 
 	if err != nil {
 		return
 	}
 
-	repo = &Repository{registry: r, path: path, token: token}
+	repo = &repository{registry: r, path: path, token: token}
 	return
 }
 
 // getToken using access token, retrieves request token for registry
-func (r *Registry) getToken(path string) (token string, err error) {
+func (r *registry) getToken(path string) (token string, err error) {
 	requestURL := fmt.Sprintf("%s/v2/token?scope=repository:%s:%s",
 		r.baseURL, path, r.scope)
 

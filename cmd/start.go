@@ -2,15 +2,16 @@ package cmd
 
 import (
 	"context"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 	"os"
 	"os/signal"
 	"syscall"
 	"tuber/pkg/events"
 	"tuber/pkg/gcloud"
 	"tuber/pkg/listener"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 func init() {
@@ -40,11 +41,9 @@ func bindShutdown(logger *zap.Logger, cancel func()) {
 func createErrorChannel(logger *zap.Logger) chan<- error {
 	var errorChan = make(chan error, 1)
 	go func() {
-		logger.Info("error listener: started")
 		for err := range errorChan {
 			logger.Warn("error while processing", zap.Error(err))
 		}
-		logger.Info("error listener: shutdown")
 	}()
 	return errorChan
 }

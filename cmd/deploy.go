@@ -1,25 +1,12 @@
-/*
-Copyright © 2019 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 package cmd
 
 import (
 	"log"
 	"tuber/pkg/containers"
+	"tuber/pkg/events"
 	"tuber/pkg/gcloud"
 	"tuber/pkg/pulp"
+	"tuber/pkg/util"
 
 	"github.com/spf13/cobra"
 )
@@ -31,7 +18,16 @@ var deployCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 }
 
+type emptyAckable struct{}
+
+func (emptyAckable) Ack()  {}
+func (emptyAckable) Nack() {}
+
 func deploy(cmd *cobra.Command, args []string) {
+	logger := createLogger()
+	defer logger.Sync()
+	var errorChan = createErrorChannel(logger)
+
 	apps, err := pulp.TuberApps()
 
 	if err != nil {
@@ -46,34 +42,34 @@ func deploy(cmd *cobra.Command, args []string) {
 
 	app := apps.FindApp(args[0])
 	location := app.GetRepositoryLocation()
-	registry := containers.NewRegistry(location.Host, token)
-	repository, err := registry.GetRepository(location.Path)
+
+	sha, err := containers.GetLatestSHA(location, token)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	manifest, err := repository.GetManifest(app.Tag)
+	streamer := events.NewStreamer(token, logger)
 
-	if err != nil {
-		log.Fatal(err)
+	unprocessedEvents := make(chan *util.RegistryEvent, 1)
+	processedEvents := make(chan *util.RegistryEvent, 1)
+	go streamer.Stream(unprocessedEvents, processedEvents, errorChan)
+
+	ackable := emptyAckable{}
+	deployEvent := util.RegistryEvent{
+		Action:  "INSERT",
+		Digest:  "gcr.io/freshly-docker/tuber@" + sha,
+		Tag:     "gcr.io/freshly-docker/tuber:master",
+		Message: ackable,
 	}
 
-	// repo location
-	//   registry
-	//     repository
+	unprocessedEvents <- &deployEvent
+
+	for range processedEvents {
+		close(unprocessedEvents)
+	}
 }
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// deployCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// deployCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
