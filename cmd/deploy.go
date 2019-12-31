@@ -58,8 +58,8 @@ func deploy(cmd *cobra.Command, args []string) {
 	ackable := emptyAckable{}
 	deployEvent := util.RegistryEvent{
 		Action:  "INSERT",
-		Digest:  "gcr.io/freshly-docker/tuber@" + sha,
-		Tag:     "gcr.io/freshly-docker/tuber:master",
+		Digest:  app.RepoHost + "/" + app.RepoPath + "@" + sha,
+		Tag:     app.ImageTag,
 		Message: ackable,
 	}
 
