@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 
@@ -221,7 +220,6 @@ func (r *repository) findLayer(tag string) (yamls []util.Yaml, err error) {
 
 	for _, layer := range layers {
 		if layer.Size > maxSize {
-			log.Println("Layer too large, skipping...")
 			continue
 		}
 
