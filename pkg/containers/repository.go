@@ -125,7 +125,7 @@ func (r *repository) getManifest(tag string) (m manifest, err error) {
 		return
 	}
 
-	return m, nil
+	return
 }
 
 func (r *repository) getLayers(tag string) (layers []layer, err error) {
