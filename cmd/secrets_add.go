@@ -3,14 +3,15 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"tuber/pkg/k8s"
+
+	"github.com/spf13/cobra"
 )
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{
 	Use:   "add [local filepath] [remote mountpoint]",
-	Short: "A brief description of your command",
+	Short: "A brief description of your command yes",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
