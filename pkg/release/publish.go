@@ -1,26 +1,29 @@
 package release
 
 import (
-	"fmt"
 	"tuber/pkg/containers"
 	"tuber/pkg/k8s"
 	"tuber/pkg/pulp"
+	"tuber/pkg/util"
 )
 
 // New create or update app in kubernetes
-func New(app *pulp.TuberApp, token string) (out []byte, err error) {
+func New(app *pulp.TuberApp, event *util.RegistryEvent, token string) (setImageOutput []byte, applyOutput []byte, err error) {
 	yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
 
 	if err != nil {
 		return
 	}
 
-	fmt.Println("Starting Apply for", app.Name, app.Tag)
-	out, err = k8s.Apply(yamls)
+	containerName := event.ContainerName()
+
+	applyOutput, err = k8s.Apply(yamls, containerName)
 
 	if err != nil {
 		return
 	}
+
+	setImageOutput, err = k8s.SetImage(app.Name, containerName, event.Digest)
 
 	return
 }

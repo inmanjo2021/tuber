@@ -1,12 +1,12 @@
 package cmd
 
 import (
+	"strings"
+
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"log"
-	"strings"
 )
 
 var (
@@ -39,10 +39,7 @@ func createLogger() (logger *zap.Logger) {
 
 // Execute executes
 func Execute() error {
-	err := godotenv.Load()
-	if err == nil {
-		log.Println(".env file loaded")
-	}
+	godotenv.Load()
 
 	return rootCmd.Execute()
 }

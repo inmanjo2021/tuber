@@ -3,10 +3,11 @@ package listener
 import (
 	"context"
 	"encoding/json"
-	"go.uber.org/zap"
 	"sync"
 	"time"
 	"tuber/pkg/util"
+
+	"go.uber.org/zap"
 
 	"cloud.google.com/go/pubsub"
 	"google.golang.org/api/option"
@@ -73,7 +74,7 @@ func (l *Listener) startListener(ctx context.Context) error {
 	var client *pubsub.Client
 	var err error
 
-	client, err = pubsub.NewClient(ctx, l.projectID, option.WithCredentialsFile("./credentials.json"))
+	client, err = pubsub.NewClient(ctx, l.projectID, option.WithCredentialsFile("/etc/tuber-credentials/credentials.json"))
 
 	if err != nil {
 		client, err = pubsub.NewClient(ctx, l.projectID)

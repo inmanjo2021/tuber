@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 
@@ -18,10 +17,6 @@ type RepositoryLocation struct {
 	Host string
 	Path string
 	Tag  string
-}
-
-type RepositoryContainer interface {
-	GetRepositoryLocation() RepositoryLocation
 }
 
 const megabyte = 1_000_000
@@ -50,30 +45,47 @@ func (n *notTuberLayerError) Error() string {
 }
 
 type manifest struct {
+	Digest string
 	Layers []layer    `json:"layers"`
-	Errors []apiError `json:errors`
+	Errors []apiError `json:"errors"`
 }
 
-// repository struct for repo
 type repository struct {
 	registry *registry
 	path     string
 	token    string
 }
 
-// GetLayer downloads yamls for an image
+// GetTuberLayer downloads yamls for an image
 func GetTuberLayer(location RepositoryLocation, password string) (yamls []util.Yaml, err error) {
-	registry := newRegistry(location.Host, password)
-	repository, err := registry.getRepository(location.Path)
+	reg := newRegistry(location.Host, password)
+	repo, err := reg.getRepository(location.Path)
 	if err != nil {
 		return
 	}
 
-	yamls, err = repository.findLayer(location.Tag)
+	yamls, err = repo.findLayer(location.Tag)
 	return
 }
 
-func (r *repository) getLayers(tag string) (layers []layer, err error) {
+func GetLatestSHA(location RepositoryLocation, password string) (sha string, err error) {
+	reg := newRegistry(location.Host, password)
+	repo, err := reg.getRepository(location.Path)
+
+	if err != nil {
+		return
+	}
+
+	m, err := repo.getManifest(location.Tag)
+	if err != nil {
+		return
+	}
+
+	sha = m.Digest
+	return
+}
+
+func (r *repository) getManifest(tag string) (m manifest, err error) {
 	requestURL := fmt.Sprintf(
 		"%s/v2/%s/manifests/%s",
 		r.registry.baseURL,
@@ -98,20 +110,31 @@ func (r *repository) getLayers(tag string) (layers []layer, err error) {
 		return
 	}
 
-	var obj = new(manifest)
-	err = json.Unmarshal(body, &obj)
+	digest := res.Header["Docker-Content-Digest"][0]
+
+	m = manifest{Digest: digest}
+	err = json.Unmarshal(body, &m)
 
 	if err != nil {
 		return
 	}
 
-	if len(obj.Errors) > 0 {
-		err = obj.Errors[0]
+	if len(m.Errors) > 0 {
+		err = m.Errors[0]
 		return
 	}
 
-	layers = obj.Layers
 	return
+}
+
+func (r *repository) getLayers(tag string) (layers []layer, err error) {
+	manifest, err := r.getManifest(tag)
+
+	if err != nil {
+		return
+	}
+
+	return manifest.Layers, nil
 }
 
 func (r *repository) downloadLayer(layerObj *layer) (yamls []util.Yaml, err error) {
@@ -197,7 +220,6 @@ func (r *repository) findLayer(tag string) (yamls []util.Yaml, err error) {
 
 	for _, layer := range layers {
 		if layer.Size > maxSize {
-			log.Println("Layer too large, skipping...")
 			continue
 		}
 

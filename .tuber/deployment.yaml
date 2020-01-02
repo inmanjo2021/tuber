@@ -3,9 +3,8 @@ kind: Deployment
 metadata:
   labels:
     app: tuber
-    test: tuberfied
   name: tuber
-  namespace: default
+  namespace: tuber
 spec:
   replicas: 1
   selector:
@@ -17,9 +16,13 @@ spec:
         app: tuber
     spec:
       containers:
-      - image: gcr.io/freshly-docker/tuber:30f9efab987c7df585f8526d2c2fd015cf06cf48
+      - image: gcr.io/freshly-docker/tuber@sha256:7011cd7e470bef9274738374896089a17c43d9fc35d1b01a9c70c8804a3c70aa
         name: tuber
+        volumeMounts:
+          - name: tuber-credentials
+            readOnly: true
+            mountPath: "/etc/tuber-credentials"
       volumes:
-        - name: credentials
+        - name: tuber-credentials
           secret:
-            secretName: credentials.json
+            secretName: tuber-credentials.json

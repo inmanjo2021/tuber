@@ -41,7 +41,7 @@ func update(cmd *cobra.Command, args []string) {
 		yamls = append(yamls, util.Yaml{Content: content, Filename: name})
 	}
 
-	out, err := k8s.Apply(yamls)
+	out, err := k8s.Apply(yamls, "tuber")
 	if err != nil {
 		fmt.Println(err)
 	}

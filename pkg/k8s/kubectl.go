@@ -3,7 +3,6 @@ package k8s
 import (
 	"fmt"
 	"io"
-	"log"
 	"os/exec"
 	"tuber/pkg/util"
 )
@@ -17,69 +16,71 @@ func write(bytes []byte) (out []byte, err error) {
 		return
 	}
 
-	stdin.Write(bytes)
-	stdin.Close()
+	_, err = stdin.Write(bytes)
+	if err != nil {
+		return
+	}
+
+	err = stdin.Close()
+	if err != nil {
+		return
+	}
 
 	out, err = cmd.CombinedOutput()
 
-	if cmd.ProcessState.ExitCode() != 0 {
-		log.Fatal(string(out))
-	}
-
 	if err != nil {
 		return
+	}
+
+	if cmd.ProcessState.ExitCode() != 0 {
+		err = fmt.Errorf(string(out))
 	}
 
 	return
 }
 
 // Get get a config
-func Get(kind string, name string) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "get", kind, name, "-o", "json")
+func Get(kind string, name string, namespace string) (out []byte, err error) {
+	cmd := exec.Command("kubectl", "get", kind, name, "-o", "json", "-n", namespace)
 
 	out, err = cmd.CombinedOutput()
 
 	if cmd.ProcessState.ExitCode() != 0 {
-		println(out)
-		println("SFDSFDSF")
-		println(cmd.ProcessState.ExitCode())
-		return nil, fmt.Errorf("%s", out)
-	}
-
-	if err != nil {
-		return
+		err = fmt.Errorf(string(out))
 	}
 
 	return
 }
 
 // Apply applies Yaml vec
-func Apply(yamls []util.Yaml) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "apply", "-f", "-")
+func Apply(yamls []util.Yaml, namespace string) (out []byte, err error) {
+	cmd := exec.Command("kubectl", "apply", "-n", namespace, "-f", "-")
 	stdin, err := cmd.StdinPipe()
 
 	if err != nil {
 		return
 	}
 
-	go func() {
-		defer stdin.Close()
-		lastIndex := len(yamls) - 1
+	lastIndex := len(yamls) - 1
 
-		for i, yaml := range yamls {
-			io.WriteString(stdin, yaml.Content)
+	for i, yaml := range yamls {
+		io.WriteString(stdin, yaml.Content)
 
-			if i < lastIndex {
-				io.WriteString(stdin, "---\n")
-			}
+		if i < lastIndex {
+			io.WriteString(stdin, "---\n")
 		}
-	}()
+	}
 
+	stdin.Close()
 	out, err = cmd.CombinedOutput()
 
-	if err != nil {
-		return
-	}
+	return
+}
+
+func SetImage(namespace string, container string, digest string) (out []byte, err error) {
+	cmd := exec.Command("kubectl", "-n", namespace, "set", "image", "deployments", container+"="+digest, "--all")
+
+	out, err = cmd.CombinedOutput()
 
 	return
 }

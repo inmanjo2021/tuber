@@ -20,7 +20,8 @@ func CreateFromFile(path string, mountpoint string) (dat []byte, err error) {
 	filename := filepath.Base(path)
 	data := map[string]string{filename: str}
 	meta := k8sMetadata{
-		Name: fmt.Sprintf("%s-%s", projectName, filename),
+		Name:      fmt.Sprintf("%s-%s", projectName, filename),
+		Namespace: projectName,
 	}
 
 	config := k8sConfig{

@@ -14,10 +14,10 @@ func init() {
 }
 
 var fetchCmd = &cobra.Command{
-	Use:   "fetch [image] [tag]",
+	Use:   "fetch [appName]",
 	Short: "Fetch Tuber yaml files",
 	RunE:  fetch,
-	Args:  cobra.ExactArgs(2),
+	Args:  cobra.ExactArgs(1),
 }
 
 func fetch(cmd *cobra.Command, args []string) error {
@@ -33,10 +33,10 @@ func fetch(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	app := apps.FindApp(args[0], args[1])
+	app, err := apps.FindApp(args[0])
 
-	if app == nil {
-		return fmt.Errorf("not found %s:%s", args[0], args[1])
+	if err != nil {
+		return err
 	}
 
 	yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
@@ -46,7 +46,7 @@ func fetch(cmd *cobra.Command, args []string) error {
 			if i > 0 {
 				fmt.Println("--")
 			}
-			fmt.Print(yaml)
+			fmt.Printf("%s\n", yaml)
 		}
 	}
 	return err

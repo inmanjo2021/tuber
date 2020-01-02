@@ -48,7 +48,7 @@ func refreshAppsCache(apps []TuberApp) {
 }
 
 func getTuberApps() (apps []TuberApp, err error) {
-	config, err := k8s.GetConfig(tuberConfig)
+	config, err := k8s.GetConfig(tuberConfig, "tuber")
 
 	if err != nil {
 		return
@@ -74,15 +74,16 @@ func getTuberApps() (apps []TuberApp, err error) {
 type AppList []TuberApp
 
 // FindApp locates a Tuber app within an app-list
-func (ta AppList) FindApp(name string, tag string) *TuberApp {
-	fullTag := fmt.Sprintf("%s:%s", name, tag)
-
+func (ta AppList) FindApp(name string) (foundApp *TuberApp, err error) {
 	for _, app := range ta {
-		if app.ImageTag == fullTag {
-			return &app
+		if app.Name == name {
+			foundApp = &app
+			return
 		}
 	}
-	return nil
+
+	err = fmt.Errorf("app '%s' not found", name)
+	return
 }
 
 // TuberApps returns a list of Tuber apps
@@ -104,7 +105,7 @@ func TuberApps() (apps AppList, err error) {
 
 // AddAppConfig add a new configuration to Tuber's config map
 func AddAppConfig(name string, repo string, tag string) (err error) {
-	config, err := k8s.GetConfig(tuberConfig)
+	config, err := k8s.GetConfig(tuberConfig, "tuber")
 
 	if err != nil {
 		return
