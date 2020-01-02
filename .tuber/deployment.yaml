@@ -16,8 +16,12 @@ spec:
         app: tuber
     spec:
       containers:
-      - image: gcr.io/freshly-docker/tuber:30f9efab987c7df585f8526d2c2fd015cf06cf48
+      - image: gcr.io/freshly-docker/tuber@sha256:be470e26ec61759623216f52d65d2221136558a2c6513b6906a251b857ea4600
         name: tuber
+        volumeMounts:
+          - name: tuber-credentials
+            readOnly: true
+            mountPath: "/etc/tuber-credentials"
       volumes:
         - name: tuber-credentials
           secret:

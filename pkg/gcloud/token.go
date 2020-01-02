@@ -9,7 +9,7 @@ import (
 
 // GetAccessToken generates a short-lives token
 func GetAccessToken() (accessToken string, err error) {
-	jsonData, err := ioutil.ReadFile("./credentials.json")
+	jsonData, err := ioutil.ReadFile("./etc/tuber-credentials/credentials.json")
 
 	if err != nil {
 		return
