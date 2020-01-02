@@ -26,7 +26,6 @@ func (emptyAckable) Nack() {}
 func deploy(cmd *cobra.Command, args []string) {
 	logger := createLogger()
 	defer logger.Sync()
-	var errorChan = createErrorChannel(logger)
 
 	apps, err := pulp.TuberApps()
 
@@ -51,6 +50,7 @@ func deploy(cmd *cobra.Command, args []string) {
 
 	streamer := events.NewStreamer(token, logger)
 
+	errorChan := make(chan error, 1)
 	unprocessedEvents := make(chan *util.RegistryEvent, 1)
 	processedEvents := make(chan *util.RegistryEvent, 1)
 	go streamer.Stream(unprocessedEvents, processedEvents, errorChan)
@@ -65,7 +65,10 @@ func deploy(cmd *cobra.Command, args []string) {
 
 	unprocessedEvents <- &deployEvent
 
-	for range processedEvents {
+	select {
+	case <-errorChan:
+		close(unprocessedEvents)
+	case <-processedEvents:
 		close(unprocessedEvents)
 	}
 }

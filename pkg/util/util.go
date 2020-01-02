@@ -1,5 +1,7 @@
 package util
 
+import "strings"
+
 // Yaml is a yaml
 type Yaml struct {
 	Content  string
@@ -17,4 +19,13 @@ type RegistryEvent struct {
 type ackable interface {
 	Ack()
 	Nack()
+}
+
+// ContainerName extracts the container name from the tag
+func (r *RegistryEvent) ContainerName() (name string) {
+	tagSplit := strings.Split(r.Tag, "/")
+	containerTag := tagSplit[len(tagSplit)-1]
+	containerTagSplit := strings.Split(containerTag, ":")
+	name = containerTagSplit[0]
+	return
 }
