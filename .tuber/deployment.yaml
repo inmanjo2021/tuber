@@ -16,7 +16,7 @@ spec:
         app: tuber
     spec:
       containers:
-      - image: gcr.io/freshly-docker/tuber@sha256:e43649639740151b414f5975516dd98c148f73d51dc0b3cc512051db6160b66f
+      - image: gcr.io/freshly-docker/tuber@sha256:7011cd7e470bef9274738374896089a17c43d9fc35d1b01a9c70c8804a3c70aa
         name: tuber
         volumeMounts:
           - name: tuber-credentials
