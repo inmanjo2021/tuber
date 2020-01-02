@@ -48,7 +48,7 @@ func refreshAppsCache(apps []TuberApp) {
 }
 
 func getTuberApps() (apps []TuberApp, err error) {
-	config, err := k8s.GetConfig(tuberConfig)
+	config, err := k8s.GetConfig(tuberConfig, "tuber")
 
 	if err != nil {
 		return
@@ -105,7 +105,7 @@ func TuberApps() (apps AppList, err error) {
 
 // AddAppConfig add a new configuration to Tuber's config map
 func AddAppConfig(name string, repo string, tag string) (err error) {
-	config, err := k8s.GetConfig(tuberConfig)
+	config, err := k8s.GetConfig(tuberConfig, "tuber")
 
 	if err != nil {
 		return

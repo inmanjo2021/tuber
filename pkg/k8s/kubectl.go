@@ -40,8 +40,8 @@ func write(bytes []byte) (out []byte, err error) {
 }
 
 // Get get a config
-func Get(kind string, name string) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "get", kind, name, "-o", "json")
+func Get(kind string, name string, namespace string) (out []byte, err error) {
+	cmd := exec.Command("kubectl", "get", kind, name, "-o", "json", "-n", namespace)
 
 	out, err = cmd.CombinedOutput()
 
@@ -53,8 +53,8 @@ func Get(kind string, name string) (out []byte, err error) {
 }
 
 // Apply applies Yaml vec
-func Apply(yamls []util.Yaml) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "apply", "-f", "-")
+func Apply(yamls []util.Yaml, namespace string) (out []byte, err error) {
+	cmd := exec.Command("kubectl", "apply", "-n", namespace, "-f", "-")
 	stdin, err := cmd.StdinPipe()
 
 	if err != nil {

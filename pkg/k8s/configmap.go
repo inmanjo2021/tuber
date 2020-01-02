@@ -5,7 +5,8 @@ import (
 )
 
 type k8sMetadata struct {
-	Name string `json:"name"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 type k8sConfig struct {
@@ -42,8 +43,8 @@ func (c *Config) Save() (err error) {
 }
 
 // GetConfig returns a Config struct with a Data element containing config map entries
-func GetConfig(name string) (config *Config, err error) {
-	result, err := Get("configmap", name)
+func GetConfig(name string, namespace string) (config *Config, err error) {
+	result, err := Get("configmap", name, namespace)
 
 	if err != nil {
 		return
@@ -55,7 +56,7 @@ func GetConfig(name string) (config *Config, err error) {
 			APIVersion: "v1",
 			Kind:       "ConfigMap",
 			Data:       map[string]string{},
-			Metadata:   k8sMetadata{Name: name},
+			Metadata:   k8sMetadata{Name: name, Namespace: namespace},
 		}
 	} else {
 		json.Unmarshal(result, &k8sc)

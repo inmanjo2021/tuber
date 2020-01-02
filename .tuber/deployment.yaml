@@ -19,6 +19,6 @@ spec:
       - image: gcr.io/freshly-docker/tuber:30f9efab987c7df585f8526d2c2fd015cf06cf48
         name: tuber
       volumes:
-        - name: credentials
+        - name: tuber-credentials
           secret:
-            secretName: credentials.json
+            secretName: tuber-credentials.json
