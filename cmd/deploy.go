@@ -39,7 +39,11 @@ func deploy(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	app := apps.FindApp(args[0])
+	app, err := apps.FindApp(args[0])
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	location := app.GetRepositoryLocation()
 
 	sha, err := containers.GetLatestSHA(location, token)

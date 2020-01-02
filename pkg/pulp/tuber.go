@@ -74,14 +74,16 @@ func getTuberApps() (apps []TuberApp, err error) {
 type AppList []TuberApp
 
 // FindApp locates a Tuber app within an app-list
-func (ta AppList) FindApp(name string) *TuberApp {
+func (ta AppList) FindApp(name string) (foundApp *TuberApp, err error) {
 	for _, app := range ta {
 		if app.Name == name {
-			return &app
+			foundApp = &app
+			return
 		}
 	}
 
-	return nil
+	err = fmt.Errorf("app '%s' not found", name)
+	return
 }
 
 // TuberApps returns a list of Tuber apps

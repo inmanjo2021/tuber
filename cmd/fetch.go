@@ -33,10 +33,10 @@ func fetch(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	app := apps.FindApp(args[0])
+	app, err := apps.FindApp(args[0])
 
-	if app == nil {
-		return fmt.Errorf("app not found %s", args[0])
+	if err != nil {
+		return err
 	}
 
 	yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
