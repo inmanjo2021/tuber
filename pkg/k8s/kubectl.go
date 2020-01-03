@@ -84,3 +84,12 @@ func SetImage(namespace string, container string, digest string) (out []byte, er
 
 	return
 }
+
+//Patch patches data for a given resource and namespace
+func Patch(name string, namespace string, data string) (out []byte, err error) {
+	cmd := exec.Command("kubectl", "patch", name, "-n", namespace, "--type", "merge", "-p", data)
+
+	out, err = cmd.CombinedOutput()
+
+	return
+}
