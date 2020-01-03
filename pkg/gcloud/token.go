@@ -2,26 +2,13 @@ package gcloud
 
 import (
 	"context"
-	"io/ioutil"
-
-	"github.com/spf13/viper"
 
 	"golang.org/x/oauth2/google"
 )
 
-// GetAccessToken generates a short-lives token
-func GetAccessToken() (accessToken string, err error) {
-	jsonData, err := ioutil.ReadFile("/etc/tuber-credentials/credentials.json")
-
-	if err != nil {
-		credentialsPath := viper.GetString("credentials-path")
-		jsonData, err = ioutil.ReadFile(credentialsPath)
-		if err != nil {
-			return
-		}
-	}
-
-	config, err := google.JWTConfigFromJSON(jsonData,
+// GetAccessToken gets a gcloud key from credentials json
+func GetAccessToken(credentials []byte) (accessToken string, err error) {
+	config, err := google.JWTConfigFromJSON(credentials,
 		"https://www.googleapis.com/auth/devstorage.read_only",
 	)
 
