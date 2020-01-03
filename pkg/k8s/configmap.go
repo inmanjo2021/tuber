@@ -68,3 +68,29 @@ func GetConfig(name string, namespace string) (config *Config, err error) {
 	}
 	return
 }
+
+// PatchConfig gets, patches, and saves a config
+func PatchConfig(mapName string, namespace string, key string, value string) (err error) {
+	config, err := GetConfig(mapName, namespace)
+
+	if err != nil {
+		return
+	}
+
+	config.Data[key] = value
+
+	return config.Save()
+}
+
+// RemoveConfigEntry removes an entry, from a config
+func RemoveConfigEntry(mapName string, namespace string, key string) (err error) {
+	config, err := GetConfig(mapName, namespace)
+
+	if err != nil {
+		return
+	}
+
+	delete(config.Data, key)
+
+	return config.Save()
+}

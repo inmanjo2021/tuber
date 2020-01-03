@@ -104,14 +104,9 @@ func TuberApps() (apps AppList, err error) {
 }
 
 // AddAppConfig add a new configuration to Tuber's config map
-func AddAppConfig(name string, repo string, tag string) (err error) {
-	config, err := k8s.GetConfig(tuberConfig, "tuber")
-
-	if err != nil {
-		return
-	}
-
-	config.Data[name] = fmt.Sprintf("%s:%s", repo, tag)
-
-	return config.Save()
+func AddAppConfig(appName string, repo string, tag string) (err error) {
+	namespace := appName
+	key := appName
+	value := fmt.Sprintf("%s:%s", repo, tag)
+	return k8s.PatchConfig(tuberConfig, namespace, key, value)
 }

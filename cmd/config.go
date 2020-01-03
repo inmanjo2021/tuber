@@ -28,10 +28,8 @@ func configPatch(cmd *cobra.Command, args []string) {
 	appName := args[0]
 	key := args[1]
 	value := args[2]
-	data := fmt.Sprintf(`{"data":{"%s":"%s"}}`, key, value)
-	name := fmt.Sprintf("configmap/%s-config", appName)
-	out, err := k8s.Patch(name, appName, data)
-	println(string(out))
+	mapName := fmt.Sprintf("%s-config", appName)
+	err := k8s.PatchConfig(mapName, appName, key, value)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,10 +38,8 @@ func configPatch(cmd *cobra.Command, args []string) {
 func configRemove(cmd *cobra.Command, args []string) {
 	appName := args[0]
 	key := args[1]
-	data := fmt.Sprintf(`[{"op":"remove", "path":"/data/%s"}]`, key)
-	name := fmt.Sprintf("configmap/%s-config", appName)
-	out, err := k8s.Remove(name, appName, data)
-	println(string(out))
+	mapName := fmt.Sprintf("%s-config", appName)
+	err := k8s.RemoveConfigEntry(mapName, appName, key)
 	if err != nil {
 		log.Fatal(err)
 	}
