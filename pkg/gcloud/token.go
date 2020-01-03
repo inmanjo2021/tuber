@@ -4,6 +4,8 @@ import (
 	"context"
 	"io/ioutil"
 
+	"github.com/spf13/viper"
+
 	"golang.org/x/oauth2/google"
 )
 
@@ -12,7 +14,11 @@ func GetAccessToken() (accessToken string, err error) {
 	jsonData, err := ioutil.ReadFile("/etc/tuber-credentials/credentials.json")
 
 	if err != nil {
-		return
+		credentialsPath := viper.GetString("credentials-path")
+		jsonData, err = ioutil.ReadFile(credentialsPath)
+		if err != nil {
+			return
+		}
 	}
 
 	config, err := google.JWTConfigFromJSON(jsonData,

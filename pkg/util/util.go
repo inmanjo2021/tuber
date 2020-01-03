@@ -29,3 +29,9 @@ func (r *RegistryEvent) ContainerName() (name string) {
 	name = containerTagSplit[0]
 	return
 }
+
+// FailedRelease can be created while streaming, consumed by the listener
+type FailedRelease interface {
+	Err() error
+	Event() *RegistryEvent
+}

@@ -13,44 +13,45 @@ import (
 	"google.golang.org/api/option"
 )
 
-//Listener binds to a pubsub subscription and sends messages to a queue
-type Listener struct {
+//listener binds to a pubsub subscription and sends messages to a queue
+type listener struct {
 	projectID    string
 	subscription string
 
-	in   chan *util.RegistryEvent
-	out  chan *util.RegistryEvent
-	wait *sync.WaitGroup
+	unprocessed chan *util.RegistryEvent
+	processed   chan *util.RegistryEvent
+	failures    chan util.FailedRelease
+	wait        *sync.WaitGroup
 
 	logger       *zap.Logger
 	recvSettings pubsub.ReceiveSettings
 }
 
-// Option provides optional settings to a Listener constructor
-type Option func(*Listener)
+// Option provides optional settings to a listener constructor
+type Option func(*listener)
 
 // WithMaxAccept determines the maximum number of outstanding messages accepted
 func WithMaxAccept(n int) Option {
-	return func(l *Listener) {
+	return func(l *listener) {
 		l.recvSettings.MaxOutstandingMessages = n
 	}
 }
 
 // WithMaxTimeout sets the maximum ack timeout extension
 func WithMaxTimeout(d time.Duration) Option {
-	return func(l *Listener) {
+	return func(l *listener) {
 		l.recvSettings.MaxExtension = d
 	}
 }
 
-// NewListener creates a new PubSub Listener
-func NewListener(logger *zap.Logger, options ...Option) *Listener {
-	var l = &Listener{
+// NewListener creates a new PubSub listener
+func NewListener(logger *zap.Logger, options ...Option) *listener {
+	var l = &listener{
 		projectID:    "freshly-docker",
 		subscription: "freshly-docker-gcr-events",
 
-		in:           make(chan *util.RegistryEvent, 1),
-		out:          make(chan *util.RegistryEvent, 1),
+		unprocessed:  make(chan *util.RegistryEvent, 1),
+		processed:    make(chan *util.RegistryEvent, 1),
 		wait:         &sync.WaitGroup{},
 		logger:       logger,
 		recvSettings: pubsub.ReceiveSettings{},
@@ -63,14 +64,14 @@ func NewListener(logger *zap.Logger, options ...Option) *Listener {
 }
 
 // Listen for incoming pubsub requests
-func (l *Listener) Listen(ctx context.Context) (<-chan *util.RegistryEvent, chan<- *util.RegistryEvent, error) {
+func (l *listener) Listen(ctx context.Context) (<-chan *util.RegistryEvent, chan<- *util.RegistryEvent, chan<- util.FailedRelease, error) {
 	go l.startAcker(ctx)
 
 	var err = l.startListener(ctx)
-	return l.in, l.out, err
+	return l.unprocessed, l.processed, l.failures, err
 }
 
-func (l *Listener) startListener(ctx context.Context) error {
+func (l *listener) startListener(ctx context.Context) error {
 	var client *pubsub.Client
 	var err error
 
@@ -95,8 +96,8 @@ func (l *Listener) startListener(ctx context.Context) error {
 		// Close the message channel before exiting to signal to downstream that we're done
 		defer close(in)
 
-		l.logger.Info("Listener: starting")
-		l.logger.Debug("Listener: subscription options", zap.Reflect("options", subscription.ReceiveSettings))
+		l.logger.Debug("listener: starting")
+		l.logger.Debug("listener: subscription options", zap.Reflect("options", subscription.ReceiveSettings))
 		err = subscription.Receive(ctx,
 			func(ctx context.Context, message *pubsub.Message) {
 				obj := &util.RegistryEvent{Message: message}
@@ -110,15 +111,15 @@ func (l *Listener) startListener(ctx context.Context) error {
 			})
 
 		if err != nil {
-			l.logger.With(zap.Error(err)).Warn("Listener: receiver error")
+			l.logger.With(zap.Error(err)).Warn("listener: receiver error")
 		}
-		l.logger.Info("Listener: shutting down")
-	}(l.in, l.logger)
+		l.logger.Debug("listener: shutting down")
+	}(l.unprocessed, l.logger)
 
 	return err
 }
 
-func (l *Listener) startAcker(ctx context.Context) {
+func (l *listener) startAcker(ctx context.Context) {
 	if ctx.Err() != nil {
 		return
 	}
@@ -127,19 +128,38 @@ func (l *Listener) startAcker(ctx context.Context) {
 	l.wait.Add(1)
 	defer l.wait.Done()
 
-	l.logger.Info("acknowledge loop: starting")
+	l.logger.Debug("acknowledge loop: starting")
 
-	for event := range l.out {
-		//event.Message.Ack()
-		l.logger.With(zap.Reflect("event", event)).Debug("did not ack")
+	for event := range l.processed {
+		l.logger.Info("acknowledged", zap.String("tag", event.Tag))
+		event.Message.Ack()
 	}
 
-	l.logger.Info("acknowledge loop: stopped")
+	l.logger.Debug("acknowledge loop: stopped")
 }
 
-// Wait for the Listener and acker goroutines to exit.
+func (l *listener) startNacker(ctx context.Context) {
+	if ctx.Err() != nil {
+		return
+	}
+
+	l.wait.Add(1)
+	defer l.wait.Done()
+
+	l.logger.Debug("error loop: starting")
+
+	for failure := range l.failures {
+		l.logger.Info("nacked", zap.String("tag", failure.Event().Tag))
+		l.logger.Warn("failed release", zap.Error(failure.Err()))
+		failure.Event().Message.Nack()
+	}
+
+	l.logger.Debug("error loop: stopped")
+}
+
+// Wait for the listener and acker goroutines to exit.
 // If you use this method, you must ensure that you close
 // the output channel when no more work is being processed
-func (l *Listener) Wait() {
+func (l *listener) Wait() {
 	l.wait.Wait()
 }
