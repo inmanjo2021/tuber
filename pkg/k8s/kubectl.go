@@ -77,6 +77,7 @@ func Apply(yamls []util.Yaml, namespace string) (out []byte, err error) {
 	return
 }
 
+// SetImage sets a digest for all deployments of a given namespaced container
 func SetImage(namespace string, container string, digest string) (out []byte, err error) {
 	cmd := exec.Command("kubectl", "-n", namespace, "set", "image", "deployments", container+"="+digest, "--all")
 
@@ -85,7 +86,7 @@ func SetImage(namespace string, container string, digest string) (out []byte, er
 	return
 }
 
-//Patch patches data for a given resource and namespace
+// Patch patches data for a given resource and namespace
 func Patch(name string, namespace string, data string) (out []byte, err error) {
 	cmd := exec.Command("kubectl", "patch", name, "-n", namespace, "--type", "merge", "-p", data)
 
@@ -94,6 +95,7 @@ func Patch(name string, namespace string, data string) (out []byte, err error) {
 	return
 }
 
+// Remove expects a remove operation with a path
 func Remove(name string, namespace string, data string) (out []byte, err error) {
 	cmd := exec.Command("kubectl", "patch", name, "-n", namespace, "--type=json", "-p", data)
 
