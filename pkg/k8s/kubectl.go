@@ -93,3 +93,11 @@ func Patch(name string, namespace string, data string) (out []byte, err error) {
 
 	return
 }
+
+func Remove(name string, namespace string, data string) (out []byte, err error) {
+	cmd := exec.Command("kubectl", "patch", name, "-n", namespace, "--type=json", "-p", data)
+
+	out, err = cmd.CombinedOutput()
+
+	return
+}
