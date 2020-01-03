@@ -37,17 +37,6 @@ func bindShutdown(logger *zap.Logger, cancel func()) {
 	}()
 }
 
-// Creates a channel that logs errors
-func createErrorChannel(logger *zap.Logger) chan<- error {
-	var errorChan = make(chan error, 1)
-	go func() {
-		for err := range errorChan {
-			logger.Warn("error while processing", zap.Error(err))
-		}
-	}()
-	return errorChan
-}
-
 func start(cmd *cobra.Command, args []string) {
 	// Create a logger and defer an final sync (os.flush())
 	logger := createLogger()
@@ -73,13 +62,10 @@ func start(cmd *cobra.Command, args []string) {
 
 	var l = listener.NewListener(logger, options...)
 
-	unprocessedEvents, processedEvents, err := l.Listen(ctx)
+	unprocessedEvents, processedEvents, failedEvents, err := l.Listen(ctx)
 	if err != nil {
 		panic(err)
 	}
-
-	// Create error channel
-	var errorChan = createErrorChannel(logger)
 
 	token, err := gcloud.GetAccessToken()
 
@@ -89,7 +75,7 @@ func start(cmd *cobra.Command, args []string) {
 
 	// Create a new streamer
 	streamer := events.NewStreamer(token, logger)
-	go streamer.Stream(unprocessedEvents, processedEvents, errorChan)
+	go streamer.Stream(unprocessedEvents, processedEvents, failedEvents)
 
 	// Wait for cancel() of context
 	<-ctx.Done()

@@ -18,14 +18,25 @@ func NewStreamer(token string, logger *zap.Logger) *streamer {
 	return &streamer{token, logger}
 }
 
+type failedRelease struct {
+	err   error
+	event *util.RegistryEvent
+}
+
+// Err returns the error causing a failed release
+func (f *failedRelease) Err() error { return f.err }
+
+// Event returns the failed release event
+func (f *failedRelease) Event() *util.RegistryEvent { return f.event }
+
 // Stream streams a stream
-func (s *streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.RegistryEvent, chErr chan<- error) {
-	defer close(chOut)
+func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan<- *util.RegistryEvent, chErr chan<- util.FailedRelease) {
+	defer close(processed)
 	defer close(chErr)
 
 	var wait = &sync.WaitGroup{}
 
-	for event := range chIn {
+	for event := range unprocessed {
 		go func(event *util.RegistryEvent) {
 			wait.Add(1)
 			defer wait.Done()
@@ -33,9 +44,9 @@ func (s *streamer) Stream(chIn <-chan *util.RegistryEvent, chOut chan<- *util.Re
 			var err error
 			defer func() {
 				if err != nil {
-					chErr <- err
+					chErr <- &failedRelease{err: err, event: event}
 				} else {
-					chOut <- event
+					processed <- event
 				}
 			}()
 

@@ -23,6 +23,17 @@ type emptyAckable struct{}
 func (emptyAckable) Ack()  {}
 func (emptyAckable) Nack() {}
 
+type failedRelease struct {
+	err   error
+	event *util.RegistryEvent
+}
+
+// Err returns the error causing a failed release
+func (f failedRelease) Err() error { return nil }
+
+// Event returns the failed release event
+func (f failedRelease) Event() *util.RegistryEvent { return f.event }
+
 func deploy(cmd *cobra.Command, args []string) {
 	logger := createLogger()
 	defer logger.Sync()
@@ -54,7 +65,7 @@ func deploy(cmd *cobra.Command, args []string) {
 
 	streamer := events.NewStreamer(token, logger)
 
-	errorChan := make(chan error, 1)
+	errorChan := make(chan util.FailedRelease, 1)
 	unprocessedEvents := make(chan *util.RegistryEvent, 1)
 	processedEvents := make(chan *util.RegistryEvent, 1)
 	go streamer.Stream(unprocessedEvents, processedEvents, errorChan)
