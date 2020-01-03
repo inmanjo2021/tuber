@@ -124,7 +124,7 @@ func (l *listener) startAcker(ctx context.Context) {
 		return
 	}
 
-	// Register this goroutine unprocessed the waiter
+	// Register this goroutine in the waiter
 	l.wait.Add(1)
 	defer l.wait.Done()
 
