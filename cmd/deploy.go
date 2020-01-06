@@ -44,7 +44,12 @@ func deploy(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	token, err := gcloud.GetAccessToken()
+	creds, err := credentials()
+	if err != nil {
+		return
+	}
+
+	token, err := gcloud.GetAccessToken(creds)
 
 	if err != nil {
 		log.Fatal(err)

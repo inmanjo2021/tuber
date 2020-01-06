@@ -21,7 +21,12 @@ func init() {
 
 func accessToken(cmd *cobra.Command, args []string) (err error) {
 	fmt.Println("accessToken called")
-	token, err := gcloud.GetAccessToken()
+	creds, err := credentials()
+	if err != nil {
+		return
+	}
+
+	token, err := gcloud.GetAccessToken(creds)
 
 	if err != nil {
 		return
