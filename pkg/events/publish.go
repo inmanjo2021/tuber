@@ -25,11 +25,5 @@ func publish(app *pulp.TuberApp, event *util.RegistryEvent, token string) (setIm
 
 	applyOutput, err = k8s.Apply(yamls, containerName)
 
-	if err != nil {
-		return
-	}
-
-	setImageOutput, err = k8s.SetImage(app.Name, containerName, event.Digest)
-
 	return
 }

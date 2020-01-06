@@ -76,11 +76,3 @@ func Apply(yamls []util.Yaml, namespace string) (out []byte, err error) {
 
 	return
 }
-
-func SetImage(namespace string, container string, digest string) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "-n", namespace, "set", "image", "deployments", container+"="+digest, "--all")
-
-	out, err = cmd.CombinedOutput()
-
-	return
-}
