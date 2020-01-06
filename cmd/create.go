@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"errors"
 	"github.com/spf13/cobra"
+	"log"
 	"tuber/pkg/pulp"
 )
 
@@ -15,12 +17,23 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		if len(args) != 3 {
+			err = errors.New("Incorrect arguments")
+			return
+		}
+
 		appName := args[0]
 		repo := args[1]
 		tag := args[2]
 
-		pulp.AddAppConfig(appName, repo, tag)
+		err = pulp.AddAppConfig(appName, repo, tag)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return nil
 	},
 }
 
