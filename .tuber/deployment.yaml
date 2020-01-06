@@ -22,6 +22,9 @@ spec:
           - name: tuber-credentials
             readOnly: true
             mountPath: "/etc/tuber-credentials"
+        envFrom:
+          - configMapRef:
+              name: tuber-config
       volumes:
         - name: tuber-credentials
           secret:

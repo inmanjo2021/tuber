@@ -64,18 +64,18 @@ func NewListener(logger *zap.Logger, options ...Option) *listener {
 }
 
 // Listen for incoming pubsub requests
-func (l *listener) Listen(ctx context.Context) (<-chan *util.RegistryEvent, chan<- *util.RegistryEvent, chan<- util.FailedRelease, error) {
+func (l *listener) Listen(ctx context.Context, credentials []byte) (<-chan *util.RegistryEvent, chan<- *util.RegistryEvent, chan<- util.FailedRelease, error) {
 	go l.startAcker(ctx)
 
-	var err = l.startListener(ctx)
+	var err = l.startListener(ctx, credentials)
 	return l.unprocessed, l.processed, l.failures, err
 }
 
-func (l *listener) startListener(ctx context.Context) error {
+func (l *listener) startListener(ctx context.Context, credentials []byte) error {
 	var client *pubsub.Client
 	var err error
 
-	client, err = pubsub.NewClient(ctx, l.projectID, option.WithCredentialsFile("/etc/tuber-credentials/credentials.json"))
+	client, err = pubsub.NewClient(ctx, l.projectID, option.WithCredentialsJSON(credentials))
 
 	if err != nil {
 		client, err = pubsub.NewClient(ctx, l.projectID)

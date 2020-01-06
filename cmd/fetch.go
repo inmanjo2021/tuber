@@ -20,23 +20,28 @@ var fetchCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 }
 
-func fetch(cmd *cobra.Command, args []string) error {
-	token, err := gcloud.GetAccessToken()
+func fetch(cmd *cobra.Command, args []string) (err error) {
+	creds, err := credentials()
+	if err != nil {
+		return
+	}
+
+	token, err := gcloud.GetAccessToken(creds)
 
 	if err != nil {
-		return err
+		return
 	}
 
 	apps, err := pulp.TuberApps()
 
 	if err != nil {
-		return err
+		return
 	}
 
 	app, err := apps.FindApp(args[0])
 
 	if err != nil {
-		return err
+		return
 	}
 
 	yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
@@ -49,5 +54,5 @@ func fetch(cmd *cobra.Command, args []string) error {
 			fmt.Printf("%s\n", yaml)
 		}
 	}
-	return err
+	return
 }
