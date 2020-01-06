@@ -6,3 +6,6 @@ start:
 
 install:
   kubectl apply -f bootstrap.yaml
+
+build:
+  go build && mv tuber ~/.bin
