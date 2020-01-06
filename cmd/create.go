@@ -28,6 +28,7 @@ to quickly create a Cobra application.`,
 		tag := args[2]
 
 		err = k8s.CreateNamespace(appName)
+		err = k8s.BindNamespace(appName)
 
 		if err != nil && !strings.Contains(err.Error(), "AlreadyExists") {
 			log.Fatal(err)

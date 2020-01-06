@@ -17,7 +17,7 @@ func New(app *pulp.TuberApp, event *util.RegistryEvent, token string) (setImageO
 
 	containerName := event.ContainerName()
 
-	applyOutput, err = k8s.Apply(yamls, containerName)
+	applyOutput, err = k8s.Apply(yamls, app.Name)
 
 	if err != nil {
 		return
