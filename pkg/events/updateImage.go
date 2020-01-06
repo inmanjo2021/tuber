@@ -4,20 +4,25 @@ import (
 	"fmt"
 	"tuber/pkg/util"
 
-	"github.com/itchyny/gojq"
+	"github.com/icza/dyno"
+	"gopkg.in/yaml.v2"
 )
 
 func updateImage(yamls []util.Yaml, event *util.RegistryEvent) (withUpdatedDeployment []util.Yaml, err error) {
 	var deploymentFound bool
 	for _, yaml := range yamls {
-		convertedYaml := convert(yaml)
-		deployment, err := isDeployment(convertedYaml)
+		parsedYaml, err := parseYaml(yaml.Content)
+		if err != nil {
+			return nil, err
+		}
+
+		deployment, err := isDeployment(parsedYaml)
 		if err != nil {
 			return nil, err
 		}
 
 		if deployment {
-			updatedYaml, err := updateDeployment(yaml, convertedYaml, event.Digest)
+			updatedYaml, err := updateDeployment(yaml, parsedYaml, event.Digest)
 			if err != nil {
 				return nil, err
 			}
@@ -33,57 +38,29 @@ func updateImage(yamls []util.Yaml, event *util.RegistryEvent) (withUpdatedDeplo
 	return
 }
 
-func isDeployment(convertedYaml interface{}) (deployment bool, err error) {
-	output, err := runJq(".kind", convertedYaml)
-	if err != nil {
-		return
-	}
-	deployment = output == "Deployment"
+func parseYaml(data string) (parsed map[string]interface{}, err error) {
+	err = yaml.Unmarshal([]byte(data), &parsed)
 	return
 }
 
-func updateDeployment(originalYaml util.Yaml, convertedYaml interface{}, digest string) (updatedYaml util.Yaml, err error) {
-	query := fmt.Sprintf(`.spec.template.spec.containers.[0].image = %s`, digest)
-	output, err := runJq(query, convertedYaml)
+func isDeployment(convertedYaml map[string]interface{}) (deployment bool, err error) {
+	kind, err := dyno.GetString(convertedYaml, "kind")
 	if err != nil {
 		return
 	}
-	updatedYaml = util.Yaml{Content: output.(string), Filename: originalYaml.Filename}
+	deployment = kind == "Deployment"
 	return
 }
 
-func convert(i interface{}) interface{} {
-	switch x := i.(type) {
-	case map[interface{}]interface{}:
-		m2 := map[string]interface{}{}
-		for k, v := range x {
-			m2[k.(string)] = convert(v)
-		}
-		return m2
-	case []interface{}:
-		for i, v := range x {
-			x[i] = convert(v)
-		}
+func updateDeployment(originalYaml util.Yaml, convertedYaml map[string]interface{}, digest string) (updatedYaml util.Yaml, err error) {
+	err = dyno.Set(convertedYaml, digest, "spec", "template", "spec", "containers", 0, "image")
+	if err != nil {
+		return
 	}
-
-	return i
-}
-
-func runJq(queryInput string, data interface{}) (v interface{}, err error) {
-	query, err := gojq.Parse(queryInput)
-	iter := query.Run(data)
-
-	for {
-		v, ok := iter.Next()
-		if !ok {
-			break
-		}
-		if err, ok := v.(error); ok {
-			v = ""
-			return "", err
-		}
-		return v, nil
+	out, err := yaml.Marshal(convertedYaml)
+	if err != nil {
+		return
 	}
-
+	updatedYaml = util.Yaml{Content: string(out), Filename: originalYaml.Filename}
 	return
 }
