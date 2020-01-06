@@ -46,7 +46,7 @@ func Get(kind string, name string, namespace string) (out []byte, err error) {
 	out, err = cmd.CombinedOutput()
 
 	if cmd.ProcessState.ExitCode() != 0 {
-		err = fmt.Errorf(string(out))
+		err = fmt.Errorf("Get failed: %s", string(out))
 	}
 
 	return

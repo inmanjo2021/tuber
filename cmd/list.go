@@ -1,9 +1,12 @@
 package cmd
 
 import (
-	"fmt"
-	"github.com/spf13/cobra"
+	"log"
+	"os"
 	"tuber/pkg/pulp"
+
+	"github.com/olekukonko/tablewriter"
+	"github.com/spf13/cobra"
 )
 
 // listCmd represents the list command
@@ -19,19 +22,22 @@ to quickly create a Cobra application.`,
 	RunE: list,
 }
 
-func list(cmd *cobra.Command, args []string) error {
+func list(cmd *cobra.Command, args []string) (err error) {
 	apps, err := pulp.TuberApps()
 
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	fmt.Printf("Name \t Image \n")
-	fmt.Printf("------------------------\n")
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Name", "Image"})
+	table.SetBorder(false)
 
 	for _, app := range apps {
-		fmt.Printf("%s \t %s \n", app.Name, app.ImageTag)
+		table.Append([]string{app.Name, app.ImageTag})
 	}
+
+	table.Render()
 
 	return nil
 }
