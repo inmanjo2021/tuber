@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+	"sync"
 	"tuber/pkg/util"
 
 	"github.com/icza/dyno"
@@ -10,32 +11,57 @@ import (
 
 func updateImage(yamls []util.Yaml, event *util.RegistryEvent) (withUpdatedDeployment []util.Yaml, err error) {
 	var deploymentFound bool
-	for _, yaml := range yamls {
-		parsedYaml, err := parseYaml(yaml.Content)
-		if err != nil {
-			return nil, err
-		}
-
-		deployment, err := isDeployment(parsedYaml)
-		if err != nil {
-			return nil, err
-		}
-
-		if deployment {
-			updatedYaml, err := updateDeployment(yaml, parsedYaml, event.Digest)
-			if err != nil {
-				return nil, err
+	var chaml = make(chan processedYaml, 1)
+	var wg = sync.WaitGroup{}
+	go func() {
+		for result := range chaml {
+			err = result.err
+			if result.deployment {
+				deploymentFound = true
 			}
-			deploymentFound = true
-			withUpdatedDeployment = append(withUpdatedDeployment, updatedYaml)
-		} else {
-			withUpdatedDeployment = append(withUpdatedDeployment, yaml)
+			withUpdatedDeployment = append(withUpdatedDeployment, result.yaml)
+			wg.Done()
 		}
+	}()
+	for _, yaml := range yamls {
+		wg.Add(1)
+		go func(yaml util.Yaml) {
+			processYaml(yaml, event, chaml)
+		}(yaml)
 	}
+	wg.Wait()
+	close(chaml)
 	if deploymentFound != true {
 		err = fmt.Errorf("no deployment found")
 	}
 	return
+}
+
+type processedYaml struct {
+	yaml       util.Yaml
+	deployment bool
+	err        error
+}
+
+func processYaml(yaml util.Yaml, event *util.RegistryEvent, chaml chan<- processedYaml) {
+	parsedYaml, err := parseYaml(yaml.Content)
+	if err != nil {
+		chaml <- processedYaml{yaml: yaml, err: err}
+		return
+	}
+
+	deployment, err := isDeployment(parsedYaml)
+	if err != nil {
+		chaml <- processedYaml{yaml: yaml, err: err}
+		return
+	}
+
+	if deployment {
+		updatedYaml, err := updateDeployment(parsedYaml, event.Digest, yaml.Filename)
+		chaml <- processedYaml{yaml: updatedYaml, deployment: true, err: err}
+	} else {
+		chaml <- processedYaml{yaml: yaml, err: err}
+	}
 }
 
 func parseYaml(data string) (parsed map[string]interface{}, err error) {
@@ -52,7 +78,7 @@ func isDeployment(convertedYaml map[string]interface{}) (deployment bool, err er
 	return
 }
 
-func updateDeployment(originalYaml util.Yaml, convertedYaml map[string]interface{}, digest string) (updatedYaml util.Yaml, err error) {
+func updateDeployment(convertedYaml map[string]interface{}, digest string, filename string) (updatedYaml util.Yaml, err error) {
 	err = dyno.Set(convertedYaml, digest, "spec", "template", "spec", "containers", 0, "image")
 	if err != nil {
 		return
@@ -61,6 +87,6 @@ func updateDeployment(originalYaml util.Yaml, convertedYaml map[string]interface
 	if err != nil {
 		return
 	}
-	updatedYaml = util.Yaml{Content: string(out), Filename: originalYaml.Filename}
+	updatedYaml = util.Yaml{Content: string(out), Filename: filename}
 	return
 }
