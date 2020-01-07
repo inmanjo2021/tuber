@@ -3,6 +3,7 @@ package listener
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 	"tuber/pkg/util"
@@ -21,7 +22,11 @@ type listener struct {
 	unprocessed chan *util.RegistryEvent
 	processed   chan *util.RegistryEvent
 	failures    chan util.FailedRelease
-	wait        *sync.WaitGroup
+
+	// TODO: What should this channel receive?
+	reportableErrors chan error
+
+	wait *sync.WaitGroup
 
 	logger       *zap.Logger
 	recvSettings pubsub.ReceiveSettings
@@ -50,11 +55,12 @@ func NewListener(logger *zap.Logger, options ...Option) *listener {
 		projectID:    "freshly-docker",
 		subscription: "freshly-docker-gcr-events",
 
-		unprocessed:  make(chan *util.RegistryEvent, 1),
-		processed:    make(chan *util.RegistryEvent, 1),
-		wait:         &sync.WaitGroup{},
-		logger:       logger,
-		recvSettings: pubsub.ReceiveSettings{},
+		unprocessed:      make(chan *util.RegistryEvent, 1),
+		processed:        make(chan *util.RegistryEvent, 1),
+		reportableErrors: make(chan error, 1),
+		wait:             &sync.WaitGroup{},
+		logger:           logger,
+		recvSettings:     pubsub.ReceiveSettings{},
 	}
 
 	for _, option := range options {
@@ -64,11 +70,11 @@ func NewListener(logger *zap.Logger, options ...Option) *listener {
 }
 
 // Listen for incoming pubsub requests
-func (l *listener) Listen(ctx context.Context, credentials []byte) (<-chan *util.RegistryEvent, chan<- *util.RegistryEvent, chan<- util.FailedRelease, error) {
+func (l *listener) Listen(ctx context.Context, credentials []byte) (<-chan *util.RegistryEvent, chan<- *util.RegistryEvent, chan<- util.FailedRelease, <-chan error, error) {
 	go l.startAcker(ctx)
 
 	var err = l.startListener(ctx, credentials)
-	return l.unprocessed, l.processed, l.failures, err
+	return l.unprocessed, l.processed, l.failures, l.reportableErrors, err
 }
 
 func (l *listener) startListener(ctx context.Context, credentials []byte) error {
@@ -152,6 +158,12 @@ func (l *listener) startNacker(ctx context.Context) {
 		l.logger.Info("nacked", zap.String("tag", failure.Event().Tag))
 		l.logger.Warn("failed release", zap.Error(failure.Err()))
 		failure.Event().Message.Nack()
+	}
+
+	for failure := range l.reportableErrors {
+		fmt.Println(failure)
+
+		// sentry.CaptureException(failure.Err())
 	}
 
 	l.logger.Debug("error loop: stopped")

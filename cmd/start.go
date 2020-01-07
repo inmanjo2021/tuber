@@ -5,10 +5,12 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 	"tuber/pkg/events"
 	"tuber/pkg/gcloud"
 	"tuber/pkg/listener"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -35,6 +37,11 @@ func bindShutdown(logger *zap.Logger, cancel func()) {
 		logger.With(zap.Reflect("signal", s)).Info("Signal received")
 		cancel()
 	}()
+}
+
+func alertSentry(err error) {
+	sentry.CaptureException(err)
+	sentry.Flush(time.Second * 5)
 }
 
 func start(cmd *cobra.Command, args []string) {
@@ -67,7 +74,7 @@ func start(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	unprocessedEvents, processedEvents, failedEvents, err := l.Listen(ctx, creds)
+	unprocessedEvents, processedEvents, failedEvents, reportableErrors, err := l.Listen(ctx, creds)
 	if err != nil {
 		panic(err)
 	}
@@ -81,6 +88,28 @@ func start(cmd *cobra.Command, args []string) {
 	// Create a new streamer
 	streamer := events.NewStreamer(token, logger)
 	go streamer.Stream(unprocessedEvents, processedEvents, failedEvents)
+
+	// Report any errors to Sentry
+	sentryEnabled := viper.GetBool("sentry-enabled")
+
+	if sentryEnabled {
+		err := sentry.Init(
+			sentry.ClientOptions{
+				Dsn:              viper.GetString("sentry-dsn"),
+				AttachStacktrace: true,
+			},
+		)
+
+		if err != nil {
+			panic(err)
+		}
+
+		defer sentry.Recover()
+
+		for err := range reportableErrors {
+			alertSentry(err)
+		}
+	}
 
 	// Wait for cancel() of context
 	<-ctx.Done()
