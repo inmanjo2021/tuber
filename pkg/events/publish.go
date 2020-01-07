@@ -15,15 +15,13 @@ func publish(app *pulp.TuberApp, event *util.RegistryEvent, token string) (outpu
 		return
 	}
 
-	containerName := event.ContainerName()
-
 	yamls, err = updateImage(yamls, event)
 
 	if err != nil {
 		return
 	}
 
-	output, err = k8s.Apply(yamls, containerName)
+	output, err = k8s.Apply(yamls, event.ContainerName())
 
 	return
 }
