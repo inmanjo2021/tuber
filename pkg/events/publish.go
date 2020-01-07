@@ -8,7 +8,7 @@ import (
 )
 
 // New create or update app in kubernetes
-func publish(app *pulp.TuberApp, event *util.RegistryEvent, token string) (setImageOutput []byte, applyOutput []byte, err error) {
+func publish(app *pulp.TuberApp, event *util.RegistryEvent, token string) (output []byte, err error) {
 	yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
 
 	if err != nil {
@@ -23,7 +23,7 @@ func publish(app *pulp.TuberApp, event *util.RegistryEvent, token string) (setIm
 		return
 	}
 
-	applyOutput, err = k8s.Apply(yamls, containerName)
+	output, err = k8s.Apply(yamls, containerName)
 
 	return
 }

@@ -61,14 +61,13 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 
 			releaseLog.Info("release: starting")
 
-			setImageOutput, applyOutput, err := publish(pendingRelease, event, s.token)
+			output, err := publish(pendingRelease, event, s.token)
 
 			if err != nil {
 				releaseLog.Warn(
 					"release: error",
 					zap.Error(err),
-					zap.String("set-image-output", string(setImageOutput)),
-					zap.String("apply-output", string(applyOutput)),
+					zap.String("output", string(output)),
 				)
 			} else {
 				releaseLog.Info("release: done")
