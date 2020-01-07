@@ -3,7 +3,6 @@ package listener
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 	"time"
 	"tuber/pkg/util"
@@ -57,6 +56,7 @@ func NewListener(logger *zap.Logger, options ...Option) *listener {
 
 		unprocessed:      make(chan *util.RegistryEvent, 1),
 		processed:        make(chan *util.RegistryEvent, 1),
+		failures:         make(chan util.FailedRelease, 1),
 		reportableErrors: make(chan error, 1),
 		wait:             &sync.WaitGroup{},
 		logger:           logger,
@@ -158,12 +158,6 @@ func (l *listener) startNacker(ctx context.Context) {
 		l.logger.Info("nacked", zap.String("tag", failure.Event().Tag))
 		l.logger.Warn("failed release", zap.Error(failure.Err()))
 		failure.Event().Message.Nack()
-	}
-
-	for failure := range l.reportableErrors {
-		fmt.Println(failure)
-
-		// sentry.CaptureException(failure.Err())
 	}
 
 	l.logger.Debug("error loop: stopped")
