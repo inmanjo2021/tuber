@@ -1,8 +1,12 @@
 package k8s
 
 import (
+	"bytes"
 	"fmt"
 	"os/exec"
+	"text/template"
+
+	"github.com/MakeNowJust/heredoc"
 )
 
 // CreateNamespace create a new namespace in kubernetes
@@ -18,15 +22,66 @@ func CreateNamespace(namespace string) (err error) {
 	return
 }
 
-// BindNamespace create a new namespace in kubernetes
-func BindNamespace(namespace string) (err error) {
-	cmd := exec.Command("kubectl", "create", "rolebinding", "default-edit", "--clusterrole=edit", "--serviceaccount=tuber:default", "--namespace", namespace)
+type templater struct {
+	Namespace string
+}
 
-	out, err := cmd.CombinedOutput()
+func ApplyTemplate(namespace string, templatestring string, params map[string]string) (err error) {
+	tpl, err := template.New("tpl").Parse(templatestring)
 
-	if cmd.ProcessState.ExitCode() != 0 {
-		err = fmt.Errorf(string(out))
+	if err != nil {
+		return
 	}
 
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, params)
+
+	if err != nil {
+		return
+	}
+
+	_, err = write(buf.Bytes(), namespace)
+
 	return
+}
+
+// BindNamespace create a new namespace in kubernetes
+func BindNamespace(namespace string) (err error) {
+	templatestring := heredoc.Doc(`
+		---
+		kind: Role
+		apiVersion: rbac.authorization.k8s.io/v1beta1
+		metadata:
+		  name: tuber-admin
+		  namespace: {{ .Namespace }}
+		rules:
+		- apiGroups: ["", "extensions", "apps"]
+		  resources: ["*"]
+		  verbs: ["*"]
+		- apiGroups: ["batch"]
+		  resources:
+		  - jobs
+		  - cronjobs
+		  verbs: ["*"]
+		---
+		kind: RoleBinding
+		apiVersion: rbac.authorization.k8s.io/v1beta1
+		metadata:
+		  name: tuber-admin
+		  namespace: {{ .Namespace }}
+		roleRef:
+		  apiGroup: rbac.authorization.k8s.io
+		  kind: Role
+		  name: tuber-admin
+		subjects:
+		- kind: ServiceAccount
+		  name: tuber:default
+		  namespace: tuber
+	`)
+
+	params := map[string]string{
+		"Namespace": namespace,
+	}
+
+	return ApplyTemplate(namespace, templatestring, params)
 }

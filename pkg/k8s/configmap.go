@@ -39,7 +39,6 @@ func (c *Config) Save() (err error) {
 	write(jsondata)
 
 	return
-
 }
 
 // GetConfig returns a Config struct with a Data element containing config map entries

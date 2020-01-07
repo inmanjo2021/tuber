@@ -8,8 +8,8 @@ import (
 )
 
 // write apply a string using kubectl
-func write(bytes []byte) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "apply", "-f", "-")
+func write(bytes []byte, namespace string) (out []byte, err error) {
+	cmd := exec.Command("kubectl", "apply", "-n", namespace, "-f", "-")
 	stdin, err := cmd.StdinPipe()
 
 	if err != nil {
