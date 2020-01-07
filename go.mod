@@ -8,6 +8,7 @@ require (
 	github.com/icza/dyno v0.0.0-20180601094105-0c96289f9585
 	github.com/itchyny/gojq v0.7.0
 	github.com/joho/godotenv v1.3.0
+	github.com/olekukonko/tablewriter v0.0.4
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.3.2
 	go.uber.org/atomic v1.4.0 // indirect

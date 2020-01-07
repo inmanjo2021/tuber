@@ -1,8 +1,12 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
+	"log"
+	"strings"
+	"tuber/pkg/k8s"
 	"tuber/pkg/pulp"
+
+	"github.com/spf13/cobra"
 )
 
 // createCmd represents the create command
@@ -15,12 +19,26 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
+	Args: cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
+		var err error
+
 		appName := args[0]
 		repo := args[1]
 		tag := args[2]
 
-		pulp.AddAppConfig(appName, repo, tag)
+		err = k8s.CreateNamespace(appName)
+		err = k8s.BindNamespace(appName)
+
+		if err != nil && !strings.Contains(err.Error(), "AlreadyExists") {
+			log.Fatal(err)
+		}
+
+		err = pulp.AddAppConfig(appName, repo, tag)
+
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 
