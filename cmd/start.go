@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -42,7 +41,7 @@ func start(cmd *cobra.Command, args []string) {
 	// Create a logger and defer an final sync (os.flush())
 	logger, err := createLogger()
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer logger.Sync()
 
@@ -68,7 +67,7 @@ func start(cmd *cobra.Command, args []string) {
 
 	creds, err := credentials()
 	if err != nil {
-		return
+		panic(err)
 	}
 
 	unprocessedEvents, processedEvents, failedEvents, err := l.Listen(ctx, creds)
