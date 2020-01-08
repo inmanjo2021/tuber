@@ -71,7 +71,7 @@ func start(cmd *cobra.Command, args []string) {
 
 	creds, err := credentials()
 	if err != nil {
-		return
+		panic(err)
 	}
 
 	unprocessedEvents, processedEvents, failedEvents, reportableErrors, err := l.Listen(ctx, creds)
