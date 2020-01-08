@@ -30,7 +30,7 @@ func (f *failedRelease) Err() error { return f.err }
 func (f *failedRelease) Event() *util.RegistryEvent { return f.event }
 
 // Stream streams a stream
-func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan<- *util.RegistryEvent, chErr chan<- util.FailedRelease) {
+func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan<- *util.RegistryEvent, chErr chan<- util.FailedRelease, chErrReports chan<- error) {
 	defer close(processed)
 	defer close(chErr)
 
@@ -45,6 +45,7 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 			defer func() {
 				if err != nil {
 					chErr <- &failedRelease{err: err, event: event}
+					chErrReports <- err
 				} else {
 					processed <- event
 				}

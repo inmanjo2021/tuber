@@ -70,11 +70,11 @@ func NewListener(logger *zap.Logger, options ...Option) *listener {
 }
 
 // Listen for incoming pubsub requests
-func (l *listener) Listen(ctx context.Context, credentials []byte) (<-chan *util.RegistryEvent, chan<- *util.RegistryEvent, chan<- util.FailedRelease, <-chan error, error) {
+func (l *listener) Listen(ctx context.Context, credentials []byte) (<-chan *util.RegistryEvent, chan<- *util.RegistryEvent, chan<- util.FailedRelease, error) {
 	go l.startAcker(ctx)
 
 	var err = l.startListener(ctx, credentials)
-	return l.unprocessed, l.processed, l.failures, l.reportableErrors, err
+	return l.unprocessed, l.processed, l.failures, err
 }
 
 func (l *listener) startListener(ctx context.Context, credentials []byte) error {
