@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"sync"
 	"time"
-	"tuber/pkg/util"
 
 	"go.uber.org/zap"
 
@@ -18,9 +17,9 @@ type listener struct {
 	projectID    string
 	subscription string
 
-	unprocessed chan *util.RegistryEvent
-	processed   chan *util.RegistryEvent
-	failures    chan util.FailedRelease
+	unprocessed chan *RegistryEvent
+	processed   chan *RegistryEvent
+	failures    chan FailedRelease
 	wait        *sync.WaitGroup
 
 	logger       *zap.Logger
@@ -50,8 +49,8 @@ func NewListener(logger *zap.Logger, options ...Option) *listener {
 		projectID:    "freshly-docker",
 		subscription: "freshly-docker-gcr-events",
 
-		unprocessed:  make(chan *util.RegistryEvent, 1),
-		processed:    make(chan *util.RegistryEvent, 1),
+		unprocessed:  make(chan *RegistryEvent, 1),
+		processed:    make(chan *RegistryEvent, 1),
 		wait:         &sync.WaitGroup{},
 		logger:       logger,
 		recvSettings: pubsub.ReceiveSettings{},
@@ -64,7 +63,7 @@ func NewListener(logger *zap.Logger, options ...Option) *listener {
 }
 
 // Listen for incoming pubsub requests
-func (l *listener) Listen(ctx context.Context, credentials []byte) (<-chan *util.RegistryEvent, chan<- *util.RegistryEvent, chan<- util.FailedRelease, error) {
+func (l *listener) Listen(ctx context.Context, credentials []byte) (<-chan *RegistryEvent, chan<- *RegistryEvent, chan<- FailedRelease, error) {
 	go l.startAcker(ctx)
 
 	var err = l.startListener(ctx, credentials)
@@ -88,7 +87,7 @@ func (l *listener) startListener(ctx context.Context, credentials []byte) error 
 	subscription := client.Subscription(l.subscription)
 	subscription.ReceiveSettings = l.recvSettings
 
-	go func(in chan<- *util.RegistryEvent, logger *zap.Logger) {
+	go func(in chan<- *RegistryEvent, logger *zap.Logger) {
 		// Register this goroutine in the waiter
 		l.wait.Add(1)
 		defer l.wait.Done()
@@ -100,7 +99,7 @@ func (l *listener) startListener(ctx context.Context, credentials []byte) error 
 		l.logger.Debug("listener: subscription options", zap.Reflect("options", subscription.ReceiveSettings))
 		err = subscription.Receive(ctx,
 			func(ctx context.Context, message *pubsub.Message) {
-				obj := &util.RegistryEvent{Message: message}
+				obj := &RegistryEvent{Message: message}
 				jsonErr := json.Unmarshal(message.Data, obj)
 
 				if jsonErr != nil {
@@ -149,9 +148,9 @@ func (l *listener) startNacker(ctx context.Context) {
 	l.logger.Debug("error loop: starting")
 
 	for failure := range l.failures {
-		l.logger.Info("nacked", zap.String("tag", failure.Event().Tag))
-		l.logger.Warn("failed release", zap.Error(failure.Err()))
-		failure.Event().Message.Nack()
+		l.logger.Info("nacked", zap.String("tag", failure.Event.Tag))
+		l.logger.Warn("failed release", zap.Error(failure.Err))
+		failure.Event.Message.Nack()
 	}
 
 	l.logger.Debug("error loop: stopped")
