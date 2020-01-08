@@ -20,5 +20,7 @@ func ProcessYamls(yamls []string, app *TuberApp, digest string) (processed []byt
 }
 
 func interpolatableData(app *TuberApp, digest string) (data map[string]string) {
-	return map[string]string{"tuberImage": digest}
+	return map[string]string{
+		"tuberImage": digest,
+	}
 }
