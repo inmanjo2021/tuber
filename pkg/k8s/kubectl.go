@@ -2,13 +2,11 @@ package k8s
 
 import (
 	"fmt"
-	"io"
 	"os/exec"
-	"tuber/pkg/util"
 )
 
-// write apply a string using kubectl
-func write(bytes []byte, namespace string) (out []byte, err error) {
+// Apply `kubectl apply` data to a given namespace
+func Apply(bytes []byte, namespace string) (out []byte, err error) {
 	cmd := exec.Command("kubectl", "apply", "-n", namespace, "-f", "-")
 	stdin, err := cmd.StdinPipe()
 
@@ -48,40 +46,6 @@ func Get(kind string, name string, namespace string) (out []byte, err error) {
 	if cmd.ProcessState.ExitCode() != 0 {
 		err = fmt.Errorf("Get failed: %s", string(out))
 	}
-
-	return
-}
-
-// Apply applies Yaml vec
-func Apply(yamls []util.Yaml, namespace string) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "apply", "-n", namespace, "-f", "-")
-	stdin, err := cmd.StdinPipe()
-
-	if err != nil {
-		return
-	}
-
-	lastIndex := len(yamls) - 1
-
-	for i, yaml := range yamls {
-		io.WriteString(stdin, yaml.Content)
-
-		if i < lastIndex {
-			io.WriteString(stdin, "---\n")
-		}
-	}
-
-	stdin.Close()
-	out, err = cmd.CombinedOutput()
-
-	return
-}
-
-// SetImage sets a digest for all deployments of a given namespaced container
-func SetImage(namespace string, container string, digest string) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "-n", namespace, "set", "image", "deployments", container+"="+digest, "--all")
-
-	out, err = cmd.CombinedOutput()
 
 	return
 }
