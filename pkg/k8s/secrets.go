@@ -8,7 +8,7 @@ import (
 )
 
 // CreateFromFile creates a secret based on the contents of a file
-func CreateFromFile(path string, mountpoint string) (dat []byte, err error) {
+func CreateFromFile(path string, namespace string) (dat []byte, err error) {
 	dat, err = ioutil.ReadFile(path)
 	projectName := "tuber"
 
@@ -39,7 +39,7 @@ func CreateFromFile(path string, mountpoint string) (dat []byte, err error) {
 		return
 	}
 
-	Apply(jsondata, "tuber")
+	Apply(jsondata, namespace)
 
 	return
 }
