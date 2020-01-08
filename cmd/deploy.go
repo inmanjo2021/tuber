@@ -3,9 +3,9 @@ package cmd
 import (
 	"log"
 	"tuber/pkg/containers"
+	"tuber/pkg/core"
 	"tuber/pkg/events"
 	"tuber/pkg/gcloud"
-	"tuber/pkg/pulp"
 	"tuber/pkg/util"
 
 	"github.com/spf13/cobra"
@@ -38,7 +38,7 @@ func deploy(cmd *cobra.Command, args []string) {
 	logger := createLogger()
 	defer logger.Sync()
 
-	apps, err := pulp.TuberApps()
+	apps, err := core.TuberApps()
 
 	if err != nil {
 		log.Fatal(err)

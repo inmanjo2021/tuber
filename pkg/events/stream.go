@@ -61,7 +61,7 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 
 			releaseLog.Info("release: starting")
 
-			output, err := publish(pendingRelease, event, s.token)
+			output, err := publish(pendingRelease, event.Digest, s.token)
 
 			if err != nil {
 				releaseLog.Warn(

@@ -3,7 +3,7 @@ package cmd
 import (
 	"log"
 	"os"
-	"tuber/pkg/pulp"
+	"tuber/pkg/core"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -23,7 +23,7 @@ to quickly create a Cobra application.`,
 }
 
 func list(cmd *cobra.Command, args []string) {
-	apps, err := pulp.TuberApps()
+	apps, err := core.TuberApps()
 
 	if err != nil {
 		log.Fatal(err)

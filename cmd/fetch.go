@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 	"tuber/pkg/containers"
+	"tuber/pkg/core"
 	"tuber/pkg/gcloud"
-	"tuber/pkg/pulp"
 
 	"github.com/spf13/cobra"
 )
@@ -32,7 +32,7 @@ func fetch(cmd *cobra.Command, args []string) (err error) {
 		return
 	}
 
-	apps, err := pulp.TuberApps()
+	apps, err := core.TuberApps()
 
 	if err != nil {
 		return

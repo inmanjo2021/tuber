@@ -3,8 +3,8 @@ package cmd
 import (
 	"log"
 	"strings"
+	"tuber/pkg/core"
 	"tuber/pkg/k8s"
-	"tuber/pkg/pulp"
 
 	"github.com/spf13/cobra"
 )
@@ -34,7 +34,7 @@ to quickly create a Cobra application.`,
 			log.Fatal(err)
 		}
 
-		err = pulp.AddAppConfig(appName, repo, tag)
+		err = core.AddAppConfig(appName, repo, tag)
 
 		if err != nil {
 			log.Fatal(err)
