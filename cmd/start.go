@@ -67,17 +67,20 @@ func start(cmd *cobra.Command, args []string) {
 
 	creds, err := credentials()
 	if err != nil {
+		logger.Info("creds fail")
 		panic(err)
 	}
 
 	unprocessedEvents, processedEvents, failedEvents, err := l.Listen(ctx, creds)
 	if err != nil {
+		logger.Info("listen startup fail")
 		panic(err)
 	}
 
 	token, err := gcloud.GetAccessToken(creds)
 
 	if err != nil {
+		logger.Info("get access token fail")
 		panic(err)
 	}
 
