@@ -40,7 +40,7 @@ func ApplyTemplate(namespace string, templatestring string, params map[string]st
 		return
 	}
 
-	_, err = write(buf.Bytes(), namespace)
+	_, err = Apply(buf.Bytes(), namespace)
 
 	return
 }
@@ -55,14 +55,12 @@ func BindNamespace(namespace string) (err error) {
 		  name: tuber-admin
 		  namespace: {{ .Namespace }}
 		rules:
-		- apiGroups: ["", "extensions", "apps"]
-		  resources: ["*"]
-		  verbs: ["*"]
-		- apiGroups: ["batch"]
+		- apiGroups:
+		  - '*'
 		  resources:
-		  - jobs
-		  - cronjobs
-		  verbs: ["*"]
+		  - '*'
+		  verbs:
+		  - '*'
 		---
 		kind: RoleBinding
 		apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -75,7 +73,7 @@ func BindNamespace(namespace string) (err error) {
 		  name: tuber-admin
 		subjects:
 		- kind: ServiceAccount
-		  name: tuber:default
+		  name: default
 		  namespace: tuber
 	`)
 

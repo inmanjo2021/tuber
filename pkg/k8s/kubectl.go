@@ -27,7 +27,7 @@ func Apply(bytes []byte, namespace string) (out []byte, err error) {
 	out, err = cmd.CombinedOutput()
 
 	if err != nil {
-		return
+		return nil, fmt.Errorf(string(out))
 	}
 
 	if cmd.ProcessState.ExitCode() != 0 {
