@@ -28,11 +28,11 @@ func init() {
 	_ = viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
 }
 
-func createLogger() (logger *zap.Logger) {
+func createLogger() (logger *zap.Logger, err error) {
 	if viper.GetBool("debug") {
-		logger, _ = zap.NewDevelopment()
+		logger, err = zap.NewDevelopment()
 	} else {
-		logger, _ = zap.NewProduction()
+		logger, err = zap.NewProduction()
 	}
 	return
 }

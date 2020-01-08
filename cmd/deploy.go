@@ -24,7 +24,11 @@ func (emptyAckable) Ack()  {}
 func (emptyAckable) Nack() {}
 
 func deploy(cmd *cobra.Command, args []string) {
-	logger := createLogger()
+	logger, err := createLogger()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	defer logger.Sync()
 
 	apps, err := core.TuberApps()
