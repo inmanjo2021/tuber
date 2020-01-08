@@ -36,7 +36,7 @@ func (c *Config) Save() (err error) {
 		return
 	}
 
-	write(jsondata)
+	Apply(jsondata, "tuber")
 
 	return
 

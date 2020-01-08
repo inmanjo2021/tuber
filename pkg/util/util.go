@@ -2,11 +2,7 @@ package util
 
 import "strings"
 
-// Yaml is a yaml
-type Yaml struct {
-	Content  string
-	Filename string
-}
+// TODO: refactor to be a purpose-built link between listener and events
 
 // RegistryEvent json deserialize target for pubsub
 type RegistryEvent struct {

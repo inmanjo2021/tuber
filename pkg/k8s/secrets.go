@@ -39,7 +39,7 @@ func CreateFromFile(path string, mountpoint string) (dat []byte, err error) {
 		return
 	}
 
-	write(jsondata)
+	Apply(jsondata, "tuber")
 
 	return
 }

@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"tuber/pkg/dataTemplate"
 	"tuber/pkg/k8s"
-	"tuber/pkg/util"
 
 	"github.com/spf13/cobra"
 )
@@ -20,6 +22,7 @@ func init() {
 	rootCmd.AddCommand(updateCmd)
 }
 
+// TODO: don't run this at the moment. need to add support for passing in interpolatables. it currently applies the local yamls raw.
 func update(cmd *cobra.Command, args []string) {
 	dir := ".tuber/"
 	files, err := ioutil.ReadDir(".tuber")
@@ -28,7 +31,7 @@ func update(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	var yamls []util.Yaml
+	var yamls []dataTemplate.Yaml
 
 	for _, file := range files {
 		name := file.Name()
@@ -38,10 +41,25 @@ func update(cmd *cobra.Command, args []string) {
 			return
 		}
 		content := string(data)
-		yamls = append(yamls, util.Yaml{Content: content, Filename: name})
+		yamls = append(yamls, dataTemplate.Yaml{Content: content, Filename: name})
 	}
 
-	out, err := k8s.Apply(yamls, "tuber")
+	lastIndex := len(yamls) - 1
+	var buf bytes.Buffer
+
+	for i, yaml := range yamls {
+		_, err = io.WriteString(&buf, yaml.Content)
+
+		if i < lastIndex {
+			_, err = io.WriteString(&buf, "---\n")
+		}
+	}
+	if err != nil {
+		return
+	}
+	bytes := buf.Bytes()
+
+	out, err := k8s.Apply(bytes, "tuber")
 	if err != nil {
 		fmt.Println(err)
 	}

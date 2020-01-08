@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strings"
 
-	"tuber/pkg/util"
+	"tuber/pkg/dataTemplate"
 )
 
 type RepositoryLocation struct {
@@ -57,7 +57,7 @@ type repository struct {
 }
 
 // GetTuberLayer downloads yamls for an image
-func GetTuberLayer(location RepositoryLocation, password string) (yamls []util.Yaml, err error) {
+func GetTuberLayer(location RepositoryLocation, password string) (yamls []dataTemplate.Yaml, err error) {
 	reg := newRegistry(location.Host, password)
 	repo, err := reg.getRepository(location.Path)
 	if err != nil {
@@ -137,7 +137,7 @@ func (r *repository) getLayers(tag string) (layers []layer, err error) {
 	return manifest.Layers, nil
 }
 
-func (r *repository) downloadLayer(layerObj *layer) (yamls []util.Yaml, err error) {
+func (r *repository) downloadLayer(layerObj *layer) (yamls []dataTemplate.Yaml, err error) {
 	layer := layerObj.Digest
 
 	requestURL := fmt.Sprintf(
@@ -165,7 +165,7 @@ func (r *repository) downloadLayer(layerObj *layer) (yamls []util.Yaml, err erro
 	return
 }
 
-func convertResponse(response *http.Response) (yamls []util.Yaml, err error) {
+func convertResponse(response *http.Response) (yamls []dataTemplate.Yaml, err error) {
 	gzipped, err := gzip.NewReader(response.Body)
 
 	if err != nil {
@@ -203,7 +203,7 @@ func convertResponse(response *http.Response) (yamls []util.Yaml, err error) {
 			return
 		}
 
-		yaml := util.Yaml{Filename: header.Name, Content: string(bytes)}
+		yaml := dataTemplate.Yaml{Filename: header.Name, Content: string(bytes)}
 
 		yamls = append(yamls, yaml)
 	}
@@ -211,7 +211,7 @@ func convertResponse(response *http.Response) (yamls []util.Yaml, err error) {
 }
 
 // findLayer finds the .tuber layer containing deploy info for Tuber
-func (r *repository) findLayer(tag string) (yamls []util.Yaml, err error) {
+func (r *repository) findLayer(tag string) (yamls []dataTemplate.Yaml, err error) {
 	layers, err := r.getLayers(tag)
 
 	if err != nil {
