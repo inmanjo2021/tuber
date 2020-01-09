@@ -78,18 +78,18 @@ func start(cmd *cobra.Command, args []string) {
 
 	creds, err := credentials()
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	unprocessedEvents, processedEvents, failedEvents, err := l.Listen(ctx, creds)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	token, err := gcloud.GetAccessToken(creds)
 
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	// Create a new streamer
