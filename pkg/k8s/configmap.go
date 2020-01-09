@@ -39,7 +39,6 @@ func (c *Config) Save(namespace string) (err error) {
 	Apply(jsondata, namespace)
 
 	return
-
 }
 
 // GetConfig returns a Config struct with a Data element containing config map entries
