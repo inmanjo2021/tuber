@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"tuber/pkg/containers"
 	"tuber/pkg/events"
@@ -11,30 +12,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var deployCmd = &cobra.Command{
-	Use:   "deploy [appName]",
-	Short: "Deploys an app",
-	Run:   deploy,
+var deployWithErrorsCmd = &cobra.Command{
+	Use:   "deployWithErrors [appName]",
+	Short: "Deploys an app and simulates an error",
+	Run:   deployWithErrors,
 	Args:  cobra.ExactArgs(1),
 }
 
-type emptyAckable struct{}
-
-func (emptyAckable) Ack()  {}
-func (emptyAckable) Nack() {}
-
-type failedRelease struct {
-	err   error
-	event *util.RegistryEvent
-}
-
-// Err returns the error causing a failed release
-func (f failedRelease) Err() error { return nil }
-
-// Event returns the failed release event
-func (f failedRelease) Event() *util.RegistryEvent { return f.event }
-
-func deploy(cmd *cobra.Command, args []string) {
+func deployWithErrors(cmd *cobra.Command, args []string) {
 	logger := createLogger()
 	defer logger.Sync()
 
@@ -46,13 +31,7 @@ func deploy(cmd *cobra.Command, args []string) {
 
 	creds, err := credentials()
 	if err != nil {
-		return
-	}
-
-	token, err := gcloud.GetAccessToken(creds)
-
-	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err.Error())
 	}
 
 	app, err := apps.FindApp(args[0])
@@ -62,8 +41,12 @@ func deploy(cmd *cobra.Command, args []string) {
 
 	location := app.GetRepositoryLocation()
 
-	sha, err := containers.GetLatestSHA(location, token)
+	token, err := gcloud.GetAccessToken(creds)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	sha, err := containers.GetLatestSHA(location, token)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -87,6 +70,10 @@ func deploy(cmd *cobra.Command, args []string) {
 	unprocessedEvents <- &deployEvent
 
 	select {
+	case msg := <-errorReports:
+		fmt.Println("-------- error recieved ----------")
+		fmt.Println(msg)
+		close(errorReports)
 	case <-errorChan:
 		close(unprocessedEvents)
 	case <-processedEvents:
@@ -95,5 +82,5 @@ func deploy(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	rootCmd.AddCommand(deployCmd)
+	rootCmd.AddCommand(deployWithErrorsCmd)
 }
