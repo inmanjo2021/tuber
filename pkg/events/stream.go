@@ -1,6 +1,7 @@
 package events
 
 import (
+	"fmt"
 	"sync"
 	"tuber/pkg/util"
 
@@ -37,10 +38,11 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 
 	for event := range unprocessed {
 		go func(event *util.RegistryEvent) {
+			var err error
+
 			wait.Add(1)
 			defer wait.Done()
 
-			var err error
 			defer func() {
 				if err != nil {
 					s.logger.Warn("release error", zap.Error(err))
@@ -59,11 +61,14 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 
 			var releaseLog = s.logger.With(
 				zap.String("releaseName", pendingRelease.Name),
-				zap.String("releaseBranch", pendingRelease.Tag))
+				zap.String("releaseBranch", pendingRelease.Tag),
+			)
 
 			releaseLog.Info("release: starting")
 
 			output, err := publish(pendingRelease, event.Digest, s.token)
+
+			err = fmt.Errorf("This is an error")
 
 			if err != nil {
 				releaseLog.Warn(
@@ -74,6 +79,7 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 			} else {
 				releaseLog.Info("release: done")
 			}
+
 		}(event)
 	}
 

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"tuber/pkg/containers"
 	"tuber/pkg/core"
@@ -76,12 +75,14 @@ func deployWithErrors(cmd *cobra.Command, args []string) {
 
 	select {
 	case msg := <-errorReports:
-		fmt.Println("-------- error recieved ----------")
-		fmt.Println(msg)
+		log.Println("-------- error recieved ----------")
+		log.Println(msg)
 		close(errorReports)
 	case <-errorChan:
+		log.Println("-------- error2 recieved ----------")
 		close(unprocessedEvents)
 	case <-processedEvents:
+		log.Println("-------- unprocessed recieved ----------")
 		close(unprocessedEvents)
 	}
 }
