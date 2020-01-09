@@ -25,7 +25,7 @@ type Config struct {
 }
 
 // Save persists updates to a configmap to k8s
-func (c *Config) Save() (err error) {
+func (c *Config) Save(namespace string) (err error) {
 	config := c.config
 	config.Data = c.Data
 
@@ -36,10 +36,9 @@ func (c *Config) Save() (err error) {
 		return
 	}
 
-	write(jsondata)
+	Apply(jsondata, namespace)
 
 	return
-
 }
 
 // GetConfig returns a Config struct with a Data element containing config map entries
@@ -79,7 +78,7 @@ func PatchConfig(mapName string, namespace string, key string, value string) (er
 
 	config.Data[key] = value
 
-	return config.Save()
+	return config.Save(namespace)
 }
 
 // RemoveConfigEntry removes an entry, from a config
@@ -92,5 +91,5 @@ func RemoveConfigEntry(mapName string, namespace string, key string) (err error)
 
 	delete(config.Data, key)
 
-	return config.Save()
+	return config.Save(namespace)
 }

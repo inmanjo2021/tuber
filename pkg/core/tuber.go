@@ -1,4 +1,4 @@
-package pulp
+package core
 
 import (
 	"fmt"
@@ -105,8 +105,8 @@ func TuberApps() (apps AppList, err error) {
 
 // AddAppConfig add a new configuration to Tuber's config map
 func AddAppConfig(appName string, repo string, tag string) (err error) {
-	namespace := appName
 	key := appName
 	value := fmt.Sprintf("%s:%s", repo, tag)
-	return k8s.PatchConfig(tuberConfig, namespace, key, value)
+
+	return k8s.PatchConfig(tuberConfig, "tuber", key, value)
 }

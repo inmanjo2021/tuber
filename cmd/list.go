@@ -1,9 +1,12 @@
 package cmd
 
 import (
-	"fmt"
+	"log"
+	"os"
+	"tuber/pkg/core"
+
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"tuber/pkg/pulp"
 )
 
 // listCmd represents the list command
@@ -16,24 +19,25 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	RunE: list,
+	Run: list,
 }
 
-func list(cmd *cobra.Command, args []string) error {
-	apps, err := pulp.TuberApps()
+func list(cmd *cobra.Command, args []string) {
+	apps, err := core.TuberApps()
 
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	fmt.Printf("Name \t Image \n")
-	fmt.Printf("------------------------\n")
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Name", "Image"})
+	table.SetBorder(false)
 
 	for _, app := range apps {
-		fmt.Printf("%s \t %s \n", app.Name, app.ImageTag)
+		table.Append([]string{app.Name, app.ImageTag})
 	}
 
-	return nil
+	table.Render()
 }
 
 func init() {

@@ -1,12 +1,12 @@
 package events
 
 import (
-	"tuber/pkg/pulp"
+	"tuber/pkg/core"
 	"tuber/pkg/util"
 )
 
-func filter(e *util.RegistryEvent) (event *pulp.TuberApp, err error) {
-	apps, err := pulp.TuberApps()
+func filter(e *util.RegistryEvent) (event *core.TuberApp, err error) {
+	apps, err := core.TuberApps()
 
 	if err != nil {
 		return

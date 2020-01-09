@@ -8,23 +8,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var configCmd = &cobra.Command{
-	Use: "config [patch || remove]",
+var envCmd = &cobra.Command{
+	Use: "env [set || unset]",
 }
 
-var configPatchCmd = &cobra.Command{
-	Use:  "patch [appName] [key] [value]",
-	Run:  configPatch,
+var envSetCmd = &cobra.Command{
+	Use:  "set [appName] [key] [value]",
+	Run:  envSet,
 	Args: cobra.ExactArgs(3),
 }
 
-var configRemoveCmd = &cobra.Command{
-	Use:  "remove [appName] [key]",
-	Run:  configRemove,
+var envUnsetCmd = &cobra.Command{
+	Use:  "unset [appName] [key]",
+	Run:  envUnset,
 	Args: cobra.ExactArgs(2),
 }
 
-func configPatch(cmd *cobra.Command, args []string) {
+func envSet(cmd *cobra.Command, args []string) {
 	appName := args[0]
 	key := args[1]
 	value := args[2]
@@ -35,7 +35,7 @@ func configPatch(cmd *cobra.Command, args []string) {
 	}
 }
 
-func configRemove(cmd *cobra.Command, args []string) {
+func envUnset(cmd *cobra.Command, args []string) {
 	appName := args[0]
 	key := args[1]
 	mapName := fmt.Sprintf("%s-config", appName)
@@ -46,7 +46,7 @@ func configRemove(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	rootCmd.AddCommand(configCmd)
-	configCmd.AddCommand(configPatchCmd)
-	configCmd.AddCommand(configRemoveCmd)
+	rootCmd.AddCommand(envCmd)
+	envCmd.AddCommand(envSetCmd)
+	envCmd.AddCommand(envUnsetCmd)
 }

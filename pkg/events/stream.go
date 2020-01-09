@@ -2,7 +2,6 @@ package events
 
 import (
 	"sync"
-	"tuber/pkg/release"
 	"tuber/pkg/util"
 
 	"go.uber.org/zap"
@@ -44,6 +43,7 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 			var err error
 			defer func() {
 				if err != nil {
+					s.logger.Warn("release error", zap.Error(err))
 					chErr <- &failedRelease{err: err, event: event}
 					chErrReports <- err
 				} else {
@@ -63,14 +63,13 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 
 			releaseLog.Info("release: starting")
 
-			setImageOutput, applyOutput, err := release.New(pendingRelease, event, s.token)
+			output, err := publish(pendingRelease, event.Digest, s.token)
 
 			if err != nil {
 				releaseLog.Warn(
 					"release: error",
 					zap.Error(err),
-					zap.String("set-image-output", string(setImageOutput)),
-					zap.String("apply-output", string(applyOutput)),
+					zap.String("output", string(output)),
 				)
 			} else {
 				releaseLog.Info("release: done")
