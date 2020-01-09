@@ -21,7 +21,11 @@ type listener struct {
 	unprocessed chan *util.RegistryEvent
 	processed   chan *util.RegistryEvent
 	failures    chan util.FailedRelease
-	wait        *sync.WaitGroup
+
+	// TODO: What should this channel receive?
+	reportableErrors chan error
+
+	wait *sync.WaitGroup
 
 	logger       *zap.Logger
 	recvSettings pubsub.ReceiveSettings
@@ -50,11 +54,13 @@ func NewListener(logger *zap.Logger, options ...Option) *listener {
 		projectID:    "freshly-docker",
 		subscription: "freshly-docker-gcr-events",
 
-		unprocessed:  make(chan *util.RegistryEvent, 1),
-		processed:    make(chan *util.RegistryEvent, 1),
-		wait:         &sync.WaitGroup{},
-		logger:       logger,
-		recvSettings: pubsub.ReceiveSettings{},
+		unprocessed:      make(chan *util.RegistryEvent, 1),
+		processed:        make(chan *util.RegistryEvent, 1),
+		failures:         make(chan util.FailedRelease, 1),
+		reportableErrors: make(chan error, 1),
+		wait:             &sync.WaitGroup{},
+		logger:           logger,
+		recvSettings:     pubsub.ReceiveSettings{},
 	}
 
 	for _, option := range options {
