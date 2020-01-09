@@ -39,7 +39,10 @@ func bindShutdown(logger *zap.Logger, cancel func()) {
 
 func start(cmd *cobra.Command, args []string) {
 	// Create a logger and defer an final sync (os.flush())
-	logger := createLogger()
+	logger, err := createLogger()
+	if err != nil {
+		panic(err)
+	}
 	defer logger.Sync()
 
 	// calling cancel() will signal to the rest of the application
@@ -64,7 +67,7 @@ func start(cmd *cobra.Command, args []string) {
 
 	creds, err := credentials()
 	if err != nil {
-		return
+		panic(err)
 	}
 
 	unprocessedEvents, processedEvents, failedEvents, err := l.Listen(ctx, creds)
