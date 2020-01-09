@@ -7,7 +7,7 @@ import (
 	"tuber/pkg/k8s"
 )
 
-// ReleaseTubers combines and interpolates with tuber's conventions
+// ReleaseTubers combines and interpolates with tuber's conventions, and applies them
 func ReleaseTubers(tubers []string, app *TuberApp, digest string) (output []byte, err error) {
 	return ApplyInterpolated(tubers, app.Name, tuberData(app, digest))
 }
@@ -18,6 +18,7 @@ func tuberData(app *TuberApp, digest string) (data map[string]string) {
 	}
 }
 
+// ApplyInterpolated combines and interpolates yamls with provided data, and applies them
 func ApplyInterpolated(yamls []string, namespace string, data map[string]string) (output []byte, err error) {
 	combined := strings.Join(yamls, "---\n")
 	tmpl, err := template.New("").Parse(combined)
