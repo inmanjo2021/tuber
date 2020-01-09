@@ -46,6 +46,15 @@ func start(cmd *cobra.Command, args []string) {
 	}
 	defer logger.Sync()
 
+	// Report any errors to Sentry
+	sentryEnabled := viper.GetBool("sentry-enabled")
+	sentryDsn := viper.GetString("sentry-dsn")
+	errReports := make(chan error, 1)
+
+	defer close(errReports)
+
+	go errors.Stream(sentryEnabled, sentryDsn, errReports, logger)
+
 	// calling cancel() will signal to the rest of the application
 	// that we want to shut down
 	var ctx, cancel = context.WithCancel(context.Background())
@@ -65,15 +74,6 @@ func start(cmd *cobra.Command, args []string) {
 	}
 
 	var l = listener.NewListener(logger, options...)
-
-	// Report any errors to Sentry
-	sentryEnabled := viper.GetBool("sentry-enabled")
-	sentryDsn := viper.GetString("sentry-dsn")
-	errReports := make(chan error, 1)
-
-	defer close(errReports)
-
-	errors.Stream(sentryEnabled, sentryDsn, errReports, logger)
 
 	creds, err := credentials()
 	if err != nil {
