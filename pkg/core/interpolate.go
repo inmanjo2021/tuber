@@ -6,7 +6,7 @@ import (
 	"text/template"
 )
 
-// ProcessYamls combines and interpolates with tuber's conventions
+// ProcessYamls combines and interpolates yaml strings with tuber's conventions
 func ProcessYamls(yamls []string, app *TuberApp, digest string) (processed []byte, err error) {
 	combined := strings.Join(yamls, "---\n")
 	tmpl, err := template.New("").Parse(combined)
