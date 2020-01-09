@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -42,7 +43,7 @@ func start(cmd *cobra.Command, args []string) {
 	// Create a logger and defer an final sync (os.flush())
 	logger, err := createLogger()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer logger.Sync()
 
@@ -73,24 +74,22 @@ func start(cmd *cobra.Command, args []string) {
 
 	defer close(errReports)
 
-	if sentryEnabled {
-		errors.InitSentry(sentryDsn, errReports)
-	}
+	errors.Stream(sentryEnabled, sentryDsn, errReports, logger)
 
 	creds, err := credentials()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	unprocessedEvents, processedEvents, failedEvents, err := l.Listen(ctx, creds)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	token, err := gcloud.GetAccessToken(creds)
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	// Create a new streamer

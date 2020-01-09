@@ -1,7 +1,6 @@
 package events
 
 import (
-	"fmt"
 	"sync"
 	"tuber/pkg/util"
 
@@ -45,7 +44,6 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 
 			defer func() {
 				if err != nil {
-					s.logger.Warn("release error", zap.Error(err))
 					chErr <- &failedRelease{err: err, event: event}
 					chErrReports <- err
 				} else {
@@ -68,8 +66,6 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 
 			output, err := publish(pendingRelease, event.Digest, s.token)
 
-			err = fmt.Errorf("This is an error")
-
 			if err != nil {
 				releaseLog.Warn(
 					"release: error",
@@ -79,7 +75,6 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 			} else {
 				releaseLog.Info("release: done")
 			}
-
 		}(event)
 	}
 
