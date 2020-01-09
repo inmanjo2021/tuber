@@ -26,7 +26,7 @@ type templater struct {
 	Namespace string
 }
 
-func ApplyTemplate(namespace string, templatestring string, params map[string]string) (err error) {
+func ApplyTemplate(namespace string, templatestring string, params map[string]string) (out []byte, err error) {
 	tpl, err := template.New("tpl").Parse(templatestring)
 
 	if err != nil {
@@ -40,13 +40,13 @@ func ApplyTemplate(namespace string, templatestring string, params map[string]st
 		return
 	}
 
-	_, err = Apply(buf.Bytes(), namespace)
+	out, err = Apply(buf.Bytes(), namespace)
 
 	return
 }
 
 // BindNamespace create a new namespace in kubernetes
-func BindNamespace(namespace string) (err error) {
+func BindNamespace(namespace string) ([]byte, error) {
 	templatestring := heredoc.Doc(`
 		---
 		kind: Role
