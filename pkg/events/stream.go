@@ -43,6 +43,7 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 			var err error
 			defer func() {
 				if err != nil {
+					s.logger.Warn("release error", zap.Error(err))
 					chErr <- &failedRelease{err: err, event: event}
 				} else {
 					processed <- event
