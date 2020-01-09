@@ -35,8 +35,6 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 
 	var wait = &sync.WaitGroup{}
 
-	s.logger.Info("stream loop start")
-
 	for event := range unprocessed {
 		go func(event *util.RegistryEvent) {
 			wait.Add(1)
@@ -45,7 +43,6 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 			var err error
 			defer func() {
 				if err != nil {
-					s.logger.Warn("failed release err", zap.Error(err))
 					chErr <- &failedRelease{err: err, event: event}
 				} else {
 					processed <- event
