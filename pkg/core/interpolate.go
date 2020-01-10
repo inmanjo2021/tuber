@@ -14,7 +14,7 @@ func ReleaseTubers(tubers []string, app *TuberApp, digest string) ([]byte, error
 func tuberData(app *TuberApp, digest string) (data map[string]string) {
 	return map[string]string{
 		"tuberImage":            digest,
-		"clusterDefaultGateway": viper.GetString("default-gateway"),
-		"clusterHostname":       viper.GetString("hostname"),
+		"clusterDefaultGateway": viper.GetString("cluster-default-gateway"),
+		"clusterHostname":       viper.GetString("cluster-hostname"),
 	}
 }
