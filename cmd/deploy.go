@@ -63,12 +63,12 @@ func deploy(cmd *cobra.Command, args []string) {
 
 	streamer := events.NewStreamer(token, logger)
 
-	errorChan := make(chan util.FailedRelease, 1)
+	errorChan := make(chan listener.FailedRelease, 1)
 	unprocessedEvents := make(chan *listener.RegistryEvent, 1)
 	processedEvents := make(chan *listener.RegistryEvent, 1)
 	errorReports := make(chan error, 1)
 
-  go streamer.Stream(unprocessedEvents, processedEvents, errorChan, errorReports)
+	go streamer.Stream(unprocessedEvents, processedEvents, errorChan, errorReports)
 
 	ackable := emptyAckable{}
 	deployEvent := listener.RegistryEvent{

@@ -33,7 +33,7 @@ func (s *streamer) Stream(unprocessed <-chan *listener.RegistryEvent, processed 
 
 			defer func() {
 				if err != nil {
-					chErr <- &listener.FailedRelease{err: err, event: event}
+					chErr <- listener.FailedRelease{Err: err, Event: event}
 					chErrReports <- err
 				} else {
 					processed <- event
