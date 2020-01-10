@@ -2,19 +2,21 @@ package events
 
 import (
 	"sync"
+	"tuber/pkg/core"
 	"tuber/pkg/util"
 
 	"go.uber.org/zap"
 )
 
 type streamer struct {
-	token  string
-	logger *zap.Logger
+	token       string
+	logger      *zap.Logger
+	clusterData *core.ClusterData
 }
 
 // NewStreamer creates a new Streamer struct
-func NewStreamer(token string, logger *zap.Logger) *streamer {
-	return &streamer{token, logger}
+func NewStreamer(token string, logger *zap.Logger, clusterData *core.ClusterData) *streamer {
+	return &streamer{token: token, logger: logger, clusterData: clusterData}
 }
 
 type failedRelease struct {
@@ -64,7 +66,7 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 
 			releaseLog.Info("release: starting")
 
-			output, err := publish(pendingRelease, event.Digest, s.token)
+			output, err := publish(pendingRelease, event.Digest, s.token, s.clusterData)
 
 			if err != nil {
 				releaseLog.Warn(

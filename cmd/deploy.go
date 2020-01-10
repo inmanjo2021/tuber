@@ -61,7 +61,7 @@ func deploy(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	streamer := events.NewStreamer(token, logger)
+	streamer := events.NewStreamer(token, logger, clusterData())
 
 	errorChan := make(chan util.FailedRelease, 1)
 	unprocessedEvents := make(chan *util.RegistryEvent, 1)

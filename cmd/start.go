@@ -92,7 +92,7 @@ func start(cmd *cobra.Command, args []string) {
 	}
 
 	// Create a new streamer
-	streamer := events.NewStreamer(token, logger)
+	streamer := events.NewStreamer(token, logger, clusterData())
 	go streamer.Stream(unprocessedEvents, processedEvents, failedEvents, errReports)
 
 	// Wait for cancel() of context
