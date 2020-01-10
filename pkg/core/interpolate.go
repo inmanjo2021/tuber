@@ -1,25 +1,15 @@
 package core
 
 import (
-	"bytes"
 	"strings"
-	"text/template"
 )
 
-// ProcessYamls combines and interpolates yaml strings with tuber's conventions
-func ProcessYamls(yamls []string, app *TuberApp, digest string) (processed []byte, err error) {
-	combined := strings.Join(yamls, "---\n")
-	tmpl, err := template.New("").Parse(combined)
-	if err != nil {
-		return
-	}
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, interpolatableData(app, digest))
-	processed = buf.Bytes()
-	return
+// ReleaseTubers combines and interpolates with tuber's conventions, and applies them
+func ReleaseTubers(tubers []string, app *TuberApp, digest string) ([]byte, error) {
+	return ApplyTemplate(app.Name, strings.Join(tubers, "---\n"), tuberData(app, digest))
 }
 
-func interpolatableData(app *TuberApp, digest string) (data map[string]string) {
+func tuberData(app *TuberApp, digest string) (data map[string]string) {
 	return map[string]string{
 		"tuberImage": digest,
 	}

@@ -2,9 +2,7 @@ package cmd
 
 import (
 	"log"
-	"strings"
 	"tuber/pkg/core"
-	"tuber/pkg/k8s"
 
 	"github.com/spf13/cobra"
 )
@@ -21,17 +19,10 @@ var createCmd = &cobra.Command{
 		repo := args[1]
 		tag := args[2]
 
-		err = k8s.CreateNamespace(appName)
-		err = k8s.BindNamespace(appName)
-
-		if err != nil && !strings.Contains(err.Error(), "AlreadyExists") {
-			log.Fatal(err)
-		}
-
-		err = core.AddAppConfig(appName, repo, tag)
+		outputError, err := core.CreateTuberApp(appName, repo, tag)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(err, string(outputError))
 		}
 	},
 }
