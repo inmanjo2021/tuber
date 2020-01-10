@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"tuber/pkg/errors"
 	"tuber/pkg/events"
 	"tuber/pkg/gcloud"
 	"tuber/pkg/listener"
@@ -45,6 +46,15 @@ func start(cmd *cobra.Command, args []string) {
 	}
 	defer logger.Sync()
 
+	// Report any errors to Sentry
+	sentryEnabled := viper.GetBool("sentry-enabled")
+	sentryDsn := viper.GetString("sentry-dsn")
+	errReports := make(chan error, 1)
+
+	defer close(errReports)
+
+	go errors.Stream(sentryEnabled, sentryDsn, errReports, logger)
+
 	// calling cancel() will signal to the rest of the application
 	// that we want to shut down
 	var ctx, cancel = context.WithCancel(context.Background())
@@ -83,7 +93,7 @@ func start(cmd *cobra.Command, args []string) {
 
 	// Create a new streamer
 	streamer := events.NewStreamer(token, logger)
-	go streamer.Stream(unprocessedEvents, processedEvents, failedEvents)
+	go streamer.Stream(unprocessedEvents, processedEvents, failedEvents, errReports)
 
 	// Wait for cancel() of context
 	<-ctx.Done()

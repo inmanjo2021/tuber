@@ -29,7 +29,7 @@ func (f *failedRelease) Err() error { return f.err }
 func (f *failedRelease) Event() *util.RegistryEvent { return f.event }
 
 // Stream streams a stream
-func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan<- *util.RegistryEvent, chErr chan<- util.FailedRelease) {
+func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan<- *util.RegistryEvent, chErr chan<- util.FailedRelease, chErrReports chan<- error) {
 	defer close(processed)
 	defer close(chErr)
 
@@ -37,14 +37,15 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 
 	for event := range unprocessed {
 		go func(event *util.RegistryEvent) {
+			var err error
+
 			wait.Add(1)
 			defer wait.Done()
 
-			var err error
 			defer func() {
 				if err != nil {
-					s.logger.Warn("release error", zap.Error(err))
 					chErr <- &failedRelease{err: err, event: event}
+					chErrReports <- err
 				} else {
 					processed <- event
 				}
@@ -58,7 +59,8 @@ func (s *streamer) Stream(unprocessed <-chan *util.RegistryEvent, processed chan
 
 			var releaseLog = s.logger.With(
 				zap.String("releaseName", pendingRelease.Name),
-				zap.String("releaseBranch", pendingRelease.Tag))
+				zap.String("releaseBranch", pendingRelease.Tag),
+			)
 
 			releaseLog.Info("release: starting")
 

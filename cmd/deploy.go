@@ -66,7 +66,8 @@ func deploy(cmd *cobra.Command, args []string) {
 	errorChan := make(chan util.FailedRelease, 1)
 	unprocessedEvents := make(chan *util.RegistryEvent, 1)
 	processedEvents := make(chan *util.RegistryEvent, 1)
-	go streamer.Stream(unprocessedEvents, processedEvents, errorChan)
+	errorReports := make(chan error, 1)
+	go streamer.Stream(unprocessedEvents, processedEvents, errorChan, errorReports)
 
 	ackable := emptyAckable{}
 	deployEvent := util.RegistryEvent{
