@@ -53,7 +53,13 @@ func PatchSecret(mapName string, namespace string, key string, value string) (er
 		return
 	}
 
-	config.Data[key] = base64.StdEncoding.EncodeToString([]byte(value))
+	value = base64.StdEncoding.EncodeToString([]byte(value))
+
+	if config.Data == nil {
+		config.Data = map[string]string{key: value}
+	} else {
+		config.Data[key] = value
+	}
 
 	return config.Save(namespace)
 }
