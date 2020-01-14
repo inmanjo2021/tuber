@@ -28,8 +28,8 @@ func envSet(cmd *cobra.Command, args []string) {
 	appName := args[0]
 	key := args[1]
 	value := args[2]
-	mapName := fmt.Sprintf("%s-config", appName)
-	err := k8s.PatchConfig(mapName, appName, key, value)
+	mapName := fmt.Sprintf("%s-env", appName)
+	err := k8s.PatchSecret(mapName, appName, key, value)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,8 +38,8 @@ func envSet(cmd *cobra.Command, args []string) {
 func envUnset(cmd *cobra.Command, args []string) {
 	appName := args[0]
 	key := args[1]
-	mapName := fmt.Sprintf("%s-config", appName)
-	err := k8s.RemoveConfigEntry(mapName, appName, key)
+	mapName := fmt.Sprintf("%s-env", appName)
+	err := k8s.RemoveSecretEntry(mapName, appName, key)
 	if err != nil {
 		log.Fatal(err)
 	}

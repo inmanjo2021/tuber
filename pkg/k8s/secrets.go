@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -42,4 +43,36 @@ func CreateFromFile(path string, namespace string) (dat []byte, err error) {
 	Apply(jsondata, namespace)
 
 	return
+}
+
+// PatchSecret gets, patches, and saves a secret
+func PatchSecret(mapName string, namespace string, key string, value string) (err error) {
+	config, err := GetConfig(mapName, namespace, "Secret")
+
+	if err != nil {
+		return
+	}
+
+	value = base64.StdEncoding.EncodeToString([]byte(value))
+
+	if config.Data == nil {
+		config.Data = map[string]string{key: value}
+	} else {
+		config.Data[key] = value
+	}
+
+	return config.Save(namespace)
+}
+
+// RemoveSecretEntry removes an entry, from a secret
+func RemoveSecretEntry(mapName string, namespace string, key string) (err error) {
+	config, err := GetConfig(mapName, namespace, "Secret")
+
+	if err != nil {
+		return
+	}
+
+	delete(config.Data, key)
+
+	return config.Save(namespace)
 }
