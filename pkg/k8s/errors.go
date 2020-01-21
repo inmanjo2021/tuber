@@ -1,23 +1,21 @@
 package k8s
 
 import (
-	"fmt"
-	"regexp"
+	"errors"
 	"strings"
 )
 
-// CommandError wraps exitCode != 0 cases with kubectl and provides a richer interface
-type CommandError struct {
-	message string
-}
+var ResourceAlreadyExists = errors.New("k8s: resource already exists")
+var ResourceNotFound = errors.New("k8s: resource not found")
 
-func (e *CommandError) ResourceAlreadyExists() bool {
-	return strings.Contains(e.message, "AlreadyExists")
-}
+func NewError(message string) error {
+	if strings.Contains(message, "AlreadyExists") {
+		return ResourceAlreadyExists
+	}
 
-func (e *CommandError) Error() string {
-	re := regexp.MustCompile(`^.*: `)
-	msg := re.ReplaceAllString(e.message, "")
+	if strings.Contains(message, "doesn't have a resource") {
+		return ResourceNotFound
+	}
 
-	return fmt.Sprintf("k8s: %s", msg)
+	return errors.New(message)
 }
