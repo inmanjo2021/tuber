@@ -2,7 +2,6 @@ package core
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"tuber/pkg/k8s"
 
@@ -13,9 +12,7 @@ import (
 // role, rolebinding, and a listing in tuber-apps
 func CreateTuberApp(appName string, repo string, tag string) (out []byte, err error) {
 	if err := k8s.CreateNamespace(appName); err != nil {
-		if err.(*k8s.CommandError).ResourceAlreadyExists() {
-			fmt.Print(err.Error())
-			fmt.Println("Continuing..")
+		if err == k8s.ResourceAlreadyExists {
 			err = nil
 		} else {
 			return nil, err
