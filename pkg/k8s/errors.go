@@ -1,6 +1,10 @@
 package k8s
 
-import "strings"
+import (
+	"fmt"
+	"regexp"
+	"strings"
+)
 
 // CommandError wraps exitCode != 0 cases with kubectl and provides a richer interface
 type CommandError struct {
@@ -12,5 +16,8 @@ func (e *CommandError) ResourceAlreadyExists() bool {
 }
 
 func (e *CommandError) Error() string {
-	return e.message
+	re := regexp.MustCompile(`^.*: `)
+	msg := re.ReplaceAllString(e.message, "")
+
+	return fmt.Sprintf("k8s: %s", msg)
 }
