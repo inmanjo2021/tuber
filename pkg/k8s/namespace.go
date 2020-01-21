@@ -11,7 +11,7 @@ func CreateNamespace(namespace string) (err error) {
 	out, err := cmd.CombinedOutput()
 
 	if cmd.ProcessState.ExitCode() != 0 {
-		err = &CommandError{message: string(out)}
+		err = NewError(string(out))
 	}
 
 	return
