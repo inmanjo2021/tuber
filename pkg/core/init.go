@@ -40,8 +40,8 @@ var deployment = heredoc.Doc(`
 `)
 
 func CreateTuberDirectory() (err error) {
-	if _, err := os.Stat(tuberConfigPath); os.IsNotExist(err) {
-		if err := os.Mkdir(tuberConfigPath, os.ModePerm); err != nil {
+	if _, err = os.Stat(tuberConfigPath); os.IsNotExist(err) {
+		if err = os.Mkdir(tuberConfigPath, os.ModePerm); err != nil {
 			return
 		}
 	}
@@ -50,7 +50,7 @@ func CreateTuberDirectory() (err error) {
 }
 
 func CreateDeploymentYAML(appName string) (err error) {
-	if _, err := os.Stat(tuberConfigPath + "deployment.yaml"); os.IsExist(err) {
+	if _, err = os.Stat(tuberConfigPath + "deployment.yaml"); os.IsExist(err) {
 		return nil
 	}
 
@@ -68,7 +68,7 @@ func CreateDeploymentYAML(appName string) (err error) {
 		return
 	}
 
-	if err := ioutil.WriteFile(tuberConfigPath, buff.Bytes(), 0644); err != nil {
+	if err = ioutil.WriteFile(tuberConfigPath, buff.Bytes(), 0644); err != nil {
 		return
 	}
 

@@ -17,7 +17,7 @@ var initCmd = &cobra.Command{
 func initialize(cmd *cobra.Command, args []string) (err error) {
 	appName := args[0]
 
-	if err := core.CreateTuberDirectory(); err != nil {
+	if err = core.CreateTuberDirectory(); err != nil {
 		return
 	}
 
