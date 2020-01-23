@@ -9,7 +9,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 )
 
-const tuberConfigPath = "./tuber"
+const tuberConfigPath = ".tuber"
 
 var deployment = heredoc.Doc(`
 	apiVersion: apps/v1
@@ -40,20 +40,14 @@ var deployment = heredoc.Doc(`
 `)
 
 func CreateTuberDirectory() (err error) {
-	if _, err = os.Stat(tuberConfigPath); os.IsNotExist(err) {
-		if err = os.Mkdir(tuberConfigPath, os.ModePerm); err != nil {
-			return
-		}
+	if err = os.Mkdir(tuberConfigPath, os.ModePerm); err != nil {
+		return
 	}
 
 	return
 }
 
 func CreateDeploymentYAML(appName string) (err error) {
-	if _, err = os.Stat(tuberConfigPath + "deployment.yaml"); os.IsExist(err) {
-		return nil
-	}
-
 	tpl, err := template.New("tpl").Parse(deployment)
 	if err != nil {
 		return
@@ -68,7 +62,7 @@ func CreateDeploymentYAML(appName string) (err error) {
 		return
 	}
 
-	if err = ioutil.WriteFile(tuberConfigPath, buff.Bytes(), 0644); err != nil {
+	if err = ioutil.WriteFile(tuberConfigPath+"/deployment.yaml", buff.Bytes(), 0644); err != nil {
 		return
 	}
 
