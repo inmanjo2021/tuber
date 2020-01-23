@@ -22,6 +22,12 @@ func CreateTuberApp(appName string, repo string, tag string) (out []byte, err er
 		return
 	}
 
+	out, err = k8s.CreateEnv(appName)
+
+	if err != nil {
+		return
+	}
+
 	err = AddAppConfig(appName, repo, tag)
 
 	if err != nil {

@@ -50,6 +50,18 @@ func Get(kind string, name string, namespace string) (out []byte, err error) {
 	return
 }
 
+// Create creates a resource with a given name and namespace
+func Create(resource string, otherResource string, name string, namespace string) (out []byte, err error) {
+	cmd := exec.Command("kubectl", "create", resource, otherResource, name, "-n", namespace)
+
+	a := cmd.String()
+	fmt.Println(a)
+
+	out, err = cmd.CombinedOutput()
+
+	return
+}
+
 // Patch patches data for a given resource and namespace
 func Patch(name string, namespace string, data string) (out []byte, err error) {
 	cmd := exec.Command("kubectl", "patch", name, "-n", namespace, "--type", "merge", "-p", data)
