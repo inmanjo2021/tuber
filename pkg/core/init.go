@@ -40,8 +40,8 @@ var deployment = heredoc.Doc(`
 `)
 
 func CreateTuberDirectory() (err error) {
-	if err = os.Mkdir(tuberConfigPath, os.ModePerm); err != nil {
-		return
+	if err = os.Mkdir(tuberConfigPath, os.ModePerm); os.IsExist(err) {
+		return nil
 	}
 
 	return
