@@ -5,7 +5,6 @@ go 1.13
 require (
 	cloud.google.com/go/pubsub v1.1.0
 	github.com/MakeNowJust/heredoc v1.0.0
-	github.com/davecgh/go-spew v1.1.1
 	github.com/getsentry/sentry-go v0.4.0
 	github.com/joho/godotenv v1.3.0
 	github.com/olekukonko/tablewriter v0.0.4
