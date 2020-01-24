@@ -18,3 +18,7 @@ type FailedRelease struct {
 	Err   error
 	Event *RegistryEvent
 }
+
+func (f *FailedRelease) Error() string {
+	return f.Err.Error()
+}
