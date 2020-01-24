@@ -1,6 +1,4 @@
-package util
-
-// TODO: refactor to be a purpose-built link between listener and events
+package listener
 
 // RegistryEvent json deserialize target for pubsub
 type RegistryEvent struct {
@@ -16,7 +14,11 @@ type ackable interface {
 }
 
 // FailedRelease can be created while streaming, consumed by the listener
-type FailedRelease interface {
-	Err() error
-	Event() *RegistryEvent
+type FailedRelease struct {
+	Err   error
+	Event *RegistryEvent
+}
+
+func (f *FailedRelease) Error() string {
+	return f.Err.Error()
 }
