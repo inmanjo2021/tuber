@@ -31,7 +31,7 @@ func Apply(bytes []byte, namespace string) (out []byte, err error) {
 	}
 
 	if cmd.ProcessState.ExitCode() != 0 {
-		err = fmt.Errorf(string(out))
+		err = NewError(string(out))
 	}
 
 	return
@@ -44,7 +44,7 @@ func Get(kind string, name string, namespace string) (out []byte, err error) {
 	out, err = cmd.CombinedOutput()
 
 	if cmd.ProcessState.ExitCode() != 0 {
-		err = fmt.Errorf("Get failed: %s", string(out))
+		err = NewError(string(out))
 	}
 
 	return
