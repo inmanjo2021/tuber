@@ -73,6 +73,8 @@ func start(cmd *cobra.Command, args []string) {
 		options = append(options, listener.WithMaxTimeout(viper.GetDuration("max-timeout")))
 	}
 
+	}
+
 	var l = listener.NewListener(logger, options...)
 
 	creds, err := credentials()

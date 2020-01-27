@@ -47,6 +47,12 @@ func WithMaxTimeout(d time.Duration) Option {
 	}
 }
 
+func WithSubscriptionName(n string) Option {
+	return func(l *listener) {
+		l.subscription = n
+	}
+}
+
 // NewListener creates a new PubSub listener
 func NewListener(logger *zap.Logger, options ...Option) *listener {
 	var l = &listener{
