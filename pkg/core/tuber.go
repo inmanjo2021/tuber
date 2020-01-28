@@ -115,5 +115,5 @@ func AddAppConfig(appName string, repo string, tag string) (err error) {
 	key := appName
 	value := fmt.Sprintf("%s:%s", repo, tag)
 
-	return k8s.PatchSecret(tuberConfig, "tuber", key, value)
+	return k8s.PatchConfigMap(tuberConfig, "tuber", key, value)
 }
