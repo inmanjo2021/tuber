@@ -73,8 +73,8 @@ func start(cmd *cobra.Command, args []string) {
 		options = append(options, listener.WithMaxTimeout(viper.GetDuration("max-timeout")))
 	}
 
-	if viper.IsSet("subscription-name") {
-		options = append(options, listener.WithSubscriptionName(viper.GetString("subscription-name")))
+	if viper.IsSet("pubsub-subscription-name") {
+		options = append(options, listener.WithSubscriptionName(viper.GetString("pubsub-subscription-name")))
 	}
 
 	var l = listener.NewListener(logger, options...)
