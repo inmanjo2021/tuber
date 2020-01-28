@@ -49,7 +49,7 @@ func refreshAppsCache(apps []TuberApp) {
 }
 
 func getTuberApps() (apps []TuberApp, err error) {
-	config, err := k8s.GetConfig(tuberConfig, "tuber", "Secret")
+	config, err := k8s.GetConfig(tuberConfig, "tuber", "ConfigMap")
 
 	if err != nil {
 		return
