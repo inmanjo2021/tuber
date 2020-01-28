@@ -73,7 +73,6 @@ func start(cmd *cobra.Command, args []string) {
 		options = append(options, listener.WithMaxTimeout(viper.GetDuration("max-timeout")))
 	}
 
-	viper.SetDefault("subscription-name", "freshly-docker-gcr-events")
 	if viper.IsSet("subscription-name") {
 		options = append(options, listener.WithSubscriptionName(viper.GetString("subscription-name")))
 	}

@@ -56,9 +56,7 @@ func WithSubscriptionName(n string) Option {
 // NewListener creates a new PubSub listener
 func NewListener(logger *zap.Logger, options ...Option) *listener {
 	var l = &listener{
-		projectID:    "freshly-docker",
-		subscription: "freshly-docker-gcr-events",
-
+		projectID:        "freshly-docker",
 		unprocessed:      make(chan *RegistryEvent, 1),
 		processed:        make(chan *RegistryEvent, 1),
 		failures:         make(chan FailedRelease, 1),
