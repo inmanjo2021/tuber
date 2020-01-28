@@ -47,16 +47,12 @@ func WithMaxTimeout(d time.Duration) Option {
 	}
 }
 
-func WithSubscriptionName(n string) Option {
-	return func(l *listener) {
-		l.subscription = n
-	}
-}
-
 // NewListener creates a new PubSub listener
-func NewListener(logger *zap.Logger, options ...Option) *listener {
+func NewListener(logger *zap.Logger, subscriptionName string, options ...Option) *listener {
 	var l = &listener{
-		projectID:        "freshly-docker",
+		projectID:    "freshly-docker",
+		subscription: subscriptionName,
+
 		unprocessed:      make(chan *RegistryEvent, 1),
 		processed:        make(chan *RegistryEvent, 1),
 		failures:         make(chan FailedRelease, 1),

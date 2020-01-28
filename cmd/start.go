@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/signal"
 	"syscall"
-	"tuber/pkg/errors"
+	sentry "tuber/pkg/errors"
 	"tuber/pkg/events"
 	"tuber/pkg/gcloud"
 	"tuber/pkg/listener"
@@ -53,7 +54,7 @@ func start(cmd *cobra.Command, args []string) {
 
 	defer close(errReports)
 
-	go errors.Stream(sentryEnabled, sentryDsn, errReports, logger)
+	go sentry.Stream(sentryEnabled, sentryDsn, errReports, logger)
 
 	// calling cancel() will signal to the rest of the application
 	// that we want to shut down
@@ -73,11 +74,13 @@ func start(cmd *cobra.Command, args []string) {
 		options = append(options, listener.WithMaxTimeout(viper.GetDuration("max-timeout")))
 	}
 
-	if viper.IsSet("pubsub-subscription-name") {
-		options = append(options, listener.WithSubscriptionName(viper.GetString("pubsub-subscription-name")))
+	subscriptionName := viper.GetString("pubsub-subscription-name")
+	if len(subscriptionName) < 1 {
+		err = errors.New("pubsub subscription name is required")
+		panic(err)
 	}
 
-	var l = listener.NewListener(logger, options...)
+	var l = listener.NewListener(logger, subscriptionName, options...)
 
 	creds, err := credentials()
 	if err != nil {
