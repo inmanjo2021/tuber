@@ -36,25 +36,44 @@ var deployment = heredoc.Doc(`
 						- secretRef:
 								name: {{.appName}}-env
 					ports:
-						- containerPort: 80
+						- containerPort: 3000
 `)
 
 var service = heredoc.Doc(`
 	apiVersion: v1
 	kind: Service
 	metadata:
-		name: {{.appName}}-service
+		name: {{.appName}}
 		namespace: {{.appName}}
 	spec:
 		ports:
-		- port: 9090
-			targetPort: {{.port}}
-			name: grpc-{{.appName}}
+		- port: 3000
+			name: grpc
 		selector:
 			app: {{.appName}}
 `)
 
-func Init(appName string, port string) (err error) {
+var virtualService = heredoc.Doc(`
+	apiVersion: networking.istio.io/v1alpha3
+	kind: VirtualService
+	metadata:
+		name: {{.appName}}-ingress
+		namespace: {{.appName}}
+	spec:
+		hosts:
+			- "*"
+		gateways:
+		- istio-system/tls-gateway
+		http:
+		- match:
+			- uri:
+				prefix: {{.routePrefix}}
+			route:
+			- destination:
+					host: {{.appName}}
+`)
+
+func Init(appName string, routePrefix string) (err error) {
 	if err = createTuberDirectory(); err != nil {
 		return
 	}
@@ -63,7 +82,11 @@ func Init(appName string, port string) (err error) {
 		return
 	}
 
-	if err = createServiceYAML(appName, port); err != nil {
+	if err = createServiceYAML(appName); err != nil {
+		return
+	}
+
+	if err = createVirtualServiceYAML(appName, routePrefix); err != nil {
 		return
 	}
 
@@ -86,13 +109,21 @@ func createDeploymentYAML(appName string) (err error) {
 	return writeYAML("deployment.yaml", deployment, templateData)
 }
 
-func createServiceYAML(appName string, port string) (err error) {
+func createServiceYAML(appName string) (err error) {
 	templateData := map[string]string{
 		"appName": appName,
-		"port":    port,
 	}
 
 	return writeYAML("service.yaml", service, templateData)
+}
+
+func createVirtualServiceYAML(appName string, routePrefix string) (err error) {
+	templateData := map[string]string{
+		"appName":     appName,
+		"routePrefix": routePrefix,
+	}
+
+	return writeYAML("virtual_service.yaml", virtualService, templateData)
 }
 
 func writeYAML(fileName string, templateString string, templateData map[string]string) (err error) {

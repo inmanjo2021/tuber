@@ -7,7 +7,7 @@ import (
 )
 
 var initCmd = &cobra.Command{
-	Use:   "init [appName] [portNumber]",
+	Use:   "init [appName] [routePrefix]",
 	Short: "initialize a .tuber directory and relevant yamls",
 	Long: `App name is the name of your app, which will be interpolated into the configuration files and used as the
 		namespace, as well as other things. Port number is the port that your app will run on. The standard is port 80.`,
@@ -17,9 +17,9 @@ var initCmd = &cobra.Command{
 
 func initialize(cmd *cobra.Command, args []string) (err error) {
 	appName := args[0]
-	portNumber := args[1]
+	routePrefix := args[1]
 
-	return core.Init(appName, portNumber)
+	return core.Init(appName, routePrefix)
 }
 
 func init() {
