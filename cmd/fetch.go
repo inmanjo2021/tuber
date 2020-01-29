@@ -44,7 +44,8 @@ func fetch(cmd *cobra.Command, args []string) (err error) {
 		return
 	}
 
-	yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
+	prerelease, yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
+	yamls = append(yamls, prerelease...)
 
 	if err == nil {
 		for i, yaml := range yamls {

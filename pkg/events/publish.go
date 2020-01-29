@@ -6,13 +6,19 @@ import (
 )
 
 func publish(app *core.TuberApp, digest string, token string) (output []byte, err error) {
-	yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
+	prereleaseYamls, releaseYamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
 
 	if err != nil {
 		return
 	}
 
-	output, err = core.ReleaseTubers(yamls, app, digest)
+	output, err = core.RunPrerelease(prereleaseYamls, app, digest)
+
+	if err != nil {
+		return
+	}
+
+	output, err = core.ReleaseTubers(releaseYamls, app, digest)
 
 	return
 }
