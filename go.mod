@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/pubsub v1.1.0
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/getsentry/sentry-go v0.4.0
+	github.com/goccy/go-yaml v1.2.0
 	github.com/joho/godotenv v1.3.0
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/spf13/cobra v0.0.5
@@ -16,4 +17,5 @@ require (
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sys v0.0.0-20191026070338-33540a1f6037 // indirect
 	google.golang.org/api v0.14.0
+	gopkg.in/yaml.v2 v2.2.4
 )

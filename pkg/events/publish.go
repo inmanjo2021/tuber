@@ -1,6 +1,7 @@
 package events
 
 import (
+	"fmt"
 	"tuber/pkg/containers"
 	"tuber/pkg/core"
 )
@@ -15,6 +16,7 @@ func publish(app *core.TuberApp, digest string, token string) (output []byte, er
 	output, err = core.RunPrerelease(prereleaseYamls, app, digest)
 
 	if err != nil {
+		err = fmt.Errorf("prerelease error: %s", err.Error())
 		return
 	}
 
