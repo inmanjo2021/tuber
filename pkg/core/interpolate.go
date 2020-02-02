@@ -66,6 +66,7 @@ spec:
 `)
 
 type prerelease struct {
+	Kind     string
 	Metadata Metadata
 }
 
@@ -82,15 +83,16 @@ func RunPrerelease(tubersTemp []string, app *TuberApp, digest string) (out []byt
 
 		prereleaser := prerelease{}
 		err = yaml.Unmarshal([]byte(tuber), &prereleaser)
+		kind := strings.ToLower(prereleaser.Kind)
 
 		out, err = ReleaseTubers(tubers, app, digest)
 		if err != nil {
 			return
 		}
 
-		out, err = waitForPhase(prereleaser.Metadata.Name, app)
+		out, err = waitForPhase(prereleaser.Metadata.Name, kind, app)
 		if err != nil {
-			deleteOut, deleteErr := deletePrereleaser(prereleaser.Metadata.Name, app)
+			deleteOut, deleteErr := deletePrereleaser(prereleaser.Metadata.Name, kind, app)
 			if deleteErr != nil {
 				doubleFailOut := []byte(string(out) + "\n also failed delete:" + string(deleteOut))
 				doubleFailErr := fmt.Errorf(err.Error() + "\n also failed delete:" + deleteErr.Error())
@@ -99,15 +101,15 @@ func RunPrerelease(tubersTemp []string, app *TuberApp, digest string) (out []byt
 			return
 		}
 
-		return deletePrereleaser(prereleaser.Metadata.Name, app)
+		return deletePrereleaser(prereleaser.Metadata.Name, kind, app)
 	}
 	return []byte{}, fmt.Errorf("unhandled prerelease run exit")
 }
 
-func waitForPhase(name string, app *TuberApp) ([]byte, error) {
+func waitForPhase(name string, kind string, app *TuberApp) ([]byte, error) {
 	for {
 		time.Sleep(5 * time.Second)
-		status, err := checkPhase(name, app)
+		status, err := checkPhase(name, kind, app)
 		if err != nil {
 			return []byte{}, err
 		}
@@ -116,7 +118,7 @@ func waitForPhase(name string, app *TuberApp) ([]byte, error) {
 		case "Succeeded":
 			return []byte{}, nil
 		case "Failed":
-			message, err := investigateFailure(name, app)
+			message, err := investigateFailure(name, kind, app)
 			if err != nil {
 				return message, err
 			}
@@ -128,22 +130,22 @@ func waitForPhase(name string, app *TuberApp) ([]byte, error) {
 	return []byte{}, fmt.Errorf("unhandled prerelease phase watch exit")
 }
 
-func checkPhase(name string, app *TuberApp) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "get", "pod", name, "-n", app.Name, "-o", `go-template="{{.status.phase}}"`)
+func checkPhase(name string, kind string, app *TuberApp) (out []byte, err error) {
+	cmd := exec.Command("kubectl", "get", kind, name, "-n", app.Name, "-o", `go-template="{{.status.phase}}"`)
 
 	out, err = cmd.CombinedOutput()
 	return
 }
 
-func investigateFailure(name string, app *TuberApp) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "get", "pod", name, "-n", app.Name, "-o", `go-template="{{range .status.containerStatuses}}{{.state.terminated.message}}{{end}}"`)
+func investigateFailure(name string, kind string, app *TuberApp) (out []byte, err error) {
+	cmd := exec.Command("kubectl", "get", kind, name, "-n", app.Name, "-o", `go-template="{{range .status.containerStatuses}}{{.state.terminated.message}}{{end}}"`)
 
 	out, err = cmd.CombinedOutput()
 	return
 }
 
-func deletePrereleaser(name string, app *TuberApp) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "delete", "pod", name, "-n", app.Name)
+func deletePrereleaser(name string, kind string, app *TuberApp) (out []byte, err error) {
+	cmd := exec.Command("kubectl", "delete", kind, name, "-n", app.Name)
 
 	out, err = cmd.CombinedOutput()
 	return
