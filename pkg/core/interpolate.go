@@ -73,27 +73,35 @@ type Metadata struct {
 	Name string
 }
 
-func RunPrerelease(tubers []string, app *TuberApp, digest string) (out []byte, err error) {
-	// will need to make all this a loop
-	prereleaser := prerelease{}
-	err = yaml.Unmarshal([]byte(testYaml), &prereleaser)
+func RunPrerelease(tubersTemp []string, app *TuberApp, digest string) (out []byte, err error) {
+	for _, tuber := range tubersTemp {
 
-	// for testing without committing up to address-service
-	tubers = []string{testYaml}
+		// for testing without committing up to address-service
+		tubers := []string{testYaml}
+		tuber = testYaml
 
-	out, err = ReleaseTubers(tubers, app, digest)
-	if err != nil {
-		return
+		prereleaser := prerelease{}
+		err = yaml.Unmarshal([]byte(tuber), &prereleaser)
+
+		out, err = ReleaseTubers(tubers, app, digest)
+		if err != nil {
+			return
+		}
+
+		out, err = waitForPhase(prereleaser.Metadata.Name, app)
+		if err != nil {
+			deleteOut, deleteErr := deletePrereleaser(prereleaser.Metadata.Name, app)
+			if deleteErr != nil {
+				doubleFailOut := []byte(string(out) + "\n also failed delete:" + string(deleteOut))
+				doubleFailErr := fmt.Errorf(err.Error() + "\n also failed delete:" + deleteErr.Error())
+				return doubleFailOut, doubleFailErr
+			}
+			return
+		}
+
+		return deletePrereleaser(prereleaser.Metadata.Name, app)
 	}
-
-	out, err = waitForPhase(prereleaser.Metadata.Name, app)
-	if err != nil {
-		return
-	}
-
-	out, err = deletePrereleaser(prereleaser.Metadata.Name, app)
-
-	return
+	return []byte{}, fmt.Errorf("unhandled prerelease run exit")
 }
 
 func waitForPhase(name string, app *TuberApp) ([]byte, error) {
