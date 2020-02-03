@@ -9,12 +9,22 @@ import (
 // CreateTuberApp adds a new tuber app configuration, including namespace,
 // role, rolebinding, and a listing in tuber-apps
 func CreateTuberApp(appName string, repo string, tag string) (out []byte, err error) {
-	err = k8s.CreateNamespace(appName)
+	if err := k8s.CreateNamespace(appName); err != nil {
+		if err == k8s.ErrResourceAlreadyExists {
+			err = nil
+		} else {
+			return nil, err
+		}
+	}
+
+	appRoleTemplate, appRoleData := appRoles(appName)
+	out, err = ApplyTemplate(appName, appRoleTemplate, appRoleData)
+
 	if err != nil {
 		return
 	}
-	appRoleTemplate, appRoleData := appRoles(appName)
-	out, err = ApplyTemplate(appName, appRoleTemplate, appRoleData)
+
+	out, err = k8s.CreateEnv(appName)
 
 	if err != nil {
 		return

@@ -1,14 +1,15 @@
 package k8s
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
 )
 
-// CreateFromFile creates a secret based on the contents of a file
-func CreateFromFile(path string, namespace string) (dat []byte, err error) {
+// CreateTuberCredentials creates a secret based on the contents of a file
+func CreateTuberCredentials(path string, namespace string) (dat []byte, err error) {
 	dat, err = ioutil.ReadFile(path)
 	projectName := "tuber"
 
@@ -39,7 +40,70 @@ func CreateFromFile(path string, namespace string) (dat []byte, err error) {
 		return
 	}
 
-	Apply(jsondata, namespace)
+	return Apply(jsondata, namespace)
+}
 
-	return
+// CreateEnvFromFile replaces an apps env with data in a local file
+func CreateEnvFromFile(name string, path string) (err error) {
+	config, err := GetConfig(name+"-env", name, "Secret")
+
+	if err != nil {
+		return
+	}
+
+	out, err := ioutil.ReadFile(path)
+
+	if err != nil {
+		return
+	}
+
+	var data map[string]string
+	err = json.Unmarshal(out, &data)
+	if err != nil {
+		return
+	}
+
+	for k, v := range data {
+		data[k] = base64.StdEncoding.EncodeToString([]byte(v))
+	}
+
+	config.Data = data
+	return config.Save(name)
+}
+
+// PatchSecret gets, patches, and saves a secret
+func PatchSecret(mapName string, namespace string, key string, value string) (err error) {
+	config, err := GetConfig(mapName, namespace, "Secret")
+
+	if err != nil {
+		return
+	}
+
+	value = base64.StdEncoding.EncodeToString([]byte(value))
+
+	if config.Data == nil {
+		config.Data = map[string]string{key: value}
+	} else {
+		config.Data[key] = value
+	}
+
+	return config.Save(namespace)
+}
+
+// RemoveSecretEntry removes an entry, from a secret
+func RemoveSecretEntry(mapName string, namespace string, key string) (err error) {
+	config, err := GetConfig(mapName, namespace, "Secret")
+
+	if err != nil {
+		return
+	}
+
+	delete(config.Data, key)
+
+	return config.Save(namespace)
+}
+
+// CreateEnv creates a Secret for a new TuberApp, to store env vars
+func CreateEnv(appName string) (out []byte, err error) {
+	return Create("secret", "generic", appName+"-env", appName)
 }
