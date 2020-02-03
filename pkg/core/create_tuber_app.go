@@ -1,8 +1,6 @@
 package core
 
 import (
-	"bytes"
-	"html/template"
 	"tuber/pkg/k8s"
 
 	"github.com/MakeNowJust/heredoc"
@@ -37,26 +35,6 @@ func CreateTuberApp(appName string, repo string, tag string) (out []byte, err er
 	if err != nil {
 		return
 	}
-
-	return
-}
-
-// ApplyTemplate interpolates and applies a yaml to a given namespace
-func ApplyTemplate(namespace string, templatestring string, params map[string]string) (out []byte, err error) {
-	tpl, err := template.New("tpl").Parse(templatestring)
-
-	if err != nil {
-		return
-	}
-
-	var buf bytes.Buffer
-	err = tpl.Execute(&buf, params)
-
-	if err != nil {
-		return
-	}
-
-	out, err = k8s.Apply(buf.Bytes(), namespace)
 
 	return
 }

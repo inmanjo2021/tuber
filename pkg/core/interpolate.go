@@ -1,23 +1,34 @@
 package core
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
+	"text/template"
 	"time"
 	"tuber/pkg/k8s"
 
-	"github.com/goccy/go-yaml"
+	"gopkg.in/yaml.v2"
 )
 
-// ReleaseTubers combines and interpolates with tuber's conventions, and applies them
-func ReleaseTubers(tubers []string, app *TuberApp, digest string) ([]byte, error) {
-	return ApplyTemplate(app.Name, strings.Join(tubers, "---\n"), tuberData(app, digest))
-}
+// ApplyTemplate interpolates and applies a yaml to a given namespace
+func ApplyTemplate(namespace string, templatestring string, params map[string]string) (out []byte, err error) {
+	tpl, err := template.New("").Parse(templatestring)
 
-func tuberData(app *TuberApp, digest string) (data map[string]string) {
-	return map[string]string{
-		"tuberImage": digest,
+	if err != nil {
+		return
 	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, params)
+
+	if err != nil {
+		return
+	}
+
+	out, err = k8s.Apply(buf.Bytes(), namespace)
+
+	return
 }
 
 type prerelease struct {
@@ -32,7 +43,7 @@ type Metadata struct {
 
 // RunPrerelease takes an array of pods, that are designed to be single use command runners
 // that have access to the new code being released.
-func RunPrerelease(tubers []string, app *TuberApp, digest string) (out []byte, err error) {
+func RunPrerelease(tubers []string, app *TuberApp, digest string, clusterData *ClusterData) (out []byte, err error) {
 	for _, tuber := range tubers {
 		prereleaser := prerelease{}
 		err = yaml.Unmarshal([]byte(tuber), &prereleaser)
@@ -45,7 +56,7 @@ func RunPrerelease(tubers []string, app *TuberApp, digest string) (out []byte, e
 			return
 		}
 
-		out, err = ReleaseTubers([]string{tuber}, app, digest)
+		out, err = ReleaseTubers([]string{tuber}, app, digest, clusterData)
 		if err != nil {
 			return
 		}
