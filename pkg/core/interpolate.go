@@ -2,11 +2,10 @@ package core
 
 import (
 	"fmt"
-	"os/exec"
 	"strings"
 	"time"
+	"tuber/pkg/k8s"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/goccy/go-yaml"
 )
 
@@ -21,95 +20,66 @@ func tuberData(app *TuberApp, digest string) (data map[string]string) {
 	}
 }
 
-// for testing without committing up to address-service
-var testYaml = heredoc.Doc(`
-apiVersion: v1
-kind: Pod
-metadata:
-  name: db-migrate
-  namespace: address-service
-  annotations:
-    sidecar.istio.io/inject: "false"
-spec:
-  restartPolicy: Never
-  containers:
-  - name: db-migrate
-    image: us.gcr.io/freshly-docker/address-service@sha256:531630e7167f57975bc79617271aaae0d635fde8ea8030cc021e796f9b4c8a4f
-    command: ["/bin/sh"]
-    args: ["-c", "rails db:migrate > /dev/termination-log"]
-    terminationMessagePolicy: FallbackToLogsOnError
-    envFrom:
-      - secretRef:
-          name: address-service-env
-`)
-
-// success example
-var success = heredoc.Doc(`
-apiVersion: v1
-kind: Pod
-metadata:
-  name: db-migrate
-  namespace: address-service
-  annotations:
-    sidecar.istio.io/inject: "false"
-spec:
-  restartPolicy: Never
-  containers:
-  - name: db-migrate
-    image: us.gcr.io/freshly-docker/address-service@sha256:531630e7167f57975bc79617271aaae0d635fde8ea8030cc021e796f9b4c8a4f
-    command: ["printenv"]
-    args: ["HOSTNAME", "KUBERNETES_PORT"]
-    terminationMessagePolicy: FallbackToLogsOnError
-    envFrom:
-      - secretRef:
-          name: address-service-env
-`)
-
 type prerelease struct {
 	Kind     string
 	Metadata Metadata
 }
 
+// Metadata exported for the yaml unmarshaller
 type Metadata struct {
 	Name string
 }
 
-func RunPrerelease(tubersTemp []string, app *TuberApp, digest string) (out []byte, err error) {
-	for _, tuber := range tubersTemp {
-
-		// for testing without committing up to address-service
-		tubers := []string{testYaml}
-		tuber = testYaml
-
+// RunPrerelease takes an array of pods, that are designed to be single use command runners
+// that have access to the new code being released.
+func RunPrerelease(tubers []string, app *TuberApp, digest string) (out []byte, err error) {
+	for _, tuber := range tubers {
 		prereleaser := prerelease{}
 		err = yaml.Unmarshal([]byte(tuber), &prereleaser)
-		kind := strings.ToLower(prereleaser.Kind)
-
-		out, err = ReleaseTubers(tubers, app, digest)
 		if err != nil {
 			return
 		}
 
-		out, err = waitForPhase(prereleaser.Metadata.Name, kind, app)
+		if prereleaser.Kind != "Pod" {
+			err = fmt.Errorf("prerelease resources must be Pods, received %s", prereleaser.Kind)
+			return
+		}
+
+		out, err = ReleaseTubers([]string{tuber}, app, digest)
 		if err != nil {
-			deleteOut, deleteErr := deletePrereleaser(prereleaser.Metadata.Name, kind, app)
+			return
+		}
+
+		out, err = waitForPhase(prereleaser.Metadata.Name, "pod", app)
+		if err != nil {
+			deleteOut, deleteErr := k8s.Delete("pod", prereleaser.Metadata.Name, app.Name)
 			if deleteErr != nil {
-				doubleFailOut := []byte(string(out) + "\n also failed delete:" + string(deleteOut))
-				doubleFailErr := fmt.Errorf(err.Error() + "\n also failed delete:" + deleteErr.Error())
-				return doubleFailOut, doubleFailErr
+				return deleteOut, fmt.Errorf(err.Error() + "\n also failed delete:" + deleteErr.Error())
 			}
 			return
 		}
 
-		return deletePrereleaser(prereleaser.Metadata.Name, kind, app)
+		return k8s.Delete("pod", prereleaser.Metadata.Name, app.Name)
 	}
-	return []byte{}, fmt.Errorf("unhandled prerelease run exit")
+	err = fmt.Errorf("unhandled prerelease run exit")
+	return
 }
 
 func waitForPhase(name string, kind string, app *TuberApp) ([]byte, error) {
+	phaseTemplate := fmt.Sprintf(`go-template="%s"`, "{{.status.phase}}")
+	failureTemplate := fmt.Sprintf(
+		`go-template="%s"`,
+		"{{range .status.containerStatuses}}{{.state.terminated.message}}{{end}}",
+	)
+	timeout := time.Now().Add(time.Minute * 10)
+
 	for {
+		if time.Now().After(timeout) {
+			return []byte{}, fmt.Errorf("timeout")
+		}
 		time.Sleep(5 * time.Second)
-		status, err := checkPhase(name, kind, app)
+
+		status, err := k8s.Get(kind, name, app.Name, "-o", phaseTemplate)
 		if err != nil {
 			return []byte{}, err
 		}
@@ -118,35 +88,13 @@ func waitForPhase(name string, kind string, app *TuberApp) ([]byte, error) {
 		case "Succeeded":
 			return []byte{}, nil
 		case "Failed":
-			message, err := investigateFailure(name, kind, app)
+			message, failedRetrieval := k8s.Get(kind, name, app.Name, "-o", failureTemplate)
 			if err != nil {
-				return message, err
+				return message, failedRetrieval
 			}
-			return message, fmt.Errorf(string(message))
+			return message, nil
 		default:
 			continue
 		}
 	}
-	return []byte{}, fmt.Errorf("unhandled prerelease phase watch exit")
-}
-
-func checkPhase(name string, kind string, app *TuberApp) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "get", kind, name, "-n", app.Name, "-o", `go-template="{{.status.phase}}"`)
-
-	out, err = cmd.CombinedOutput()
-	return
-}
-
-func investigateFailure(name string, kind string, app *TuberApp) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "get", kind, name, "-n", app.Name, "-o", `go-template="{{range .status.containerStatuses}}{{.state.terminated.message}}{{end}}"`)
-
-	out, err = cmd.CombinedOutput()
-	return
-}
-
-func deletePrereleaser(name string, kind string, app *TuberApp) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "delete", kind, name, "-n", app.Name)
-
-	out, err = cmd.CombinedOutput()
-	return
 }

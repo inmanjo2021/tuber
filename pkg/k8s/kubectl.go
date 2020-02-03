@@ -1,20 +1,31 @@
 package k8s
 
 import (
-	"fmt"
 	"os/exec"
 )
 
-// Apply `kubectl apply` data to a given namespace
-func Apply(bytes []byte, namespace string) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "apply", "-n", namespace, "-f", "-")
+func runKubectl(cmd *exec.Cmd) (out []byte, err error) {
+	out, err = cmd.CombinedOutput()
+
+	if cmd.ProcessState.ExitCode() != 0 {
+		err = newError(string(out))
+	}
+	return
+}
+
+func kubectl(args ...string) ([]byte, error) {
+	return runKubectl(exec.Command("kubectl", args...))
+}
+
+func pipeToKubectl(data []byte, args ...string) (out []byte, err error) {
+	cmd := exec.Command("kubectl", args...)
 	stdin, err := cmd.StdinPipe()
 
 	if err != nil {
 		return
 	}
 
-	_, err = stdin.Write(bytes)
+	_, err = stdin.Write(data)
 	if err != nil {
 		return
 	}
@@ -24,58 +35,27 @@ func Apply(bytes []byte, namespace string) (out []byte, err error) {
 		return
 	}
 
-	out, err = cmd.CombinedOutput()
-
-	if err != nil {
-		return nil, fmt.Errorf(string(out))
-	}
-
-	if cmd.ProcessState.ExitCode() != 0 {
-		err = NewError(string(out))
-	}
-
-	return
+	return runKubectl(cmd)
 }
 
-// Get get a config
-func Get(kind string, name string, namespace string) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "get", kind, name, "-o", "json", "-n", namespace)
+// Apply `kubectl apply` data to a given namespace
+func Apply(data []byte, namespace string, args ...string) ([]byte, error) {
+	apply := []string{"apply", "-n", namespace, "-f", "-"}
+	return pipeToKubectl(data, append(apply, args...)...)
+}
 
-	out, err = cmd.CombinedOutput()
+func Get(kind string, name string, namespace string, args ...string) ([]byte, error) {
+	get := []string{"get", kind, name, "-n", namespace}
+	return kubectl(append(get, args...)...)
+}
 
-	if cmd.ProcessState.ExitCode() != 0 {
-		err = NewError(string(out))
-	}
-
-	return
+func Delete(kind string, name string, namespace string, args ...string) ([]byte, error) {
+	deleteArgs := []string{"delete", kind, name, "-n", namespace}
+	return kubectl(append(deleteArgs, args...)...)
 }
 
 // Create creates a resource with a given name and namespace
-func Create(resource string, otherResource string, name string, namespace string) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "create", resource, otherResource, name, "-n", namespace)
-
-	a := cmd.String()
-	fmt.Println(a)
-
-	out, err = cmd.CombinedOutput()
-
-	return
-}
-
-// Patch patches data for a given resource and namespace
-func Patch(name string, namespace string, data string) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "patch", name, "-n", namespace, "--type", "merge", "-p", data)
-
-	out, err = cmd.CombinedOutput()
-
-	return
-}
-
-// Remove expects a remove operation with a path
-func Remove(name string, namespace string, data string) (out []byte, err error) {
-	cmd := exec.Command("kubectl", "patch", name, "-n", namespace, "--type=json", "-p", data)
-
-	out, err = cmd.CombinedOutput()
-
-	return
+func Create(namespace string, resourceAndArgs ...string) ([]byte, error) {
+	create := []string{"create", "-n", namespace}
+	return kubectl(append(create, resourceAndArgs...)...)
 }

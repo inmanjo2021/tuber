@@ -8,7 +8,7 @@ import (
 var ErrResourceAlreadyExists = errors.New("k8s: resource already exists")
 var ErrResourceNotFound = errors.New("k8s: resource not found")
 
-func NewError(message string) error {
+func newError(message string) error {
 	if strings.Contains(message, "AlreadyExists") {
 		return ErrResourceAlreadyExists
 	}
