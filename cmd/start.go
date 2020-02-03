@@ -5,10 +5,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"tuber/pkg/errors"
 	"tuber/pkg/events"
 	"tuber/pkg/gcloud"
 	"tuber/pkg/listener"
+	"tuber/pkg/sentry"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -53,7 +53,7 @@ func start(cmd *cobra.Command, args []string) {
 
 	defer close(errReports)
 
-	go errors.Stream(sentryEnabled, sentryDsn, errReports, logger)
+	go sentry.Stream(sentryEnabled, sentryDsn, errReports, logger)
 
 	// calling cancel() will signal to the rest of the application
 	// that we want to shut down
