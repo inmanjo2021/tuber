@@ -8,7 +8,7 @@ import (
 
 // ApplyTemplate interpolates and applies a yaml to a given namespace
 func ApplyTemplate(namespace string, templatestring string, params map[string]string) (out []byte, err error) {
-	tpl, err := template.New("tpl").Parse(templatestring)
+	tpl, err := template.New("").Parse(templatestring)
 
 	if err != nil {
 		return
