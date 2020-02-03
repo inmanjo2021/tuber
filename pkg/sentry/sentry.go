@@ -1,4 +1,4 @@
-package errors
+package sentry
 
 import (
 	"time"

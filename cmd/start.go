@@ -6,10 +6,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	sentry "tuber/pkg/errors"
+
 	"tuber/pkg/events"
 	"tuber/pkg/gcloud"
 	"tuber/pkg/listener"
+	"tuber/pkg/sentry"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
