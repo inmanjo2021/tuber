@@ -108,6 +108,11 @@ func (r *repository) getManifest(tag string) (m manifest, err error) {
 		return
 	}
 
+	if len(res.Header["Docker-Content-Digest"]) == 0 {
+		err = &InvalidRegistryResponse{StatusCode: res.StatusCode, Headers: res.Header}
+		return
+	}
+
 	digest := res.Header["Docker-Content-Digest"][0]
 
 	m = manifest{Digest: digest}

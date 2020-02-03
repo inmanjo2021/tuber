@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/base64"
 	"fmt"
 	"strings"
 	"sync"
@@ -49,25 +48,19 @@ func refreshAppsCache(apps []TuberApp) {
 }
 
 func getTuberApps() (apps []TuberApp, err error) {
-	config, err := k8s.GetConfig(tuberConfig, "tuber", "Secret")
+	config, err := k8s.GetConfig(tuberConfig, "tuber", "ConfigMap")
 
 	if err != nil {
 		return
 	}
 
 	for name, imageTag := range config.Data {
-		decoded, decodeErr := base64.StdEncoding.DecodeString(imageTag)
-		if decodeErr != nil {
-			return
-		}
-
-		decodedTag := string(decoded)
-		split := strings.SplitN(decodedTag, ":", 2)
+		split := strings.SplitN(imageTag, ":", 2)
 		repoSplit := strings.SplitN(split[0], "/", 2)
 
 		apps = append(apps, TuberApp{
 			Name:     name,
-			ImageTag: decodedTag,
+			ImageTag: imageTag,
 			Tag:      split[1],
 			RepoPath: repoSplit[1],
 			RepoHost: repoSplit[0],
@@ -115,5 +108,5 @@ func AddAppConfig(appName string, repo string, tag string) (err error) {
 	key := appName
 	value := fmt.Sprintf("%s:%s", repo, tag)
 
-	return k8s.PatchSecret(tuberConfig, "tuber", key, value)
+	return k8s.PatchConfigMap(tuberConfig, "tuber", key, value)
 }

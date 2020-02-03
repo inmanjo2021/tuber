@@ -1,8 +1,6 @@
 package core
 
 import (
-	"bytes"
-	"html/template"
 	"tuber/pkg/k8s"
 
 	"github.com/MakeNowJust/heredoc"
@@ -11,12 +9,22 @@ import (
 // CreateTuberApp adds a new tuber app configuration, including namespace,
 // role, rolebinding, and a listing in tuber-apps
 func CreateTuberApp(appName string, repo string, tag string) (out []byte, err error) {
-	err = k8s.CreateNamespace(appName)
+	if err := k8s.CreateNamespace(appName); err != nil {
+		if err == k8s.ErrResourceAlreadyExists {
+			err = nil
+		} else {
+			return nil, err
+		}
+	}
+
+	appRoleTemplate, appRoleData := appRoles(appName)
+	out, err = ApplyTemplate(appName, appRoleTemplate, appRoleData)
+
 	if err != nil {
 		return
 	}
-	appRoleTemplate, appRoleData := appRoles(appName)
-	out, err = ApplyTemplate(appName, appRoleTemplate, appRoleData)
+
+	out, err = k8s.CreateEnv(appName)
 
 	if err != nil {
 		return
@@ -27,25 +35,6 @@ func CreateTuberApp(appName string, repo string, tag string) (out []byte, err er
 	if err != nil {
 		return
 	}
-
-	return
-}
-
-func ApplyTemplate(namespace string, templatestring string, params map[string]string) (out []byte, err error) {
-	tpl, err := template.New("tpl").Parse(templatestring)
-
-	if err != nil {
-		return
-	}
-
-	var buf bytes.Buffer
-	err = tpl.Execute(&buf, params)
-
-	if err != nil {
-		return
-	}
-
-	out, err = k8s.Apply(buf.Bytes(), namespace)
 
 	return
 }

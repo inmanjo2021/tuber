@@ -1,16 +1,27 @@
 package core
 
 import (
-	"strings"
+	"bytes"
+	"html/template"
+	"tuber/pkg/k8s"
 )
 
-// ReleaseTubers combines and interpolates with tuber's conventions, and applies them
-func ReleaseTubers(tubers []string, app *TuberApp, digest string) ([]byte, error) {
-	return ApplyTemplate(app.Name, strings.Join(tubers, "---\n"), tuberData(app, digest))
-}
+// ApplyTemplate interpolates and applies a yaml to a given namespace
+func ApplyTemplate(namespace string, templatestring string, params map[string]string) (out []byte, err error) {
+	tpl, err := template.New("").Parse(templatestring)
 
-func tuberData(app *TuberApp, digest string) (data map[string]string) {
-	return map[string]string{
-		"tuberImage": digest,
+	if err != nil {
+		return
 	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, params)
+
+	if err != nil {
+		return
+	}
+
+	out, err = k8s.Apply(buf.Bytes(), namespace)
+
+	return
 }

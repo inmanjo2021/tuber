@@ -6,7 +6,7 @@ import (
 	"tuber/pkg/core"
 	"tuber/pkg/events"
 	"tuber/pkg/gcloud"
-	"tuber/pkg/util"
+	"tuber/pkg/listener"
 
 	"github.com/spf13/cobra"
 )
@@ -61,16 +61,17 @@ func deploy(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	streamer := events.NewStreamer(token, logger)
+	streamer := events.NewStreamer(token, logger, clusterData())
 
-	errorChan := make(chan util.FailedRelease, 1)
-	unprocessedEvents := make(chan *util.RegistryEvent, 1)
-	processedEvents := make(chan *util.RegistryEvent, 1)
+	errorChan := make(chan listener.FailedRelease, 1)
+	unprocessedEvents := make(chan *listener.RegistryEvent, 1)
+	processedEvents := make(chan *listener.RegistryEvent, 1)
 	errorReports := make(chan error, 1)
+
 	go streamer.Stream(unprocessedEvents, processedEvents, errorChan, errorReports)
 
 	ackable := emptyAckable{}
-	deployEvent := util.RegistryEvent{
+	deployEvent := listener.RegistryEvent{
 		Action:  "INSERT",
 		Digest:  app.RepoHost + "/" + app.RepoPath + "@" + sha,
 		Tag:     app.ImageTag,

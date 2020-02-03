@@ -9,7 +9,7 @@ import (
 )
 
 var envCmd = &cobra.Command{
-	Use: "env [set || unset]",
+	Use: "env [set || unset || file]",
 }
 
 var envSetCmd = &cobra.Command{
@@ -22,6 +22,14 @@ var envUnsetCmd = &cobra.Command{
 	Use:  "unset [appName] [key]",
 	Run:  envUnset,
 	Args: cobra.ExactArgs(2),
+}
+
+var fileCmd = &cobra.Command{
+	Use:   "file [app] [local filepath]",
+	Short: "batch env set",
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		return k8s.CreateEnvFromFile(args[0], args[1])
+	},
 }
 
 func envSet(cmd *cobra.Command, args []string) {
@@ -49,4 +57,5 @@ func init() {
 	rootCmd.AddCommand(envCmd)
 	envCmd.AddCommand(envSetCmd)
 	envCmd.AddCommand(envUnsetCmd)
+	envCmd.AddCommand(fileCmd)
 }
