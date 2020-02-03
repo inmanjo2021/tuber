@@ -62,8 +62,8 @@ func NewListener(logger *zap.Logger, subscriptionName string, options ...Option)
 		recvSettings:     pubsub.ReceiveSettings{},
 	}
 
-	for _, option := range options {
-		option(l)
+	for _, op := range options {
+		op(l)
 	}
 	return l
 }
