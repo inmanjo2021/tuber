@@ -8,7 +8,7 @@ import (
 	"time"
 	"tuber/pkg/k8s"
 
-	"gopkg.in/yaml.v2"
+	"github.com/goccy/go-yaml"
 )
 
 // ApplyTemplate interpolates and applies a yaml to a given namespace
