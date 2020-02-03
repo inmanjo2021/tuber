@@ -8,7 +8,7 @@ import (
 
 func clusterData() (data *core.ClusterData) {
 	return &core.ClusterData{
-		DefaultGateway:  viper.GetString("cluster-default-gateway"),
-		DefaultHostname: viper.GetString("cluster-default-hostname"),
+		DefaultGateway: viper.GetString("cluster-default-gateway"),
+		DefaultHost:    viper.GetString("cluster-default-host"),
 	}
 }
