@@ -11,14 +11,14 @@ func ReleaseTubers(tubers []string, app *TuberApp, digest string, data *ClusterD
 
 // ClusterData is configurable, cluster-wide data available for yaml interpolation
 type ClusterData struct {
-	DefaultGateway string
-	Hostname       string
+	DefaultGateway  string
+	DefaultHostname string
 }
 
 func tuberData(app *TuberApp, digest string, clusterData *ClusterData) (data map[string]string) {
 	return map[string]string{
-		"tuberImage":            digest,
-		"clusterDefaultGateway": clusterData.DefaultGateway,
-		"clusterHostname":       clusterData.Hostname,
+		"tuberImage":             digest,
+		"clusterDefaultGateway":  clusterData.DefaultGateway,
+		"clusterDefaultHostname": clusterData.DefaultHostname,
 	}
 }
