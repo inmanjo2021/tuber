@@ -61,9 +61,9 @@ var virtualService = heredoc.Doc(`
 		namespace: {{.appName}}
 	spec:
 		hosts:
-			- "*"
+			- {{"{{.clusterDefaultHost}}"}}
 		gateways:
-		- istio-system/tls-gateway
+		- {{"{{.clusterDefaultGateway}}"}}
 		http:
 		- match:
 			- uri:
