@@ -7,8 +7,8 @@ import (
 func runKubectl(cmd *exec.Cmd) (out []byte, err error) {
 	out, err = cmd.CombinedOutput()
 
-	if cmd.ProcessState.ExitCode() != 0 {
-		err = newError(string(out))
+	if err != nil || cmd.ProcessState.ExitCode() != 0 {
+		err = newK8sError(out, err)
 	}
 	return
 }
@@ -38,23 +38,26 @@ func pipeToKubectl(data []byte, args ...string) (out []byte, err error) {
 	return runKubectl(cmd)
 }
 
-// Apply `kubectl apply` data to a given namespace
+// Apply `kubectl apply` data to a given namespace. Specify output or any other flags as args.
+// Uses a stdin pipe to include the content of the data slice
 func Apply(data []byte, namespace string, args ...string) ([]byte, error) {
 	apply := []string{"apply", "-n", namespace, "-f", "-"}
 	return pipeToKubectl(data, append(apply, args...)...)
 }
 
+// Get `kubectl get` a resource. Specify output or any other flags as args
 func Get(kind string, name string, namespace string, args ...string) ([]byte, error) {
 	get := []string{"get", kind, name, "-n", namespace}
 	return kubectl(append(get, args...)...)
 }
 
+// Delete `kubectl delete` a resource. Specify output or any other flags as args
 func Delete(kind string, name string, namespace string, args ...string) ([]byte, error) {
 	deleteArgs := []string{"delete", kind, name, "-n", namespace}
 	return kubectl(append(deleteArgs, args...)...)
 }
 
-// Create creates a resource with a given name and namespace
+// Create `kubectl create` a resource. Specify output or any other flags as args
 func Create(namespace string, resourceAndArgs ...string) ([]byte, error) {
 	create := []string{"create", "-n", namespace}
 	return kubectl(append(create, resourceAndArgs...)...)
