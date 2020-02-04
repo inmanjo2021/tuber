@@ -57,7 +57,8 @@ func Delete(kind string, name string, namespace string, args ...string) ([]byte,
 	return kubectl(append(deleteArgs, args...)...)
 }
 
-// Create `kubectl create` a resource. Specify output or any other flags as args
+// Create `kubectl create` a resource.
+// Some resources take multiple args (like secrets), so both the resource type and any flags are the variadic
 func Create(namespace string, resourceAndArgs ...string) ([]byte, error) {
 	create := []string{"create", "-n", namespace}
 	return kubectl(append(create, resourceAndArgs...)...)
