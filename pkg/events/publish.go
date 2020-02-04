@@ -13,11 +13,13 @@ func publish(app *core.TuberApp, digest string, token string, clusterData *core.
 		return
 	}
 
-	output, err = core.RunPrerelease(prereleaseYamls, app, digest, clusterData)
+	if len(prereleaseYamls) > 0 {
+		output, err = core.RunPrerelease(prereleaseYamls, app, digest, clusterData)
 
-	if err != nil {
-		err = fmt.Errorf("prerelease error: %s", err.Error())
-		return
+		if err != nil {
+			err = fmt.Errorf("prerelease error: %s", err.Error())
+			return
+		}
 	}
 
 	output, err = core.ReleaseTubers(releaseYamls, app, digest, clusterData)
