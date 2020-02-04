@@ -10,7 +10,7 @@ var initCmd = &cobra.Command{
 	Use:   "init [appName] [routePrefix]",
 	Short: "initialize a .tuber directory and relevant yamls",
 	Long: `App name is the name of your app, which will be interpolated into the configuration files and used as the
-		namespace, as well as other things. Port number is the port that your app will run on. The standard is port 80.`,
+		namespace, as well as other things.`,
 	Args: cobra.ExactArgs(2),
 	RunE: initialize,
 }
