@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/signal"
 	"syscall"
+
 	"tuber/pkg/events"
 	"tuber/pkg/gcloud"
 	"tuber/pkg/listener"
@@ -73,7 +75,13 @@ func start(cmd *cobra.Command, args []string) {
 		options = append(options, listener.WithMaxTimeout(viper.GetDuration("max-timeout")))
 	}
 
-	var l = listener.NewListener(logger, options...)
+	subscriptionName := viper.GetString("pubsub-subscription-name")
+	if len(subscriptionName) < 1 {
+		err = errors.New("pubsub subscription name is required")
+		panic(err)
+	}
+
+	var l = listener.NewListener(logger, subscriptionName, options...)
 
 	creds, err := credentials()
 	if err != nil {
