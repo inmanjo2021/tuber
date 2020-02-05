@@ -9,9 +9,10 @@ import (
 )
 
 var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List tuberapps",
-	RunE:  list,
+	SilenceUsage: true,
+	Use:          "list",
+	Short:        "List tuberapps",
+	RunE:         list,
 }
 
 func list(*cobra.Command, []string) (err error) {

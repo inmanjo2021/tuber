@@ -12,10 +12,11 @@ import (
 )
 
 var deployCmd = &cobra.Command{
-	Use:   "deploy [appName]",
-	Short: "Deploys an app",
-	RunE:  deploy,
-	Args:  cobra.ExactArgs(1),
+	SilenceUsage: true,
+	Use:          "deploy [appName]",
+	Short:        "Deploys an app",
+	RunE:         deploy,
+	Args:         cobra.ExactArgs(1),
 }
 
 type emptyAckable struct{}
@@ -24,6 +25,7 @@ func (emptyAckable) Ack()  {}
 func (emptyAckable) Nack() {}
 
 func deploy(cmd *cobra.Command, args []string) error {
+	return fmt.Errorf("hi yes")
 	logger, err := createLogger()
 	if err != nil {
 		return err

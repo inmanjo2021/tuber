@@ -12,20 +12,23 @@ var envCmd = &cobra.Command{
 }
 
 var envSetCmd = &cobra.Command{
-	Use:  "set [appName] [key] [value]",
-	RunE: envSet,
-	Args: cobra.ExactArgs(3),
+	SilenceUsage: true,
+	Use:          "set [appName] [key] [value]",
+	RunE:         envSet,
+	Args:         cobra.ExactArgs(3),
 }
 
 var envUnsetCmd = &cobra.Command{
-	Use:  "unset [appName] [key]",
-	RunE: envUnset,
-	Args: cobra.ExactArgs(2),
+	SilenceUsage: true,
+	Use:          "unset [appName] [key]",
+	RunE:         envUnset,
+	Args:         cobra.ExactArgs(2),
 }
 
 var fileCmd = &cobra.Command{
-	Use:   "file [app] [local filepath]",
-	Short: "batch env set",
+	SilenceUsage: true,
+	Use:          "file [app] [local filepath]",
+	Short:        "batch env set",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return k8s.CreateEnvFromFile(args[0], args[1])
 	},
