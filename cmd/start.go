@@ -6,7 +6,6 @@ import (
 	"os/signal"
 	"syscall"
 	"tuber/pkg/events"
-	"tuber/pkg/gcloud"
 	"tuber/pkg/listener"
 	"tuber/pkg/sentry"
 
@@ -85,14 +84,8 @@ func start(cmd *cobra.Command, args []string) {
 		panic(err)
 	}
 
-	token, err := gcloud.GetAccessToken(creds)
-
-	if err != nil {
-		panic(err)
-	}
-
 	// Create a new streamer
-	streamer := events.NewStreamer(token, logger, clusterData())
+	streamer := events.NewStreamer(creds, logger, clusterData())
 	go streamer.Stream(unprocessedEvents, processedEvents, failedEvents, errReports)
 
 	// Wait for cancel() of context

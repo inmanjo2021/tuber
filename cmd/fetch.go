@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"tuber/pkg/containers"
 	"tuber/pkg/core"
-	"tuber/pkg/gcloud"
 
 	"github.com/spf13/cobra"
 )
@@ -27,12 +26,6 @@ func fetch(cmd *cobra.Command, args []string) (err error) {
 		return
 	}
 
-	token, err := gcloud.GetAccessToken(creds)
-
-	if err != nil {
-		return
-	}
-
 	apps, err := core.TuberApps()
 
 	if err != nil {
@@ -45,7 +38,7 @@ func fetch(cmd *cobra.Command, args []string) (err error) {
 		return
 	}
 
-	prerelease, yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
+	prerelease, yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), creds)
 	yamls = append(yamls, prerelease...)
 
 	if err == nil {

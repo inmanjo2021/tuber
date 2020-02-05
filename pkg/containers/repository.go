@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"tuber/pkg/gcloud"
 )
 
 type RepositoryLocation struct {
@@ -55,8 +56,13 @@ type repository struct {
 }
 
 // GetTuberLayer downloads yamls for an image
-func GetTuberLayer(location RepositoryLocation, password string) (prereleaseYamls []string, releaseYamls []string, err error) {
-	reg := newRegistry(location.Host, password)
+func GetTuberLayer(location RepositoryLocation, creds []byte) (prereleaseYamls []string, releaseYamls []string, err error) {
+	authToken, err := gcloud.GetAccessToken(creds)
+	if err != nil {
+		return
+	}
+
+	reg := newRegistry(location.Host, authToken)
 	repo, err := reg.getRepository(location.Path)
 	if err != nil {
 		return
@@ -66,8 +72,9 @@ func GetTuberLayer(location RepositoryLocation, password string) (prereleaseYaml
 	return
 }
 
-func GetLatestSHA(location RepositoryLocation, password string) (sha string, err error) {
-	reg := newRegistry(location.Host, password)
+func GetLatestSHA(location RepositoryLocation, creds []byte) (sha string, err error) {
+	authToken, err := gcloud.GetAccessToken(creds)
+	reg := newRegistry(location.Host, authToken)
 	repo, err := reg.getRepository(location.Path)
 
 	if err != nil {
