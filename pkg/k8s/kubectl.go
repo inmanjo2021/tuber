@@ -78,6 +78,8 @@ func Create(namespace string, resourceAndArgs ...string) (err error) {
 	return
 }
 
+// Restart runs a rollout restart on a given resource type for a namespace
+// For example, `Restart("deployments", "some-app")` will restart _all_ deployments in that namespace
 func Restart(resource string, namespace string, args ...string) (err error) {
 	restart := []string{"rollout", "restart", resource, "-n", namespace}
 	_, err = kubectl(append(restart, args...)...)
