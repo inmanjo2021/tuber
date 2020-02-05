@@ -55,13 +55,12 @@ func (s *streamer) Stream(unprocessed <-chan *listener.RegistryEvent, processed 
 
 			releaseLog.Info("release: starting")
 
-			output, err := publish(pendingRelease, event.Digest, s.token, s.clusterData)
+			err = publish(pendingRelease, event.Digest, s.token, s.clusterData)
 
 			if err != nil {
 				releaseLog.Warn(
 					"release: error",
 					zap.Error(err),
-					zap.String("output", string(output)),
 				)
 			} else {
 				releaseLog.Info("release: done")

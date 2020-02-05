@@ -16,11 +16,11 @@ func credentials() (creds []byte, err error) {
 }
 
 var credentialsCmd = &cobra.Command{
-	Use:   "credentials [local filepath] [namespace]",
-	Short: "add tuber secrets from file",
-	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		_, err = k8s.CreateTuberCredentials(args[0], args[1])
-		return
+	SilenceUsage: true,
+	Use:          "credentials [local filepath] [namespace]",
+	Short:        "add tuber secrets from file",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return k8s.CreateTuberCredentials(args[0], args[1])
 	},
 }
 

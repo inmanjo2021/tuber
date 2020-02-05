@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
 	"tuber/pkg/containers"
 	"tuber/pkg/core"
 	"tuber/pkg/events"
@@ -12,10 +12,11 @@ import (
 )
 
 var deployCmd = &cobra.Command{
-	Use:   "deploy [appName]",
-	Short: "Deploys an app",
-	Run:   deploy,
-	Args:  cobra.ExactArgs(1),
+	SilenceUsage: true,
+	Use:          "deploy [appName]",
+	Short:        "Deploys an app",
+	RunE:         deploy,
+	Args:         cobra.ExactArgs(1),
 }
 
 type emptyAckable struct{}
@@ -23,10 +24,10 @@ type emptyAckable struct{}
 func (emptyAckable) Ack()  {}
 func (emptyAckable) Nack() {}
 
-func deploy(cmd *cobra.Command, args []string) {
+func deploy(cmd *cobra.Command, args []string) error {
 	logger, err := createLogger()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	defer logger.Sync()
@@ -34,23 +35,23 @@ func deploy(cmd *cobra.Command, args []string) {
 	apps, err := core.TuberApps()
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	creds, err := credentials()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	token, err := gcloud.GetAccessToken(creds)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	app, err := apps.FindApp(args[0])
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	location := app.GetRepositoryLocation()
@@ -58,7 +59,7 @@ func deploy(cmd *cobra.Command, args []string) {
 	sha, err := containers.GetLatestSHA(location, token)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	streamer := events.NewStreamer(token, logger, clusterData())
@@ -83,8 +84,10 @@ func deploy(cmd *cobra.Command, args []string) {
 	select {
 	case <-errorChan:
 		close(unprocessedEvents)
+		return fmt.Errorf("deploy failed")
 	case <-processedEvents:
 		close(unprocessedEvents)
+		return nil
 	}
 }
 

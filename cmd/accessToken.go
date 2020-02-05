@@ -9,10 +9,11 @@ import (
 
 // accessTokenCmd represents the accessToken command
 var accessTokenCmd = &cobra.Command{
-	Use:   "access-token",
-	Short: "display access token",
-	Long:  `print an access token for debugging purposes`,
-	RunE:  accessToken,
+	SilenceUsage: true,
+	Use:          "access-token",
+	Short:        "display access token",
+	Long:         `print an access token for debugging purposes`,
+	RunE:         accessToken,
 }
 
 func init() {

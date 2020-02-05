@@ -14,10 +14,11 @@ func init() {
 }
 
 var fetchCmd = &cobra.Command{
-	Use:   "fetch [appName]",
-	Short: "Fetch Tuber yaml files",
-	RunE:  fetch,
-	Args:  cobra.ExactArgs(1),
+	SilenceUsage: true,
+	Use:          "fetch [appName]",
+	Short:        "Fetch Tuber yaml files",
+	RunE:         fetch,
+	Args:         cobra.ExactArgs(1),
 }
 
 func fetch(cmd *cobra.Command, args []string) (err error) {
@@ -44,7 +45,8 @@ func fetch(cmd *cobra.Command, args []string) (err error) {
 		return
 	}
 
-	yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
+	prerelease, yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
+	yamls = append(yamls, prerelease...)
 
 	if err == nil {
 		for i, yaml := range yamls {
