@@ -5,7 +5,7 @@ import (
 )
 
 // ReleaseTubers combines and interpolates with tuber's conventions, and applies them
-func ReleaseTubers(tubers []string, app *TuberApp, digest string, data *ClusterData) ([]byte, error) {
+func ReleaseTubers(tubers []string, app *TuberApp, digest string, data *ClusterData) error {
 	return ApplyTemplate(app.Name, strings.Join(tubers, "---\n"), tuberData(digest, data))
 }
 

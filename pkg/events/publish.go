@@ -6,7 +6,7 @@ import (
 	"tuber/pkg/core"
 )
 
-func publish(app *core.TuberApp, digest string, token string, clusterData *core.ClusterData) (output []byte, err error) {
+func publish(app *core.TuberApp, digest string, token string, clusterData *core.ClusterData) (err error) {
 	prereleaseYamls, releaseYamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
 
 	if err != nil {
@@ -14,7 +14,7 @@ func publish(app *core.TuberApp, digest string, token string, clusterData *core.
 	}
 
 	if len(prereleaseYamls) > 0 {
-		output, err = core.RunPrerelease(prereleaseYamls, app, digest, clusterData)
+		err = core.RunPrerelease(prereleaseYamls, app, digest, clusterData)
 
 		if err != nil {
 			err = fmt.Errorf("prerelease error: %s", err.Error())
@@ -22,7 +22,5 @@ func publish(app *core.TuberApp, digest string, token string, clusterData *core.
 		}
 	}
 
-	output, err = core.ReleaseTubers(releaseYamls, app, digest, clusterData)
-
-	return
+	return core.ReleaseTubers(releaseYamls, app, digest, clusterData)
 }

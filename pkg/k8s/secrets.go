@@ -9,8 +9,8 @@ import (
 )
 
 // CreateTuberCredentials creates a secret based on the contents of a file
-func CreateTuberCredentials(path string, namespace string) (dat []byte, err error) {
-	dat, err = ioutil.ReadFile(path)
+func CreateTuberCredentials(path string, namespace string) (err error) {
+	dat, err := ioutil.ReadFile(path)
 	projectName := "tuber"
 
 	if err != nil {
@@ -104,6 +104,6 @@ func RemoveSecretEntry(mapName string, namespace string, key string) (err error)
 }
 
 // CreateEnv creates a Secret for a new TuberApp, to store env vars
-func CreateEnv(appName string) (out []byte, err error) {
+func CreateEnv(appName string) error {
 	return Create(appName, "secret", "generic", appName+"-env")
 }

@@ -28,11 +28,11 @@ func (e K8sError) Error() string {
 
 func newK8sError(out []byte, err error) error {
 	message := string(out)
-	if strings.Contains(message, "Error from server (AlreadyExists):") {
+	if strings.Contains(message, "K8sError from server (AlreadyExists):") {
 		return AlreadyExistsError{K8sError{message, err}}
 	}
 
-	if strings.Contains(message, "Error from server (NotFound):") {
+	if strings.Contains(message, "K8sError from server (NotFound):") {
 		return NotFoundError{K8sError{message, err}}
 	}
 
