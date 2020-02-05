@@ -8,8 +8,8 @@ import (
 
 // CreateTuberApp adds a new tuber app configuration, including namespace,
 // role, rolebinding, and a listing in tuber-apps
-func CreateTuberApp(appName string, repo string, tag string) (out []byte, err error) {
-	out, err = k8s.Create(appName, "namespace", appName)
+func CreateTuberApp(appName string, repo string, tag string) (err error) {
+	err = k8s.Create(appName, "namespace", appName)
 	if err != nil {
 		switch err.(type) {
 		case k8s.AlreadyExistsError:
@@ -20,13 +20,13 @@ func CreateTuberApp(appName string, repo string, tag string) (out []byte, err er
 	}
 
 	appRoleTemplate, appRoleData := appRoles(appName)
-	out, err = ApplyTemplate(appName, appRoleTemplate, appRoleData)
+	err = ApplyTemplate(appName, appRoleTemplate, appRoleData)
 
 	if err != nil {
 		return
 	}
 
-	out, err = k8s.CreateEnv(appName)
+	err = k8s.CreateEnv(appName)
 
 	if err != nil {
 		return

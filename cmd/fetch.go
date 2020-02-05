@@ -14,10 +14,11 @@ func init() {
 }
 
 var fetchCmd = &cobra.Command{
-	Use:   "fetch [appName]",
-	Short: "Fetch Tuber yaml files",
-	RunE:  fetch,
-	Args:  cobra.ExactArgs(1),
+	SilenceUsage: true,
+	Use:          "fetch [appName]",
+	Short:        "Fetch Tuber yaml files",
+	RunE:         fetch,
+	Args:         cobra.ExactArgs(1),
 }
 
 func fetch(cmd *cobra.Command, args []string) (err error) {

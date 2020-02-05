@@ -2,10 +2,21 @@ package k8s
 
 import (
 	"os/exec"
+
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 func runKubectl(cmd *exec.Cmd) (out []byte, err error) {
 	out, err = cmd.CombinedOutput()
+
+	if viper.GetBool("debug") {
+		logger, zapErr := zap.NewDevelopment()
+		if zapErr != nil {
+			return nil, zapErr
+		}
+		logger.Debug(string(out))
+	}
 
 	if err != nil || cmd.ProcessState.ExitCode() != 0 {
 		err = newK8sError(out, err)
@@ -40,9 +51,10 @@ func pipeToKubectl(data []byte, args ...string) (out []byte, err error) {
 
 // Apply `kubectl apply` data to a given namespace. Specify output or any other flags as args.
 // Uses a stdin pipe to include the content of the data slice
-func Apply(data []byte, namespace string, args ...string) ([]byte, error) {
+func Apply(data []byte, namespace string, args ...string) (err error) {
 	apply := []string{"apply", "-n", namespace, "-f", "-"}
-	return pipeToKubectl(data, append(apply, args...)...)
+	_, err = pipeToKubectl(data, append(apply, args...)...)
+	return
 }
 
 // Get `kubectl get` a resource. Specify output or any other flags as args
@@ -52,14 +64,16 @@ func Get(kind string, name string, namespace string, args ...string) ([]byte, er
 }
 
 // Delete `kubectl delete` a resource. Specify output or any other flags as args
-func Delete(kind string, name string, namespace string, args ...string) ([]byte, error) {
+func Delete(kind string, name string, namespace string, args ...string) (err error) {
 	deleteArgs := []string{"delete", kind, name, "-n", namespace}
-	return kubectl(append(deleteArgs, args...)...)
+	_, err = kubectl(append(deleteArgs, args...)...)
+	return
 }
 
 // Create `kubectl create` a resource.
 // Some resources take multiple args (like secrets), so both the resource type and any flags are the variadic
-func Create(namespace string, resourceAndArgs ...string) ([]byte, error) {
+func Create(namespace string, resourceAndArgs ...string) (err error) {
 	create := []string{"create", "-n", namespace}
-	return kubectl(append(create, resourceAndArgs...)...)
+	_, err = kubectl(append(create, resourceAndArgs...)...)
+	return
 }
