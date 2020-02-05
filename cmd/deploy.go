@@ -25,7 +25,6 @@ func (emptyAckable) Ack()  {}
 func (emptyAckable) Nack() {}
 
 func deploy(cmd *cobra.Command, args []string) error {
-	return fmt.Errorf("hi yes")
 	logger, err := createLogger()
 	if err != nil {
 		return err
