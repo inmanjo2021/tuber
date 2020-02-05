@@ -9,14 +9,14 @@ import (
 )
 
 type streamer struct {
-	token       string
+	creds       []byte
 	logger      *zap.Logger
 	clusterData *core.ClusterData
 }
 
 // NewStreamer creates a new Streamer struct
-func NewStreamer(token string, logger *zap.Logger, clusterData *core.ClusterData) *streamer {
-	return &streamer{token: token, logger: logger, clusterData: clusterData}
+func NewStreamer(creds []byte, logger *zap.Logger, clusterData *core.ClusterData) *streamer {
+	return &streamer{creds: creds, logger: logger, clusterData: clusterData}
 }
 
 // Stream streams a stream
@@ -55,7 +55,7 @@ func (s *streamer) Stream(unprocessed <-chan *listener.RegistryEvent, processed 
 
 			releaseLog.Info("release: starting")
 
-			err = publish(pendingRelease, event.Digest, s.token, s.clusterData)
+			err = publish(pendingRelease, event.Digest, s.creds, s.clusterData)
 
 			if err != nil {
 				releaseLog.Warn(

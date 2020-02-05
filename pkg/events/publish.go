@@ -6,8 +6,8 @@ import (
 	"tuber/pkg/core"
 )
 
-func publish(app *core.TuberApp, digest string, token string, clusterData *core.ClusterData) (err error) {
-	prereleaseYamls, releaseYamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
+func publish(app *core.TuberApp, digest string, creds []byte, clusterData *core.ClusterData) (err error) {
+	prereleaseYamls, releaseYamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), creds)
 
 	if err != nil {
 		return

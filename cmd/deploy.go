@@ -5,7 +5,6 @@ import (
 	"tuber/pkg/containers"
 	"tuber/pkg/core"
 	"tuber/pkg/events"
-	"tuber/pkg/gcloud"
 	"tuber/pkg/listener"
 
 	"github.com/spf13/cobra"
@@ -43,12 +42,6 @@ func deploy(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	token, err := gcloud.GetAccessToken(creds)
-
-	if err != nil {
-		return err
-	}
-
 	app, err := apps.FindApp(args[0])
 	if err != nil {
 		return err
@@ -56,13 +49,13 @@ func deploy(cmd *cobra.Command, args []string) error {
 
 	location := app.GetRepositoryLocation()
 
-	sha, err := containers.GetLatestSHA(location, token)
+	sha, err := containers.GetLatestSHA(location, creds)
 
 	if err != nil {
 		return err
 	}
 
-	streamer := events.NewStreamer(token, logger, clusterData())
+	streamer := events.NewStreamer(creds, logger, clusterData())
 
 	errorChan := make(chan listener.FailedRelease, 1)
 	unprocessedEvents := make(chan *listener.RegistryEvent, 1)
