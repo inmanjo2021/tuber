@@ -77,3 +77,9 @@ func Create(namespace string, resourceAndArgs ...string) (err error) {
 	_, err = kubectl(append(create, resourceAndArgs...)...)
 	return
 }
+
+func Restart(resource string, namespace string, args ...string) (err error) {
+	restart := []string{"rollout", "restart", resource, "-n", namespace}
+	_, err = kubectl(append(restart, args...)...)
+	return
+}
