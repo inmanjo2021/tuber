@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"fmt"
 	"tuber/pkg/k8s"
 
@@ -34,6 +35,13 @@ var fileCmd = &cobra.Command{
 	},
 }
 
+var envGetCmd = &cobra.Command{
+	SilenceUsage: true,
+	Use:          "get [appName]",
+	RunE:         envGet,
+	Args:         cobra.ExactArgs(1),
+}
+
 func envSet(cmd *cobra.Command, args []string) error {
 	appName := args[0]
 	key := args[1]
@@ -49,9 +57,27 @@ func envUnset(cmd *cobra.Command, args []string) error {
 	return k8s.RemoveSecretEntry(mapName, appName, key)
 }
 
+func envGet(cmd *cobra.Command, args []string) (err error) {
+	appName := args[0]
+	mapName := fmt.Sprintf("%s-env", appName)
+	config, err := k8s.GetConfig(mapName, appName, "Secret")
+	if err != nil {
+		return
+	}
+	for k, v := range config.Data {
+		decoded, decodeErr := base64.StdEncoding.DecodeString(v)
+		if decodeErr != nil {
+			return
+		}
+		fmt.Println(k+":", string(decoded))
+	}
+	return
+}
+
 func init() {
 	rootCmd.AddCommand(envCmd)
 	envCmd.AddCommand(envSetCmd)
 	envCmd.AddCommand(envUnsetCmd)
 	envCmd.AddCommand(fileCmd)
+	envCmd.AddCommand(envGetCmd)
 }
