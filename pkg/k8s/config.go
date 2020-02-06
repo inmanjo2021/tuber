@@ -44,7 +44,7 @@ func (c *Config) Save(namespace string) (err error) {
 
 // GetConfig returns a Config struct with a Data element containing config map entries
 func GetConfig(name string, namespace string, kind string) (config *Config, err error) {
-	result, err := Get(strings.ToLower(kind), name, namespace)
+	result, err := Get(strings.ToLower(kind), name, namespace, "-o", "json")
 
 	if err != nil {
 		return

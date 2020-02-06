@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"fmt"
-	"log"
 	"tuber/pkg/k8s"
 
 	"github.com/spf13/cobra"
@@ -13,44 +13,65 @@ var envCmd = &cobra.Command{
 }
 
 var envSetCmd = &cobra.Command{
-	Use:  "set [appName] [key] [value]",
-	Run:  envSet,
-	Args: cobra.ExactArgs(3),
+	SilenceUsage: true,
+	Use:          "set [appName] [key] [value]",
+	RunE:         envSet,
+	Args:         cobra.ExactArgs(3),
 }
 
 var envUnsetCmd = &cobra.Command{
-	Use:  "unset [appName] [key]",
-	Run:  envUnset,
-	Args: cobra.ExactArgs(2),
+	SilenceUsage: true,
+	Use:          "unset [appName] [key]",
+	RunE:         envUnset,
+	Args:         cobra.ExactArgs(2),
 }
 
 var fileCmd = &cobra.Command{
-	Use:   "file [app] [local filepath]",
-	Short: "batch env set",
-	RunE: func(cmd *cobra.Command, args []string) (err error) {
+	SilenceUsage: true,
+	Use:          "file [app] [local filepath]",
+	Short:        "batch env set",
+	RunE: func(cmd *cobra.Command, args []string) error {
 		return k8s.CreateEnvFromFile(args[0], args[1])
 	},
 }
 
-func envSet(cmd *cobra.Command, args []string) {
+var envGetCmd = &cobra.Command{
+	SilenceUsage: true,
+	Use:          "get [appName]",
+	RunE:         envGet,
+	Args:         cobra.ExactArgs(1),
+}
+
+func envSet(cmd *cobra.Command, args []string) error {
 	appName := args[0]
 	key := args[1]
 	value := args[2]
 	mapName := fmt.Sprintf("%s-env", appName)
-	err := k8s.PatchSecret(mapName, appName, key, value)
-	if err != nil {
-		log.Fatal(err)
-	}
+	return k8s.PatchSecret(mapName, appName, key, value)
 }
 
-func envUnset(cmd *cobra.Command, args []string) {
+func envUnset(cmd *cobra.Command, args []string) error {
 	appName := args[0]
 	key := args[1]
 	mapName := fmt.Sprintf("%s-env", appName)
-	err := k8s.RemoveSecretEntry(mapName, appName, key)
+	return k8s.RemoveSecretEntry(mapName, appName, key)
+}
+
+func envGet(cmd *cobra.Command, args []string) (err error) {
+	appName := args[0]
+	mapName := fmt.Sprintf("%s-env", appName)
+	config, err := k8s.GetConfig(mapName, appName, "Secret")
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
+	for k, v := range config.Data {
+		decoded, decodeErr := base64.StdEncoding.DecodeString(v)
+		if decodeErr != nil {
+			return
+		}
+		fmt.Println(k+":", string(decoded))
+	}
+	return
 }
 
 func init() {
@@ -58,4 +79,5 @@ func init() {
 	envCmd.AddCommand(envSetCmd)
 	envCmd.AddCommand(envUnsetCmd)
 	envCmd.AddCommand(fileCmd)
+	envCmd.AddCommand(envGetCmd)
 }

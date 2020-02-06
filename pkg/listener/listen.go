@@ -48,10 +48,10 @@ func WithMaxTimeout(d time.Duration) Option {
 }
 
 // NewListener creates a new PubSub listener
-func NewListener(logger *zap.Logger, options ...Option) *listener {
+func NewListener(logger *zap.Logger, subscriptionName string, options ...Option) *listener {
 	var l = &listener{
 		projectID:    "freshly-docker",
-		subscription: "freshly-docker-gcr-events",
+		subscription: subscriptionName,
 
 		unprocessed:      make(chan *RegistryEvent, 1),
 		processed:        make(chan *RegistryEvent, 1),
@@ -62,8 +62,8 @@ func NewListener(logger *zap.Logger, options ...Option) *listener {
 		recvSettings:     pubsub.ReceiveSettings{},
 	}
 
-	for _, option := range options {
-		option(l)
+	for _, op := range options {
+		op(l)
 	}
 	return l
 }

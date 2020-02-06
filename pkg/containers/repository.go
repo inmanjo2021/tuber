@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"tuber/pkg/gcloud"
 )
 
 type RepositoryLocation struct {
@@ -55,19 +56,25 @@ type repository struct {
 }
 
 // GetTuberLayer downloads yamls for an image
-func GetTuberLayer(location RepositoryLocation, password string) (yamls []string, err error) {
-	reg := newRegistry(location.Host, password)
+func GetTuberLayer(location RepositoryLocation, creds []byte) (prereleaseYamls []string, releaseYamls []string, err error) {
+	authToken, err := gcloud.GetAccessToken(creds)
+	if err != nil {
+		return
+	}
+
+	reg := newRegistry(location.Host, authToken)
 	repo, err := reg.getRepository(location.Path)
 	if err != nil {
 		return
 	}
 
-	yamls, err = repo.findLayer(location.Tag)
+	prereleaseYamls, releaseYamls, err = repo.findLayer(location.Tag)
 	return
 }
 
-func GetLatestSHA(location RepositoryLocation, password string) (sha string, err error) {
-	reg := newRegistry(location.Host, password)
+func GetLatestSHA(location RepositoryLocation, creds []byte) (sha string, err error) {
+	authToken, err := gcloud.GetAccessToken(creds)
+	reg := newRegistry(location.Host, authToken)
 	repo, err := reg.getRepository(location.Path)
 
 	if err != nil {
@@ -140,7 +147,7 @@ func (r *repository) getLayers(tag string) (layers []layer, err error) {
 	return manifest.Layers, nil
 }
 
-func (r *repository) downloadLayer(layerObj *layer) (yamls []string, err error) {
+func (r *repository) downloadLayer(layerObj *layer) (prereleaseYamls []string, releaseYamls []string, err error) {
 	layer := layerObj.Digest
 
 	requestURL := fmt.Sprintf(
@@ -164,11 +171,11 @@ func (r *repository) downloadLayer(layerObj *layer) (yamls []string, err error) 
 		return
 	}
 
-	yamls, err = convertResponse(res)
+	prereleaseYamls, releaseYamls, err = convertResponse(res)
 	return
 }
 
-func convertResponse(response *http.Response) (yamls []string, err error) {
+func convertResponse(response *http.Response) (prereleaseYamls []string, releaseYamls []string, err error) {
 	gzipped, err := gzip.NewReader(response.Body)
 
 	if err != nil {
@@ -206,13 +213,17 @@ func convertResponse(response *http.Response) (yamls []string, err error) {
 			return
 		}
 
-		yamls = append(yamls, string(bytes))
+		if strings.HasPrefix(header.Name, ".tuber/prerelease/") {
+			prereleaseYamls = append(prereleaseYamls, string(bytes))
+		} else {
+			releaseYamls = append(releaseYamls, string(bytes))
+		}
 	}
 	return
 }
 
 // findLayer finds the .tuber layer containing deploy info for Tuber
-func (r *repository) findLayer(tag string) (yamls []string, err error) {
+func (r *repository) findLayer(tag string) (prereleaseYamls []string, releaseYamls []string, err error) {
 	layers, err := r.getLayers(tag)
 
 	if err != nil {
@@ -224,7 +235,7 @@ func (r *repository) findLayer(tag string) (yamls []string, err error) {
 			continue
 		}
 
-		yamls, err = r.downloadLayer(&layer)
+		prereleaseYamls, releaseYamls, err = r.downloadLayer(&layer)
 
 		if err != nil {
 			switch err.(type) {

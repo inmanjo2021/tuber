@@ -1,18 +1,26 @@
 package events
 
 import (
+	"fmt"
 	"tuber/pkg/containers"
 	"tuber/pkg/core"
 )
 
-func publish(app *core.TuberApp, digest string, token string, clusterData *core.ClusterData) (output []byte, err error) {
-	yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
+func publish(app *core.TuberApp, digest string, creds []byte, clusterData *core.ClusterData) (err error) {
+	prereleaseYamls, releaseYamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), creds)
 
 	if err != nil {
 		return
 	}
 
-	output, err = core.ReleaseTubers(yamls, app, digest, clusterData)
+	if len(prereleaseYamls) > 0 {
+		err = core.RunPrerelease(prereleaseYamls, app, digest, clusterData)
 
-	return
+		if err != nil {
+			err = fmt.Errorf("prerelease error: %s", err.Error())
+			return
+		}
+	}
+
+	return core.ReleaseTubers(releaseYamls, app, digest, clusterData)
 }

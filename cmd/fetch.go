@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"tuber/pkg/containers"
 	"tuber/pkg/core"
-	"tuber/pkg/gcloud"
 
 	"github.com/spf13/cobra"
 )
@@ -14,20 +13,15 @@ func init() {
 }
 
 var fetchCmd = &cobra.Command{
-	Use:   "fetch [appName]",
-	Short: "Fetch Tuber yaml files",
-	RunE:  fetch,
-	Args:  cobra.ExactArgs(1),
+	SilenceUsage: true,
+	Use:          "fetch [appName]",
+	Short:        "Fetch Tuber yaml files",
+	RunE:         fetch,
+	Args:         cobra.ExactArgs(1),
 }
 
 func fetch(cmd *cobra.Command, args []string) (err error) {
 	creds, err := credentials()
-	if err != nil {
-		return
-	}
-
-	token, err := gcloud.GetAccessToken(creds)
-
 	if err != nil {
 		return
 	}
@@ -44,7 +38,8 @@ func fetch(cmd *cobra.Command, args []string) (err error) {
 		return
 	}
 
-	yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), token)
+	prerelease, yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), creds)
+	yamls = append(yamls, prerelease...)
 
 	if err == nil {
 		for i, yaml := range yamls {

@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/signal"
 	"syscall"
+
 	"tuber/pkg/events"
-	"tuber/pkg/gcloud"
 	"tuber/pkg/listener"
 	"tuber/pkg/sentry"
 
@@ -73,7 +74,13 @@ func start(cmd *cobra.Command, args []string) {
 		options = append(options, listener.WithMaxTimeout(viper.GetDuration("max-timeout")))
 	}
 
-	var l = listener.NewListener(logger, options...)
+	subscriptionName := viper.GetString("pubsub-subscription-name")
+	if len(subscriptionName) < 1 {
+		err = errors.New("pubsub subscription name is required")
+		panic(err)
+	}
+
+	var l = listener.NewListener(logger, subscriptionName, options...)
 
 	creds, err := credentials()
 	if err != nil {
@@ -85,14 +92,8 @@ func start(cmd *cobra.Command, args []string) {
 		panic(err)
 	}
 
-	token, err := gcloud.GetAccessToken(creds)
-
-	if err != nil {
-		panic(err)
-	}
-
 	// Create a new streamer
-	streamer := events.NewStreamer(token, logger, clusterData())
+	streamer := events.NewStreamer(creds, logger, clusterData())
 	go streamer.Stream(unprocessedEvents, processedEvents, failedEvents, errReports)
 
 	// Wait for cancel() of context
