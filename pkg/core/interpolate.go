@@ -1,10 +1,8 @@
 package core
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
-	"text/template"
 	"time"
 	"tuber/pkg/k8s"
 
@@ -12,23 +10,12 @@ import (
 )
 
 // ApplyTemplate interpolates and applies a yaml to a given namespace
-func ApplyTemplate(namespace string, templatestring string, params map[string]string) (err error) {
-	tpl, err := template.New("").Parse(templatestring)
-
+func ApplyTemplate(namespace string, templateString string, data map[string]string) error {
+	interpolated, err := interpolateTuber(templateString, data)
 	if err != nil {
-		return
+		return err
 	}
-
-	var buf bytes.Buffer
-	err = tpl.Execute(&buf, params)
-
-	if err != nil {
-		return
-	}
-
-	err = k8s.Apply(buf.Bytes(), namespace)
-
-	return
+	return k8s.Apply(interpolated, namespace)
 }
 
 type prerelease struct {
@@ -43,22 +30,25 @@ type Metadata struct {
 
 // RunPrerelease takes an array of pods, that are designed to be single use command runners
 // that have access to the new code being released.
-func RunPrerelease(tubers []string, app *TuberApp, digest string, clusterData *ClusterData) (err error) {
+func RunPrerelease(tubers []string, app *TuberApp, digest string, clusterData *ClusterData) error {
 	for _, tuber := range tubers {
-		prereleaser := prerelease{}
-		err = yaml.Unmarshal([]byte(tuber), &prereleaser)
+		interpolatedTuber, err := interpolateTuber(tuber, tuberData(digest, clusterData))
 		if err != nil {
-			return
+			return err
+		}
+		prereleaser := prerelease{}
+		err = yaml.Unmarshal([]byte(interpolatedTuber), &prereleaser)
+		if err != nil {
+			return err
 		}
 
 		if prereleaser.Kind != "Pod" {
-			err = fmt.Errorf("prerelease resources must be Pods, received %s", prereleaser.Kind)
-			return
+			return fmt.Errorf("prerelease resources must be Pods, received %s", prereleaser.Kind)
 		}
 
-		err = ReleaseTubers([]string{tuber}, app, digest, clusterData)
+		err = k8s.Apply(interpolatedTuber, app.Name)
 		if err != nil {
-			return
+			return err
 		}
 
 		err = waitForPhase(prereleaser.Metadata.Name, "pod", app)
@@ -67,13 +57,12 @@ func RunPrerelease(tubers []string, app *TuberApp, digest string, clusterData *C
 			if deleteErr != nil {
 				return fmt.Errorf(err.Error() + "\n also failed delete:" + deleteErr.Error())
 			}
-			return
+			return deleteErr
 		}
 
 		return k8s.Delete("pod", prereleaser.Metadata.Name, app.Name)
 	}
-	err = fmt.Errorf("unhandled prerelease run exit")
-	return
+	return fmt.Errorf("unhandled prerelease run exit")
 }
 
 func waitForPhase(name string, kind string, app *TuberApp) error {
