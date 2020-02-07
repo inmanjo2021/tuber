@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"tuber/pkg/core"
 	"tuber/pkg/gcloud"
 )
 
@@ -197,7 +198,7 @@ func convertResponse(response *http.Response) (prereleaseYamls []string, release
 			return
 		}
 
-		if !strings.HasPrefix(header.Name, ".tuber") {
+		if !strings.HasPrefix(header.Name, core.Dir) {
 			err = &notTuberLayerError{"contains stuff other than .tuber"}
 			return
 		}

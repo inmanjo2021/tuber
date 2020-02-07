@@ -10,6 +10,8 @@ import (
 	"tuber/pkg/k8s"
 )
 
+// Dir is the directory where tuber yamls live
+const Dir = ".tuber"
 const tuberConfig = "tuber-apps"
 
 // TuberApp type for Tuber app
