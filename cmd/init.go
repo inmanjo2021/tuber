@@ -19,7 +19,7 @@ func initialize(cmd *cobra.Command, args []string) (err error) {
 	appName := args[0]
 	routePrefix := args[1]
 
-	return core.Init(appName, routePrefix)
+	return core.InitTuberApp(appName, routePrefix)
 }
 
 func init() {

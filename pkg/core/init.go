@@ -6,87 +6,43 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/MakeNowJust/heredoc"
+	"github.com/gobuffalo/packr"
 )
 
 const tuberConfigPath = ".tuber"
 
-var deployment = heredoc.Doc(`
-	apiVersion: apps/v1
-	kind: Deployment
-	metadata:
-		labels:
-			app: {{.appName}}
-		name: {{.appName}}
-		namespace: {{.appName}}
-	spec:
-		replicas: 1
-		selector:
-			matchLabels:
-				app: {{.appName}}
-		template:
-			metadata:
-				labels:
-					app: {{.appName}}
-			spec:
-				containers:
-				- image: {{"{{.tuberImage}}"}}
-					name: {{.appName}}
-					envFrom:
-						- secretRef:
-								name: {{.appName}}-env
-					ports:
-						- containerPort: 3000
-`)
-
-var service = heredoc.Doc(`
-	apiVersion: v1
-	kind: Service
-	metadata:
-		name: {{.appName}}
-		namespace: {{.appName}}
-	spec:
-		ports:
-		- port: 3000
-			name: grpc
-		selector:
-			app: {{.appName}}
-`)
-
-var virtualService = heredoc.Doc(`
-	apiVersion: networking.istio.io/v1alpha3
-	kind: VirtualService
-	metadata:
-		name: {{.appName}}-ingress
-		namespace: {{.appName}}
-	spec:
-		hosts:
-			- {{"{{.clusterDefaultHost}}"}}
-		gateways:
-		- {{"{{.clusterDefaultGateway}}"}}
-		http:
-		- match:
-			- uri:
-				prefix: {{.routePrefix}}
-			route:
-			- destination:
-					host: {{.appName}}
-`)
-
-func Init(appName string, routePrefix string) (err error) {
+// InitTuberApp creates a bunch of yamls for you
+func InitTuberApp(appName string, routePrefix string) (err error) {
 	if err = createTuberDirectory(); err != nil {
 		return
 	}
 
-	if err = createDeploymentYAML(appName); err != nil {
+	box := packr.NewBox("../../yamls")
+
+	deploymentYaml, err := box.FindString("deployment.yaml")
+	if err != nil {
 		return
 	}
 
-	if err = createServiceYAML(appName); err != nil {
+	if err = createDeploymentYAML(appName, deploymentYaml); err != nil {
 		return
 	}
 
-	if err = createVirtualServiceYAML(appName, routePrefix); err != nil {
+	serviceYaml, err := box.FindString("service.yaml")
+	if err != nil {
+		return
+	}
+
+	if err = createServiceYAML(appName, serviceYaml); err != nil {
+		return
+	}
+
+	virtualServiceYaml, err := box.FindString("virtual_service.yaml")
+	if err != nil {
+		return
+	}
+
+	if err = createVirtualServiceYAML(appName, routePrefix, virtualServiceYaml); err != nil {
 		return
 	}
 
@@ -101,29 +57,29 @@ func createTuberDirectory() (err error) {
 	return
 }
 
-func createDeploymentYAML(appName string) (err error) {
+func createDeploymentYAML(appName string, fileContent string) (err error) {
 	templateData := map[string]string{
 		"appName": appName,
 	}
 
-	return writeYAML("deployment.yaml", deployment, templateData)
+	return writeYAML("deployment.yaml", fileContent, templateData)
 }
 
-func createServiceYAML(appName string) (err error) {
+func createServiceYAML(appName string, fileContent string) (err error) {
 	templateData := map[string]string{
 		"appName": appName,
 	}
 
-	return writeYAML("service.yaml", service, templateData)
+	return writeYAML("service.yaml", fileContent, templateData)
 }
 
-func createVirtualServiceYAML(appName string, routePrefix string) (err error) {
+func createVirtualServiceYAML(appName string, routePrefix string, fileContent string) (err error) {
 	templateData := map[string]string{
 		"appName":     appName,
 		"routePrefix": routePrefix,
 	}
 
-	return writeYAML("virtual_service.yaml", virtualService, templateData)
+	return writeYAML("virtual_service.yaml", fileContent, templateData)
 }
 
 func writeYAML(fileName string, templateString string, templateData map[string]string) (err error) {
