@@ -1,7 +1,9 @@
-[![Build Status](https://dev.azure.com/freshly-oss/tuber/_apis/build/status/Freshly.tuber?branchName=master)](https://dev.azure.com/freshly-oss/tuber/_build/latest?definitionId=1&branchName=master)
 # tuber 
 
 ![logo](logo.png)
+
+## Kubectl version
+`kubectl` version >= 1.15 is required. Check your client version anywhere with `kubectl version`.
 
 ## Environment Variables
 * `TUBER_PUBSUB_SUBSCRIPTION_NAME`

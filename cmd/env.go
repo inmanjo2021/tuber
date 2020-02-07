@@ -31,7 +31,11 @@ var fileCmd = &cobra.Command{
 	Use:          "file [app] [local filepath]",
 	Short:        "batch env set",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return k8s.CreateEnvFromFile(args[0], args[1])
+		err := k8s.CreateEnvFromFile(args[0], args[1])
+		if err != nil {
+			return err
+		}
+		return k8s.Restart("deployments", args[0])
 	},
 }
 
@@ -47,14 +51,22 @@ func envSet(cmd *cobra.Command, args []string) error {
 	key := args[1]
 	value := args[2]
 	mapName := fmt.Sprintf("%s-env", appName)
-	return k8s.PatchSecret(mapName, appName, key, value)
+	err := k8s.PatchSecret(mapName, appName, key, value)
+	if err != nil {
+		return err
+	}
+	return k8s.Restart("deployments", appName)
 }
 
 func envUnset(cmd *cobra.Command, args []string) error {
 	appName := args[0]
 	key := args[1]
 	mapName := fmt.Sprintf("%s-env", appName)
-	return k8s.RemoveSecretEntry(mapName, appName, key)
+	err := k8s.RemoveSecretEntry(mapName, appName, key)
+	if err != nil {
+		return err
+	}
+	return k8s.Restart("deployments", appName)
 }
 
 func envGet(cmd *cobra.Command, args []string) (err error) {
