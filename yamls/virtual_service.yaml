@@ -2,16 +2,15 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: '{{.appName}}-ingress'
-  namespace: {{.appName}}
 spec:
   hosts:
-    - {{"{{.clusterDefaultHost}}"}}
+  - {{"{{.clusterDefaultHost}}"}}
   gateways:
   - {{"{{.clusterDefaultGateway}}"}}
   http:
   - match:
     - uri:
-      prefix: {{.routePrefix}}
+        prefix: {{.routePrefix}}
     route:
     - destination:
         host: {{.appName}}
