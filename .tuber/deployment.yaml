@@ -14,7 +14,6 @@ spec:
     metadata:
       labels:
         app: tuber
-        testing: something
     spec:
       containers:
       - image: {{ .tuberImage }}
