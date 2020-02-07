@@ -6,13 +6,10 @@ require (
 	cloud.google.com/go/pubsub v1.1.0
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/getsentry/sentry-go v0.4.0
-	github.com/gobuffalo/envy v1.7.1 // indirect
-	github.com/gobuffalo/packr v1.30.1
 	github.com/goccy/go-yaml v1.2.0
 	github.com/joho/godotenv v1.3.0
 	github.com/markbates/pkger v0.14.0
 	github.com/olekukonko/tablewriter v0.0.4
-	github.com/rogpeppe/go-internal v1.4.0 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.3.2
 	go.uber.org/atomic v1.4.0 // indirect
