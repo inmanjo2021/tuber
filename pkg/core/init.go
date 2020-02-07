@@ -10,7 +10,6 @@ import (
 )
 
 const tuberConfigPath = ".tuber"
-const templateBasePath = "/yamls"
 
 // InitTuberApp creates a bunch of yamls for you
 func InitTuberApp(appName string, routePrefix string) (err error) {
