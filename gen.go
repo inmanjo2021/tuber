@@ -2,6 +2,8 @@
 
 // +build ignore
 
+// run explicitly, using `go run gen.go`
+
 package main
 
 import (
