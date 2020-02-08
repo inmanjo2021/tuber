@@ -2,9 +2,6 @@
 
 // +build ignore
 
-// This program generates stations.go. It can be invoked by running
-// go generate
-
 package main
 
 import (
