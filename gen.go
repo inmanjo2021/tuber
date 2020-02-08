@@ -42,7 +42,8 @@ func Yamls() {
 			panic(err)
 		}
 		exportName := strings.Title(name)
-		t := template.Must(template.New("").Parse(`package data
+		t := template.Must(template.New("").Parse(`// Package data is generated
+package data
 
 import(
 	"github.com/MakeNowJust/heredoc"
@@ -74,7 +75,8 @@ func {{ .name }}Contents() string {
 	if err != nil {
 		panic(err)
 	}
-	base := `package data
+	base := `// Package data is generated
+package data
 
 // TuberYaml is generated. It's a generic representation of a default yaml for new tuber apps
 type TuberYaml struct {

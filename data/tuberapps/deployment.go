@@ -1,3 +1,4 @@
+// Package data is generated
 package data
 
 import(
