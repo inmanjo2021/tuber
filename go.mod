@@ -8,7 +8,6 @@ require (
 	github.com/getsentry/sentry-go v0.4.0
 	github.com/goccy/go-yaml v1.2.0
 	github.com/joho/godotenv v1.3.0
-	github.com/markbates/pkger v0.14.0
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.3.2
@@ -19,5 +18,6 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/sys v0.0.0-20191026070338-33540a1f6037 // indirect
 	google.golang.org/api v0.14.0
+	gopkg.in/yaml.v2 v2.2.7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200121175148-a6ecf24a6d71 // indirect
 )
