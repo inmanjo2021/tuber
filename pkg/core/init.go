@@ -9,6 +9,8 @@ import (
 	"github.com/markbates/pkger"
 )
 
+const tuberConfigPath = ".tuber"
+
 // InitTuberApp creates a bunch of yamls for you
 func InitTuberApp(appName string, routePrefix string) (err error) {
 	if err = createTuberDirectory(); err != nil {
@@ -31,7 +33,7 @@ func InitTuberApp(appName string, routePrefix string) (err error) {
 }
 
 func createTuberDirectory() (err error) {
-	if err = os.Mkdir(Dir, os.ModePerm); os.IsExist(err) {
+	if err = os.Mkdir(tuberConfigPath, os.ModePerm); os.IsExist(err) {
 		return nil
 	}
 
