@@ -6,6 +6,7 @@ import (
 	"tuber/pkg/k8s"
 
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 var envCmd = &cobra.Command{
@@ -51,7 +52,18 @@ func envSet(cmd *cobra.Command, args []string) error {
 	key := args[1]
 	value := args[2]
 	mapName := fmt.Sprintf("%s-env", appName)
-	err := k8s.PatchSecret(mapName, appName, key, value)
+
+	logger, err := createLogger()
+	if err != nil {
+		return err
+	}
+
+	logger.Info("env: set",
+		zap.String("appName", appName),
+		zap.String("key", key),
+	)
+
+	err = k8s.PatchSecret(mapName, appName, key, value)
 	if err != nil {
 		return err
 	}
@@ -62,7 +74,18 @@ func envUnset(cmd *cobra.Command, args []string) error {
 	appName := args[0]
 	key := args[1]
 	mapName := fmt.Sprintf("%s-env", appName)
-	err := k8s.RemoveSecretEntry(mapName, appName, key)
+
+	logger, err := createLogger()
+	if err != nil {
+		return err
+	}
+
+	logger.Info("env: unset",
+		zap.String("appName", appName),
+		zap.String("key", key),
+	)
+
+	err = k8s.RemoveSecretEntry(mapName, appName, key)
 	if err != nil {
 		return err
 	}
