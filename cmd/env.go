@@ -59,8 +59,9 @@ func envSet(cmd *cobra.Command, args []string) error {
 	}
 
 	logger.Info("env: set",
-		zap.String("appName", appName),
+		zap.String("name", appName),
 		zap.String("key", key),
+		zap.String("action", "change_env"),
 	)
 
 	err = k8s.PatchSecret(mapName, appName, key, value)
@@ -81,8 +82,9 @@ func envUnset(cmd *cobra.Command, args []string) error {
 	}
 
 	logger.Info("env: unset",
-		zap.String("appName", appName),
+		zap.String("name", appName),
 		zap.String("key", key),
+		zap.String("action", "change_env"),
 	)
 
 	err = k8s.RemoveSecretEntry(mapName, appName, key)
