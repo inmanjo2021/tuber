@@ -51,6 +51,7 @@ func (s *streamer) Stream(unprocessed <-chan *listener.RegistryEvent, processed 
 			var releaseLog = s.logger.With(
 				zap.String("releaseName", pendingRelease.Name),
 				zap.String("releaseBranch", pendingRelease.Tag),
+				zap.String("imageTag", pendingRelease.ImageTag),
 			)
 
 			releaseLog.Info("release: starting")
