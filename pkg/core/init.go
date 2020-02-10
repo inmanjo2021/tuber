@@ -88,7 +88,7 @@ func writeYAML(fileName string, templateData map[string]string) (err error) {
 		return
 	}
 
-	path := "./tuber/" + fileName
+	path := ".tuber/" + fileName
 	if err = ioutil.WriteFile(path, buff.Bytes(), 0644); err != nil {
 		return
 	}
