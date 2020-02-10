@@ -31,7 +31,7 @@ func InitTuberApp(appName string, routePrefix string) (err error) {
 }
 
 func createTuberDirectory() (err error) {
-	if err = os.Mkdir(Dir, os.ModePerm); os.IsExist(err) {
+	if err = os.Mkdir(".tuber", os.ModePerm); os.IsExist(err) {
 		return nil
 	}
 
@@ -88,7 +88,8 @@ func writeYAML(fileName string, templateData map[string]string) (err error) {
 		return
 	}
 
-	if err = ioutil.WriteFile(tuberConfigPath+"/"+fileName, buff.Bytes(), 0644); err != nil {
+	path := "./tuber/" + fileName
+	if err = ioutil.WriteFile(path, buff.Bytes(), 0644); err != nil {
 		return
 	}
 
