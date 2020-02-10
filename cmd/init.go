@@ -11,8 +11,9 @@ var initCmd = &cobra.Command{
 	Short: "initialize a .tuber directory and relevant yamls",
 	Long: `App name is the name of your app, which will be interpolated into the configuration files and used as the
 		namespace, as well as other things.`,
-	Args: cobra.ExactArgs(2),
-	RunE: initialize,
+	SilenceUsage: true,
+	Args:         cobra.ExactArgs(2),
+	RunE:         initialize,
 }
 
 func initialize(cmd *cobra.Command, args []string) (err error) {
