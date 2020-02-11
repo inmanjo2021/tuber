@@ -1,9 +1,7 @@
-// The following directive is necessary to make the package coherent:
-
 // +build ignore
 
 // run using `go generate ./...`
-// generate directive is in data/base.go
+// generate directive is in data/tuberapps/base.go
 
 package main
 
