@@ -6,11 +6,9 @@ import(
 )
 
 // Virtualservice is generated. Returns the default virtualservice for a new tuber app
-func Virtualservice() TuberYaml {
-	return TuberYaml{
-		Filename: "virtualservice.yaml",
-		Contents: virtualserviceContents(),
-	}
+var Virtualservice = TuberYaml{
+	Filename: "virtualservice.yaml",
+	Contents: virtualserviceContents(),
 }
 
 func virtualserviceContents() string {

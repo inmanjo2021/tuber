@@ -6,11 +6,9 @@ import(
 )
 
 // Service is generated. Returns the default service for a new tuber app
-func Service() TuberYaml {
-	return TuberYaml{
-		Filename: "service.yaml",
-		Contents: serviceContents(),
-	}
+var Service = TuberYaml{
+	Filename: "service.yaml",
+	Contents: serviceContents(),
 }
 
 func serviceContents() string {

@@ -6,11 +6,9 @@ import(
 )
 
 // Deployment is generated. Returns the default deployment for a new tuber app
-func Deployment() TuberYaml {
-	return TuberYaml{
-		Filename: "deployment.yaml",
-		Contents: deploymentContents(),
-	}
+var Deployment = TuberYaml{
+	Filename: "deployment.yaml",
+	Contents: deploymentContents(),
 }
 
 func deploymentContents() string {

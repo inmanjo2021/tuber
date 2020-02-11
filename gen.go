@@ -2,7 +2,8 @@
 
 // +build ignore
 
-// run explicitly, using `go run gen.go`
+// run using `go generate`
+// generate directive is in data/base.go
 
 package main
 
@@ -50,11 +51,9 @@ import(
 )
 
 // {{ .exportName }} is generated. Returns the default {{ .name }} for a new tuber app
-func {{ .exportName }}() TuberYaml {
-	return TuberYaml{
-		Filename: "{{ .fileName }}",
-		Contents: {{ .name }}Contents(),
-	}
+var {{ .exportName }} = TuberYaml{
+	Filename: "{{ .fileName }}",
+	Contents: {{ .name }}Contents(),
 }
 
 func {{ .name }}Contents() string {
@@ -69,23 +68,5 @@ func {{ .name }}Contents() string {
 			panic(err)
 		}
 		f.Close()
-	}
-
-	f, err := os.Create("data/tuberapps/base.go")
-	if err != nil {
-		panic(err)
-	}
-	base := `// Package data is generated
-package data
-
-// TuberYaml is generated. It's a generic representation of a default yaml for new tuber apps
-type TuberYaml struct {
-	Filename string
-	Contents string
-}
-`
-	_, err = f.Write([]byte(base))
-	if err != nil {
-		panic(err)
 	}
 }
