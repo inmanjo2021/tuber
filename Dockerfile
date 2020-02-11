@@ -12,7 +12,7 @@ COPY go.sum   ./go.sum
 COPY pkg      ./pkg
 COPY cmd      ./cmd
 COPY main.go  ./main.go
-COPY yamls    ./data
+COPY data    ./data
 
 ENV GO111MODULE on
 
