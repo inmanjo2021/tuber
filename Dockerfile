@@ -9,7 +9,6 @@ WORKDIR /app
 
 COPY go.mod   ./go.mod
 COPY go.sum   ./go.sum
-COPY justfile ./justfile
 COPY pkg      ./pkg
 COPY cmd      ./cmd
 COPY main.go  ./main.go
