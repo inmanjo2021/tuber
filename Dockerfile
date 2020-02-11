@@ -16,8 +16,6 @@ COPY data    ./data
 
 ENV GO111MODULE on
 
-RUN go get github.com/markbates/pkger/cmd/pkger
-RUN pkger
 RUN go build
 
 CMD ["/app/tuber", "start"]
