@@ -32,10 +32,9 @@ func InitTuberApp(appName string, routePrefix string) (err error) {
 }
 
 func createTuberDirectory() (err error) {
-	if err = os.Mkdir(tuberConfigPath, os.ModePerm); os.IsExist(err) {
+	if err = os.Mkdir(".tuber", os.ModePerm); os.IsExist(err) {
 		return nil
 	}
-
 	return
 }
 
@@ -66,6 +65,7 @@ func createVirtualServiceYAML(appName string, routePrefix string) (err error) {
 
 func writeYAML(app data.TuberYaml, templateData map[string]string) (err error) {
 	tpl, err := template.New("").Parse(app.Contents)
+
 	if err != nil {
 		return
 	}

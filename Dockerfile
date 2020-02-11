@@ -13,9 +13,12 @@ COPY justfile ./justfile
 COPY pkg      ./pkg
 COPY cmd      ./cmd
 COPY main.go  ./main.go
+COPY yamls    ./yamls
 
 ENV GO111MODULE on
 
+RUN go get github.com/markbates/pkger/cmd/pkger
+RUN pkger
 RUN go build
 
 CMD ["/app/tuber", "start"]
