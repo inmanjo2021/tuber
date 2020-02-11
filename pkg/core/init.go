@@ -64,7 +64,7 @@ func createVirtualServiceYAML(appName string, routePrefix string) (err error) {
 }
 
 func writeYAML(app data.TuberYaml, templateData map[string]string) (err error) {
-	tpl, err := template.New("").Parse(app.Contents)
+	tpl, err := template.New("").Parse(string(app.Contents))
 
 	if err != nil {
 		return

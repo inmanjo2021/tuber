@@ -8,6 +8,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -42,31 +43,37 @@ func Yamls() {
 		if err != nil {
 			panic(err)
 		}
+
 		exportName := strings.Title(name)
 		t := template.Must(template.New("").Parse(`// Package data is generated
 package data
 
-import(
-	"github.com/MakeNowJust/heredoc"
-)
-
 // {{ .exportName }} is generated. Returns the default {{ .name }} for a new tuber app
 var {{ .exportName }} = TuberYaml{
 	Filename: "{{ .fileName }}",
-	Contents: {{ .name }}Contents(),
-}
-
-func {{ .name }}Contents() string {
-	return heredoc.Doc(` + "`" + "\n{{ .contents }}`)\n}"))
-		err = t.Execute(f, map[string]string{
+	Contents: []byte{ {{ .contents }} },
+}`))
+		data := map[string]interface{}{
 			"name":       name,
 			"exportName": exportName,
-			"contents":   string(file),
 			"fileName":   yaml.Name(),
-		})
+			"contents":   formatByteSlice(file),
+		}
+		if err != nil {
+			panic(err)
+		}
+		err = t.Execute(f, data)
 		if err != nil {
 			panic(err)
 		}
 		f.Close()
 	}
+}
+
+func formatByteSlice(sl []byte) string {
+	builder := strings.Builder{}
+	for _, v := range sl {
+		builder.WriteString(fmt.Sprintf("%d,", int(v)))
+	}
+	return builder.String()
 }
