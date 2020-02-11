@@ -43,7 +43,7 @@ func createDeploymentYAML(appName string) (err error) {
 		"appName": appName,
 	}
 
-	return writeYAML(data.Deployment(), templateData)
+	return writeYAML(data.Deployment, templateData)
 }
 
 func createServiceYAML(appName string) (err error) {
@@ -51,7 +51,7 @@ func createServiceYAML(appName string) (err error) {
 		"appName": appName,
 	}
 
-	return writeYAML(data.Service(), templateData)
+	return writeYAML(data.Service, templateData)
 }
 
 func createVirtualServiceYAML(appName string, routePrefix string) (err error) {
@@ -60,7 +60,7 @@ func createVirtualServiceYAML(appName string, routePrefix string) (err error) {
 		"routePrefix": routePrefix,
 	}
 
-	return writeYAML(data.Virtualservice(), templateData)
+	return writeYAML(data.Virtualservice, templateData)
 }
 
 func writeYAML(app data.TuberYaml, templateData map[string]string) (err error) {

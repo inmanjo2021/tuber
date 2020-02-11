@@ -2,7 +2,7 @@
 
 // +build ignore
 
-// run using `go generate`
+// run using `go generate ./...`
 // generate directive is in data/base.go
 
 package main
@@ -19,7 +19,7 @@ func main() {
 }
 
 func Yamls() {
-	dir, err := ioutil.ReadDir("data/tuberapps")
+	dir, err := ioutil.ReadDir(".")
 	if err != nil {
 		panic(err)
 	}
@@ -32,13 +32,13 @@ func Yamls() {
 	}
 
 	for _, yaml := range yamls {
-		file, err := ioutil.ReadFile("data/tuberapps/" + yaml.Name())
+		file, err := ioutil.ReadFile(yaml.Name())
 		if err != nil {
 			panic(err)
 		}
 		separated := strings.Split(yaml.Name(), ".yaml")
 		name := separated[0]
-		f, err := os.Create("data/tuberapps/" + name + ".go")
+		f, err := os.Create(name + ".go")
 		if err != nil {
 			panic(err)
 		}

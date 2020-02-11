@@ -1,4 +1,3 @@
-// Package data is generated
 package data
 
 //go:generate go run gen.go
