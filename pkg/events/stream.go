@@ -1,7 +1,9 @@
 package events
 
 import (
+	"strings"
 	"sync"
+	"time"
 	"tuber/pkg/core"
 	"tuber/pkg/listener"
 
@@ -48,22 +50,27 @@ func (s *streamer) Stream(unprocessed <-chan *listener.RegistryEvent, processed 
 				return
 			}
 
+			imageTag := strings.Split(pendingRelease.ImageTag, ":")[1]
 			var releaseLog = s.logger.With(
-				zap.String("releaseName", pendingRelease.Name),
-				zap.String("releaseBranch", pendingRelease.Tag),
+				zap.String("name", pendingRelease.Name),
+				zap.String("branch", pendingRelease.Tag),
+				zap.String("imageTag", imageTag),
+				zap.String("action", "release"),
 			)
 
-			releaseLog.Info("release: starting")
+			start := time.Now()
+			releaseLog.Info("release: starting", zap.String("event", "begin"))
 
 			err = publish(pendingRelease, event.Digest, s.creds, s.clusterData)
 
 			if err != nil {
 				releaseLog.Warn(
 					"release: error",
+					zap.String("event", "error"),
 					zap.Error(err),
 				)
 			} else {
-				releaseLog.Info("release: done")
+				releaseLog.Info("release: done", zap.String("event", "complete"), zap.Duration("duration", time.Since(start)))
 			}
 		}(event)
 	}

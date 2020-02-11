@@ -31,9 +31,16 @@ func init() {
 func createLogger() (logger *zap.Logger, err error) {
 	if viper.GetBool("debug") {
 		logger, err = zap.NewDevelopment()
+		if err != nil {
+			return
+		}
 	} else {
 		logger, err = zap.NewProduction()
+		if err != nil {
+			return
+		}
 	}
+
 	return
 }
 

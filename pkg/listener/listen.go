@@ -133,14 +133,18 @@ func (l *listener) startAcker(ctx context.Context) {
 	l.wait.Add(1)
 	defer l.wait.Done()
 
-	l.logger.Debug("acknowledge loop: starting")
+	ackLogger := l.logger.With(
+		zap.String("action", "acknowledger"),
+	)
+
+	ackLogger.Debug("starting")
 
 	for event := range l.processed {
-		l.logger.Info("acknowledged", zap.String("tag", event.Tag))
 		event.Message.Ack()
+		ackLogger.Info("acknowledged", zap.String("tag", event.Tag))
 	}
 
-	l.logger.Debug("acknowledge loop: stopped")
+	ackLogger.Debug("stopped")
 }
 
 func (l *listener) startNacker(ctx context.Context) {
