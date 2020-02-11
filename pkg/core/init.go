@@ -66,7 +66,7 @@ func createVirtualServiceYAML(appName string, routePrefix string) (err error) {
 func writeYAML(fileName string, templateData map[string]string) (err error) {
 	templateDir := pkger.Dir("/yamls")
 
-	templateFile, err := templateDir.Open(fileName)
+	templateFile, err := templateDir.Open("/" + fileName)
 	if err != nil {
 		return
 	}

@@ -8,4 +8,5 @@ install:
   kubectl apply -f bootstrap.yaml
 
 build:
+  pkger
   go build && mv tuber ~/.bin
