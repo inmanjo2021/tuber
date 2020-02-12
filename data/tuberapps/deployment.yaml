@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{.appName}}
+  name: {{.appName}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{.appName}}
+  template:
+    metadata:
+      labels:
+        app: {{.appName}}
+    spec:
+      containers:
+      - image: {{"{{.tuberImage}}"}}
+        name: {{.appName}}
+        envFrom:
+          - secretRef:
+              name: {{.appName}}-env
+        ports:
+          - containerPort: 3000
