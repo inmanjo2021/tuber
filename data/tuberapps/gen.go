@@ -18,7 +18,7 @@ func main() {
 }
 
 func Yamls() {
-	dir, err := ioutil.ReadDir(".")
+	dir, err := ioutil.ReadDir("./yamls")
 	if err != nil {
 		panic(err)
 	}
@@ -31,7 +31,7 @@ func Yamls() {
 	}
 
 	for _, yaml := range yamls {
-		file, err := ioutil.ReadFile(yaml.Name())
+		file, err := ioutil.ReadFile("yamls/" + yaml.Name())
 		if err != nil {
 			panic(err)
 		}
