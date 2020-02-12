@@ -5,9 +5,10 @@ import (
 	"io/ioutil"
 	"os"
 	"text/template"
-
-	"github.com/markbates/pkger"
+	data "tuber/data/tuberapps"
 )
+
+const tuberConfigPath = ".tuber"
 
 // InitTuberApp creates a bunch of yamls for you
 func InitTuberApp(appName string, routePrefix string) (err error) {
@@ -34,7 +35,6 @@ func createTuberDirectory() (err error) {
 	if err = os.Mkdir(".tuber", os.ModePerm); os.IsExist(err) {
 		return nil
 	}
-
 	return
 }
 
@@ -43,7 +43,7 @@ func createDeploymentYAML(appName string) (err error) {
 		"appName": appName,
 	}
 
-	return writeYAML("deployment.yaml", templateData)
+	return writeYAML(data.Deployment, templateData)
 }
 
 func createServiceYAML(appName string) (err error) {
@@ -51,7 +51,7 @@ func createServiceYAML(appName string) (err error) {
 		"appName": appName,
 	}
 
-	return writeYAML("service.yaml", templateData)
+	return writeYAML(data.Service, templateData)
 }
 
 func createVirtualServiceYAML(appName string, routePrefix string) (err error) {
@@ -60,24 +60,12 @@ func createVirtualServiceYAML(appName string, routePrefix string) (err error) {
 		"routePrefix": routePrefix,
 	}
 
-	return writeYAML("virtual_service.yaml", templateData)
+	return writeYAML(data.Virtualservice, templateData)
 }
 
-func writeYAML(fileName string, templateData map[string]string) (err error) {
-	templateDir := pkger.Dir("/yamls")
+func writeYAML(app data.TuberYaml, templateData map[string]string) (err error) {
+	tpl, err := template.New("").Parse(string(app.Contents))
 
-	templateFile, err := templateDir.Open("/" + fileName)
-	if err != nil {
-		return
-	}
-	defer templateFile.Close()
-
-	templateFileBytes, err := ioutil.ReadAll(templateFile)
-	if err != nil {
-		return
-	}
-
-	tpl, err := template.New("tpl").Parse(string(templateFileBytes))
 	if err != nil {
 		return
 	}
@@ -88,8 +76,7 @@ func writeYAML(fileName string, templateData map[string]string) (err error) {
 		return
 	}
 
-	path := ".tuber/" + fileName
-	if err = ioutil.WriteFile(path, buff.Bytes(), 0644); err != nil {
+	if err = ioutil.WriteFile(tuberConfigPath+"/"+app.Filename, buff.Bytes(), 0644); err != nil {
 		return
 	}
 
