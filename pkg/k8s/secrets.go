@@ -11,7 +11,6 @@ import (
 // CreateTuberCredentials creates a secret based on the contents of a file
 func CreateTuberCredentials(path string, namespace string) (err error) {
 	dat, err := ioutil.ReadFile(path)
-	projectName := "tuber"
 
 	if err != nil {
 		return
@@ -21,8 +20,8 @@ func CreateTuberCredentials(path string, namespace string) (err error) {
 	filename := filepath.Base(path)
 	data := map[string]string{filename: str}
 	meta := k8sMetadata{
-		Name:      fmt.Sprintf("%s-%s", projectName, filename),
-		Namespace: projectName,
+		Name:      fmt.Sprintf("%s-%s", namespace, filename),
+		Namespace: namespace,
 	}
 
 	config := k8sConfig{
