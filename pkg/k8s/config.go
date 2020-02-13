@@ -62,9 +62,14 @@ func GetConfig(name string, namespace string, kind string) (config *Config, err 
 		json.Unmarshal(result, &k8sc)
 	}
 
+	data := k8sc.Data
+	if data == nil {
+		data = map[string]string{}
+	}
+
 	config = &Config{
 		config: &k8sc,
-		Data:   k8sc.Data,
+		Data:   data,
 	}
 	return
 }
