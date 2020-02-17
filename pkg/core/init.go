@@ -1,10 +1,8 @@
 package core
 
 import (
-	"bytes"
 	"io/ioutil"
 	"os"
-	"text/template"
 	data "tuber/data/tuberapps"
 )
 
@@ -64,21 +62,11 @@ func createVirtualServiceYAML(appName string, routePrefix string) (err error) {
 }
 
 func writeYAML(app data.TuberYaml, templateData map[string]string) (err error) {
-	tpl, err := template.New("").Parse(string(app.Contents))
+	interpolated, err := interpolate(string(app.Contents), templateData)
 
 	if err != nil {
 		return
 	}
 
-	var buff bytes.Buffer
-
-	if err = tpl.Execute(&buff, templateData); err != nil {
-		return
-	}
-
-	if err = ioutil.WriteFile(tuberConfigPath+"/"+app.Filename, buff.Bytes(), 0644); err != nil {
-		return
-	}
-
-	return
+	return ioutil.WriteFile(tuberConfigPath+"/"+app.Filename, interpolated, 0644)
 }
