@@ -11,8 +11,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Build project
-        run: |
-          go build
+        run: go build
       - name: Create Release
         uses: actions/create-release@v1
         env:
