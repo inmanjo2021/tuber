@@ -23,6 +23,11 @@ jobs:
         env:
           GOOS: linux
           GOARCH: amd64
+      - name: Build Windows
+        run: go build -o tuber_windows
+        env:
+          GOOS: windows
+          GOARCH: amd64
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
