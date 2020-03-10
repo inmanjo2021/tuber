@@ -24,7 +24,7 @@ changelog:
 brews:
   - github:
       owner: Freshly
-      name: homebrew-tuber
+      name: homebrew-taps
     folder: Formula
     homepage: https://github.com/Freshly/tuber
     dependencies:
