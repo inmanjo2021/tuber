@@ -2,9 +2,12 @@ package cmd
 
 import (
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"tuber/pkg/core"
 	"tuber/pkg/k8s"
 
+	"github.com/goccy/go-yaml"
 	"github.com/spf13/viper"
 )
 
@@ -45,4 +48,46 @@ func credentials() ([]byte, error) {
 	} else {
 		return creds, nil
 	}
+}
+
+type tuberConfig struct {
+	Clusters map[string]string
+}
+
+func getTuberConfig() (*tuberConfig, error) {
+	path, err := tuberConfigPath()
+	if err != nil {
+		return nil, err
+	}
+
+	raw, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var t tuberConfig
+	err = yaml.Unmarshal(raw, &t)
+	if err != nil {
+		return nil, err
+	}
+
+	return &t, nil
+}
+
+func tuberConfigPath() (string, error) {
+	dir, err := tuberConfigDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(dir, "config.yaml"), nil
+}
+
+func tuberConfigDir() (string, error) {
+	basePath, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(basePath, "tuber"), nil
 }
