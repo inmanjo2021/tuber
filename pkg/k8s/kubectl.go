@@ -1,6 +1,8 @@
 package k8s
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -130,10 +132,53 @@ func Exec(name string, namespace string, args ...string) error {
 	return err
 }
 
+type unmarshalledList struct {
+	Items []interface{} `json:"items"`
+}
+
+type List struct {
+	Items [][]byte
+}
+
+// List returns a List resource, with an Items slice of raw yamls
+func ListKind(kind string, namespace string, args ...string) (List, error) {
+	get := []string{"get", kind, "-n", namespace, "-o", "json"}
+	out, err := kubectl(append(get, args...)...)
+	if err != nil {
+		return List{}, err
+	}
+	var unmarshalled unmarshalledList
+	err = json.Unmarshal(out, &unmarshalled)
+	if err != nil {
+		return List{}, err
+	}
+	var l List
+	for _, resource := range unmarshalled.Items {
+		marshalled, marshalErr := json.Marshal(resource)
+		if marshalErr != nil {
+			return List{}, marshalErr
+		}
+		l.Items = append(l.Items, marshalled)
+	}
+	return l, nil
+}
+
 // UseCluster switch current configured kubectl cluster
 func UseCluster(cluster string) error {
 	_, err := kubectl([]string{"config", "use-context", cluster}...)
 	return err
+}
+
+// CanDeploy determines if the current user can create a deployment
+func CanDeploy(appName, token string) bool {
+	t := fmt.Sprintf("--token=%s", token)
+
+	out, err := kubectl([]string{"auth", "can-i", "create", "deployments", "-n", appName, t}...)
+	if err != nil {
+		return false
+	}
+
+	return strings.Trim(string(out), "\r\n") == "yes"
 }
 
 // CurrentCluster the current configured kubectl cluster
@@ -142,5 +187,5 @@ func CurrentCluster() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(out), nil
+	return strings.Trim(string(out), "\r\n"), nil
 }
