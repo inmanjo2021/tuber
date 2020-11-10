@@ -1,131 +1,125 @@
 package events
 
 import (
-	"strings"
-	"sync"
+	"context"
 	"time"
+	"tuber/pkg/containers"
 	"tuber/pkg/core"
-	"tuber/pkg/listener"
+	"tuber/pkg/report"
 
 	"go.uber.org/zap"
 )
 
-// EventProcessor processes events
-type EventProcessor struct {
-	Creds             []byte
-	Logger            *zap.Logger
-	ClusterData       *core.ClusterData
-	ReviewAppsEnabled bool
-	Unprocessed       <-chan *listener.RegistryEvent
-	Processed         chan<- *listener.RegistryEvent
-	ChErr             chan<- listener.FailedRelease
-	ChErrReports      chan<- error
+// Processor processes events
+type Processor struct {
+	ctx               context.Context
+	logger            *zap.Logger
+	creds             []byte
+	clusterData       *core.ClusterData
+	reviewAppsEnabled bool
 }
 
-// Start streams a stream
-func (p EventProcessor) Start() {
-	defer close(p.Processed)
-	defer close(p.ChErr)
-
-	p.Logger.Info("Event processor starting", zap.Bool("review apps enabled", p.ReviewAppsEnabled))
-	var wait = &sync.WaitGroup{}
-
-	for event := range p.Unprocessed {
-		go func(event *listener.RegistryEvent) {
-			wait.Add(1)
-			defer wait.Done()
-
-			apps, err := p.apps()
-			if err != nil {
-				p.Logger.Error("An error occured looking up tuber apps! Reporting the event as failed and acking",
-					zap.Error(err),
-					zap.String("tag", event.Tag),
-					zap.String("digest", event.Digest),
-				)
-				p.reportFailedRelease(event, p.Logger, err)
-				return
-			}
-
-			p.processEvent(event, apps)
-		}(event)
+// NewProcessor is a constructor for Processors so that the fields can be unexported
+func NewProcessor(ctx context.Context, logger *zap.Logger, creds []byte, clusterData *core.ClusterData, reviewAppsEnabled bool) Processor {
+	return Processor{
+		ctx:               ctx,
+		logger:            logger,
+		creds:             creds,
+		clusterData:       clusterData,
+		reviewAppsEnabled: reviewAppsEnabled,
 	}
-	wait.Wait()
 }
 
-func (p EventProcessor) apps() ([]core.TuberApp, error) {
-	if p.ReviewAppsEnabled {
-		p.Logger.Debug("Listing source and review apps")
+type event struct {
+	digest     string
+	tag        string
+	logger     *zap.Logger
+	errorScope report.Scope
+}
+
+// ProcessMessage receives a pubsub message, filters it against TuberApps, and triggers deploys for matching apps
+func (p Processor) ProcessMessage(digest string, tag string) {
+	event := event{
+		digest:     digest,
+		tag:        tag,
+		logger:     p.logger.With(zap.String("tag", tag), zap.String("digest", digest)),
+		errorScope: report.Scope{"tag": tag, "digest": digest},
+	}
+	apps, err := p.apps()
+	if err != nil {
+		event.logger.Error("failed to look up tuber apps", zap.Error(err))
+		report.Error(err, event.errorScope.WithContext("tuber apps lookup"))
+		return
+	}
+	event.logger.Debug("filtering event against current tuber apps", zap.Any("apps", apps))
+
+	matchFound := false
+	for _, app := range apps {
+		if app.ImageTag == event.tag {
+			matchFound = true
+			p.deploy(event, &app)
+		}
+	}
+	if !matchFound {
+		event.logger.Debug("ignored event")
+	}
+}
+
+func (p Processor) apps() ([]core.TuberApp, error) {
+	if p.reviewAppsEnabled {
+		p.logger.Debug("pulling source and review apps")
 		return core.SourceAndReviewApps()
 	}
 
-	p.Logger.Debug("Listing source apps")
+	p.logger.Debug("pulling source apps")
 	return core.TuberSourceApps()
 }
 
-func (p EventProcessor) processEvent(event *listener.RegistryEvent, apps []core.TuberApp) {
-	p.Logger.Info("Processing event",
-		zap.String("tag", event.Tag),
-		zap.String("digest", event.Digest),
-	)
-	p.Logger.Debug("Listing tuber apps",
-		zap.Any("apps", apps),
-	)
-
-	for _, app := range apps {
-		if app.ImageTag == event.Tag {
-			p.runDeploy(app, event)
-		}
-	}
-
-	p.Processed <- event
-}
-
-func (p EventProcessor) releaseLogger(app core.TuberApp) *zap.Logger {
-	imageTag := strings.Split(app.ImageTag, ":")[1]
-	return p.Logger.With(
+func (p Processor) deploy(event event, app *core.TuberApp) {
+	deployLogger := event.logger.With(
 		zap.String("name", app.Name),
 		zap.String("branch", app.Tag),
-		zap.String("imageTag", imageTag),
+		zap.String("imageTag", app.ImageTag),
 		zap.String("action", "release"),
 	)
-}
+	errorScope := event.errorScope.AddScope(report.Scope{
+		"name":     app.Name,
+		"branch":   app.Tag,
+		"imageTag": app.ImageTag,
+	})
 
-func (p EventProcessor) runDeploy(app core.TuberApp, event *listener.RegistryEvent) {
-	releaseLog := p.releaseLogger(app)
+	deployLogger.Info("release starting")
 
 	startTime := time.Now()
-	releaseLog.Info("release: starting",
-		zap.String("event", "begin"),
-		zap.String("tag", event.Tag),
-		zap.String("digest", event.Digest),
-	)
-
-	err := deploy(*releaseLog, &app, event.Digest, p.Creds, p.ClusterData)
+	prereleaseYamls, releaseYamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), p.creds)
 
 	if err != nil {
-		p.reportFailedRelease(event, releaseLog, err)
-	} else {
-		p.reportSuccessfulRelease(event, releaseLog, startTime)
+		deployLogger.Warn("failed to find tuber layer", zap.Error(err))
+		report.Error(err, errorScope.WithContext("find tuber layer"))
+		return
 	}
-}
 
-func (p EventProcessor) reportSuccessfulRelease(event *listener.RegistryEvent, releaseLog *zap.Logger, startTime time.Time) {
-	releaseLog.Info("release: done",
-		zap.String("event", "complete"),
-		zap.Duration("duration", time.Since(startTime)),
-		zap.String("tag", event.Tag),
-		zap.String("digest", event.Digest),
-	)
-}
+	if len(prereleaseYamls) > 0 {
+		deployLogger.Info("prerelease starting")
 
-func (p EventProcessor) reportFailedRelease(event *listener.RegistryEvent, releaseLog *zap.Logger, err error) {
-	releaseLog.Warn(
-		"release: error",
-		zap.String("event", "error"),
-		zap.Error(err),
-		zap.String("tag", event.Tag),
-		zap.String("digest", event.Digest),
-	)
-	p.ChErr <- listener.FailedRelease{Err: err, Event: event}
-	p.ChErrReports <- err
+		err = core.RunPrerelease(prereleaseYamls, app, event.digest, p.clusterData)
+
+		if err != nil {
+			report.Error(err, errorScope.WithContext("prerelease"))
+			deployLogger.Warn("failed prerelease", zap.Error(err))
+			return
+		}
+
+		deployLogger.Info("prerelease complete")
+	}
+
+	releaseIDs, err := core.ReleaseTubers(releaseYamls, app, event.digest, p.clusterData)
+	if err != nil {
+		deployLogger.Warn("failed release", zap.Error(err))
+		report.Error(err, errorScope.WithContext("release"))
+		return
+	}
+	deployLogger.Info("release complete", zap.Strings("releaseIds", releaseIDs), zap.Duration("duration", time.Since(startTime)))
+
+	return
 }
