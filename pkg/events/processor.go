@@ -40,7 +40,7 @@ type event struct {
 	sha        string
 }
 
-// ProcessMessage receives a pubsub message, filters it against TuberApps, and triggers deploys for matching apps
+// ProcessMessage receives a pubsub message, filters it against TuberApps, and triggers releases for matching apps
 func (p Processor) ProcessMessage(digest string, tag string) {
 	logger := p.logger.With(zap.String("tag", tag), zap.String("digest", digest))
 	scope := report.Scope{"tag": tag, "digest": digest}
@@ -72,7 +72,18 @@ func (p Processor) ProcessMessage(digest string, tag string) {
 	for _, app := range apps {
 		if app.ImageTag == event.tag {
 			matchFound = true
-			p.deploy(event, &app)
+
+			paused, err := core.ReleasesPaused(app.Name)
+			if err != nil {
+				event.logger.Error("failed to check for paused state", zap.Error(err))
+			}
+
+			if paused {
+				event.logger.Warn("app deployments paused; skipping", zap.String("appName", app.Name))
+				continue
+			}
+
+			p.startRelease(event, &app)
 		}
 	}
 	if !matchFound {
@@ -90,8 +101,8 @@ func (p Processor) apps() ([]core.TuberApp, error) {
 	return core.TuberSourceApps()
 }
 
-func (p Processor) deploy(event event, app *core.TuberApp) {
-	deployLogger := event.logger.With(
+func (p Processor) startRelease(event event, app *core.TuberApp) {
+	logger := event.logger.With(
 		zap.String("name", app.Name),
 		zap.String("branch", app.Tag),
 		zap.String("imageTag", app.ImageTag),
@@ -103,38 +114,33 @@ func (p Processor) deploy(event event, app *core.TuberApp) {
 		"imageTag": app.ImageTag,
 	})
 
-	deployLogger.Info("release starting")
-
-	startTime := time.Now()
+	logger.Info("release starting")
 	prereleaseYamls, releaseYamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), event.sha, p.creds)
-
 	if err != nil {
-		deployLogger.Warn("failed to find tuber layer", zap.Error(err))
+		logger.Error("failed to find tuber layer", zap.Error(err))
 		report.Error(err, errorScope.WithContext("find tuber layer"))
 		return
 	}
 
 	if len(prereleaseYamls) > 0 {
-		deployLogger.Info("prerelease starting")
+		logger.Info("prerelease starting")
 
 		err = core.RunPrerelease(prereleaseYamls, app, event.digest, p.clusterData)
-
 		if err != nil {
 			report.Error(err, errorScope.WithContext("prerelease"))
-			deployLogger.Warn("failed prerelease", zap.Error(err))
+			logger.Error("failed prerelease", zap.Error(err))
 			return
 		}
 
-		deployLogger.Info("prerelease complete")
+		logger.Info("prerelease complete")
 	}
 
-	releaseIDs, err := core.ReleaseTubers(releaseYamls, app, event.digest, p.clusterData)
+	startTime := time.Now()
+	err = core.Release(logger, errorScope, releaseYamls, app, event.digest, p.clusterData)
 	if err != nil {
-		deployLogger.Warn("failed release", zap.Error(err))
-		report.Error(err, errorScope.WithContext("release"))
+		logger.Warn("release failed", zap.Error(err), zap.Duration("duration", time.Since(startTime)))
 		return
 	}
-	deployLogger.Info("release complete", zap.Strings("releaseIds", releaseIDs), zap.Duration("duration", time.Since(startTime)))
-
+	logger.Info("release complete", zap.Duration("duration", time.Since(startTime)))
 	return
 }

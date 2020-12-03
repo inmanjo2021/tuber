@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -121,6 +122,20 @@ func Restart(resource string, namespace string, args ...string) (err error) {
 	restart := []string{"rollout", "restart", resource, "-n", namespace}
 	_, err = kubectl(append(restart, args...)...)
 	return
+}
+
+// RolloutStatus waits and watches a rollout's progress
+func RolloutStatus(kind string, name string, namespace string, timeout time.Duration, args ...string) error {
+	status := []string{"rollout", "status", kind, name, "-n", namespace, "--timeout", timeout.String()}
+	_, err := kubectl(append(status, args...)...)
+	return err
+}
+
+// RolloutUndo runs undo on a rollout
+func RolloutUndo(kind string, name string, namespace string, args ...string) error {
+	status := []string{"rollout", "undo", kind, name, "-n", namespace}
+	_, err := kubectl(append(status, args...)...)
+	return err
 }
 
 // Exists tells you if a given resource already exists. Errors if a get call fails for any reason other than Not Found
