@@ -42,7 +42,7 @@ type manifest struct {
 }
 
 type repository struct {
-	registry *registry
+	registry *Registry
 	path     string
 	token    string
 }
@@ -54,13 +54,13 @@ type AppYamls struct {
 }
 
 // GetTuberLayer downloads yamls for an image
-func GetTuberLayer(location RepositoryLocation, sha string, creds []byte) (AppYamls, error) {
+func GetTuberLayer(location RepositoryLocation, sha string, creds []byte, client *http.Client) (AppYamls, error) {
 	authToken, err := gcloud.GetAccessToken(creds)
 	if err != nil {
 		return AppYamls{}, nil
 	}
 
-	reg := newRegistry(location.Host, authToken)
+	reg := NewRegistry(location.Host, authToken, nil)
 	repo, err := reg.getRepository(location.Path)
 	if err != nil {
 		return AppYamls{}, nil
@@ -69,14 +69,14 @@ func GetTuberLayer(location RepositoryLocation, sha string, creds []byte) (AppYa
 	return repo.findLayer(sha)
 }
 
-func GetLatestSHA(location RepositoryLocation, creds []byte) (sha string, err error) {
+func GetLatestSHA(location RepositoryLocation, creds []byte, client *http.Client) (sha string, err error) {
 	authToken, err := gcloud.GetAccessToken(creds)
 
 	if err != nil {
 		return
 	}
 
-	reg := newRegistry(location.Host, authToken)
+	reg := NewRegistry(location.Host, authToken, client)
 	repo, err := reg.getRepository(location.Path)
 
 	if err != nil {

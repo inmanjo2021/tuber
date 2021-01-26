@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"net/http"
 	"tuber/pkg/containers"
 	"tuber/pkg/core"
 	"tuber/pkg/events"
@@ -44,8 +45,8 @@ func deploy(cmd *cobra.Command, args []string) error {
 	}
 
 	location := app.GetRepositoryLocation()
-
-	sha, err := containers.GetLatestSHA(location, creds)
+	client := http.DefaultClient
+	sha, err := containers.GetLatestSHA(location, creds, client)
 
 	if err != nil {
 		return err

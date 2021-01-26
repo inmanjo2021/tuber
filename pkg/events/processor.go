@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -142,7 +143,8 @@ func (p Processor) startRelease(event event, app *core.TuberApp) {
 
 	logger.Info("release starting")
 
-	yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), event.sha, p.creds)
+	client := http.DefaultClient
+	yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), event.sha, p.creds, client)
 	if err != nil {
 		logger.Error("failed to find tuber layer", zap.Error(err))
 		report.Error(err, errorScope.WithContext("find tuber layer"))
