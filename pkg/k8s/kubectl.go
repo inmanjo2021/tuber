@@ -206,6 +206,10 @@ func UseCluster(cluster string) error {
 
 // CanDeploy determines if the current user can create a deployment
 func CanDeploy(appName, token string) bool {
+	if token == "" {
+		return false
+	}
+
 	t := fmt.Sprintf("--token=%s", token)
 
 	out, err := kubectl([]string{"auth", "can-i", "create", "deployments", "-n", appName, t}...)

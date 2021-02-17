@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -105,10 +106,17 @@ func start(cmd *cobra.Command, args []string) {
 func startReviewAppsServer(logger *zap.Logger, creds []byte) {
 	logger = logger.With(zap.String("action", "grpc"))
 
+	projectName := viper.GetString("review-apps-triggers-project-name")
+	if projectName == "" {
+		err := fmt.Errorf("no reviewapps project name configured")
+		logger.Error("grpc server failed to start: no reviewapps project name configured")
+		report.Error(err, report.Scope{"during": "grpc server startup"})
+		panic(err)
+	}
+
 	srv := reviewapps.Server{
-		ReviewAppsEnabled:  viper.GetBool("reviewapps-enabled"),
 		ClusterDefaultHost: viper.GetString("cluster-default-host"),
-		ProjectName:        viper.GetString("project-name"),
+		ProjectName:        projectName,
 		Logger:             logger,
 		Credentials:        creds,
 	}
