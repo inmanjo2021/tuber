@@ -153,6 +153,7 @@ func (p Processor) startRelease(event event, app *core.TuberApp) {
 		return
 	}
 
+	logger.Debug("$$$$$$$$$$")
 	logger.Debug(fmt.Sprintf("yamls for %s: %+v", app.Name, yamls))
 
 	startTime := time.Now()

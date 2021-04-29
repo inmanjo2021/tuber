@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -20,7 +21,12 @@ func runKubectl(cmd *exec.Cmd) ([]byte, error) {
 		logger.Debug(strings.Join(cmd.Args, " "))
 	}
 
+	fmt.Printf("command args: %+v\n", cmd.Args)
+
 	out, err := cmd.CombinedOutput()
+	fmt.Printf("exit code: %d\n", cmd.ProcessState.ExitCode())
+	fmt.Printf("runKubectl out: %q\n", out)
+	fmt.Printf("runKubectl err: %v\n", err)
 
 	if err != nil || cmd.ProcessState.ExitCode() != 0 {
 		err = newK8sError(out, err)
@@ -61,12 +67,13 @@ func kubectlIO(args ...string) error {
 
 func pipeToKubectl(data []byte, args ...string) (out []byte, err error) {
 	cmd := exec.Command("kubectl", args...)
-	stdin, err := cmd.StdinPipe()
 
+	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return
 	}
 
+	fmt.Printf("attempting to write data to stdin: %s\n", string(data))
 	_, err = stdin.Write(data)
 	if err != nil {
 		return
@@ -83,6 +90,7 @@ func pipeToKubectl(data []byte, args ...string) (out []byte, err error) {
 // Apply `kubectl apply` data to a given namespace. Specify output or any other flags as args.
 // Uses a stdin pipe to include the content of the data slice
 func Apply(data []byte, namespace string, args ...string) (err error) {
+	fmt.Printf("args in apply: %+v\n", args)
 	apply := []string{"apply", "-n", namespace, "-f", "-"}
 	_, err = pipeToKubectl(data, append(apply, args...)...)
 	return
@@ -217,6 +225,8 @@ func CanDeploy(namespace string, args ...string) (bool, error) {
 // CurrentCluster the current configured kubectl cluster
 func CurrentCluster() (string, error) {
 	out, err := kubectl([]string{"config", "current-context"}...)
+	fmt.Printf("CurrentCluster out: %q\n", out)
+	fmt.Printf("CurrentCluster err: %v\n", err)
 	if err != nil {
 		return "", err
 	}

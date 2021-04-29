@@ -82,7 +82,7 @@ func Release(yamls containers.AppYamls, logger *zap.Logger, errorScope report.Sc
 func (r releaser) release() error {
 	r.logger.Debug(fmt.Sprintf("releaser starting for %s", r.app.Name))
 
-	r.logger.Debug("getting app ")
+	r.logger.Debug("getting app")
 	rr, err := r.resourcesToApply()
 	if err != nil {
 		return r.releaseError(err)
@@ -334,11 +334,15 @@ func (r releaser) resourcesToApply() (*ResourceCollection, error) {
 	var configs []appResource
 
 	for _, releaseResource := range releaseResources {
+		fmt.Printf("releaseResource: %s\n", releaseResource.contents)
 		if releaseResource.isWorkload() {
+			fmt.Printf("appending to workload\n")
 			workloads = append(workloads, releaseResource)
 		} else if releaseResource.canBeManaged() {
+			fmt.Printf("appending to configs\n")
 			configs = append(configs, releaseResource)
 		}
+		fmt.Println("not appending to any type")
 	}
 
 	var filteredPrereleasers []appResource
@@ -438,8 +442,11 @@ func (r releaser) apply(resources []appResource) ([]appResource, error) {
 		scope, logger := resource.scopes(r)
 
 		r.logger.Debug("attempting to apply", zap.String("app name", r.app.Name), zap.ByteString("resource", resource.contents))
+		fmt.Printf("----------")
+		fmt.Printf("about to call apply in releaser apply\n")
 		err := k8s.Apply(resource.contents, r.app.Name)
 		if err != nil {
+			fmt.Printf("failed to apply %s. resource: %s\n", r.app.Name, resource.contents)
 			r.logger.Debug("failed to apply", zap.String("app name", r.app.Name), zap.ByteString("resource", resource.contents))
 			return applied, ErrorContext{err: err, scope: scope, logger: logger, context: "apply"}
 		}
@@ -597,6 +604,7 @@ func (r releaser) rollbackResource(applied appResource, cached appResource) erro
 	if applied.supportsRollback() {
 		err = k8s.RolloutUndo(applied.kind, applied.name, r.app.Name)
 	} else {
+		fmt.Printf("about to call apply in rollback resource\n")
 		err = k8s.Apply(cached.contents, r.app.Name)
 	}
 
