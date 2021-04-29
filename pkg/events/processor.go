@@ -65,6 +65,7 @@ func (p Processor) ProcessMessage(digest string, tag string) {
 		sha:        sha,
 	}
 
+	logger.Debug("getting tuber apps")
 	apps, err := p.apps()
 	if err != nil {
 		event.logger.Error("failed to look up tuber apps", zap.Error(err))
@@ -79,6 +80,7 @@ func (p Processor) ProcessMessage(digest string, tag string) {
 
 	for _, a := range apps {
 		if a.ImageTag == event.tag {
+			logger.Debug(fmt.Sprintf("found matching app for %s", a.ImageTag))
 			matchFound = true
 			wg.Add(1)
 
@@ -92,6 +94,7 @@ func (p Processor) ProcessMessage(digest string, tag string) {
 				cond := (*p.locks)[app.Name]
 				cond.L.Lock()
 
+				logger.Debug(fmt.Sprintf("checking if releases are paused for %s", app.Name))
 				paused, err := core.ReleasesPaused(app.Name)
 				if err != nil {
 					event.logger.Error("failed to check for paused state", zap.Error(err))
@@ -99,6 +102,7 @@ func (p Processor) ProcessMessage(digest string, tag string) {
 				}
 
 				if paused {
+					logger.Debug("releases are paused")
 					event.logger.Warn("deployments are paused for this app; skipping", zap.String("appName", app.Name))
 					return
 				}
@@ -141,6 +145,7 @@ func (p Processor) startRelease(event event, app *core.TuberApp) {
 
 	logger.Info("release starting")
 
+	logger.Debug(fmt.Sprintf("getting tuber layer for %s", app.Name))
 	yamls, err := containers.GetTuberLayer(app.GetRepositoryLocation(), event.sha, p.creds)
 	if err != nil {
 		logger.Error("failed to find tuber layer", zap.Error(err))
@@ -148,7 +153,10 @@ func (p Processor) startRelease(event event, app *core.TuberApp) {
 		return
 	}
 
+	logger.Debug(fmt.Sprintf("yamls for %s: %+v", app.Name, yamls))
+
 	startTime := time.Now()
+	logger.Debug("calling core.Release")
 	err = core.Release(
 		yamls,
 		logger,
@@ -164,5 +172,4 @@ func (p Processor) startRelease(event event, app *core.TuberApp) {
 	}
 
 	logger.Info("release complete", zap.Duration("duration", time.Since(startTime)))
-	return
 }
