@@ -153,7 +153,7 @@ func promptCurrentContext(cmd *cobra.Command, args []string) error {
 
 	cluster, err := k8s.CurrentCluster()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get current cluster context. reason: %s", err.Error())
 	}
 
 	fmt.Fprintf(os.Stderr, "About to run %s on %s", cmd.Name(), cluster)
