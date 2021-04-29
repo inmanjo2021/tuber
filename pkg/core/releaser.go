@@ -80,22 +80,24 @@ func Release(yamls containers.AppYamls, logger *zap.Logger, errorScope report.Sc
 }
 
 func (r releaser) release() error {
-	r.logger.Debug("releaser starting")
+	r.logger.Debug(fmt.Sprintf("releaser starting for %s", r.app.Name))
 
-	prereleaseResources, configs, workloads, postreleaseResources, err := r.resourcesToApply()
+	r.logger.Debug("getting app ")
+	rr, err := r.resourcesToApply()
 	if err != nil {
 		return r.releaseError(err)
 	}
 
+	r.logger.Debug("getting current state")
 	state, err := r.currentState()
 	if err != nil {
 		return r.releaseError(err)
 	}
 
-	if len(prereleaseResources) > 0 {
+	if len(rr.Prerelease) > 0 {
 		r.logger.Debug("prerelease starting")
 
-		err = RunPrerelease(prereleaseResources, r.app)
+		err = RunPrerelease(rr.Prerelease, r.app)
 		if err != nil {
 			return ErrorContext{context: "prerelease", err: err}
 		}
@@ -103,14 +105,15 @@ func (r releaser) release() error {
 		r.logger.Debug("prerelease complete")
 	}
 
-	appliedConfigs, err := r.apply(configs)
+	r.logger.Debug("attempting to apply configs")
+	appliedConfigs, err := r.apply(rr.Configs)
 	if err != nil {
 		_ = r.releaseError(err)
 		r.rollback(appliedConfigs, state.resources)
 		return err
 	}
 
-	appliedWorkloads, err := r.apply(workloads)
+	appliedWorkloads, err := r.apply(rr.Workloads)
 	if err != nil {
 		_ = r.releaseError(err)
 		_, configRollbackErrors := r.rollback(appliedConfigs, state.resources)
@@ -140,7 +143,7 @@ func (r releaser) release() error {
 		return err
 	}
 
-	appliedPostreleaseResources, err := r.apply(postreleaseResources)
+	appliedPostreleaseResources, err := r.apply(rr.Postrelease)
 	if err != nil {
 		_ = r.releaseError(err)
 		_, configRollbackErrors := r.rollback(appliedConfigs, state.resources)
@@ -255,13 +258,14 @@ func (m managedResources) decode() (appResources, error) {
 
 func (r releaser) currentState() (*state, error) {
 	stateName := "tuber-state-" + r.app.Name
-	exists, err := k8s.Exists("configMap", stateName, r.app.Name)
 
+	exists, err := k8s.Exists("configMap", stateName, r.app.Name)
 	if err != nil {
 		return nil, ErrorContext{err: err, context: "state config exists check"}
 	}
 
 	if !exists {
+		r.logger.Debug("config map does not exist for app & state. attempting to create new configmap", zap.String("stateName", stateName), zap.String("appName", r.app.Name))
 		createErr := k8s.Create(r.app.Name, "configmap", stateName, `--from-literal=state=`)
 		if createErr != nil {
 			return nil, ErrorContext{err: createErr, context: "state config creation"}
@@ -301,22 +305,29 @@ type parsedResource struct {
 	Metadata   metadata `yaml:"metadata"`
 }
 
-func (r releaser) resourcesToApply() ([]appResource, []appResource, []appResource, []appResource, error) {
+type ResourceCollection struct {
+	Prerelease  []appResource
+	Configs     []appResource
+	Workloads   []appResource
+	Postrelease []appResource
+}
+
+func (r releaser) resourcesToApply() (*ResourceCollection, error) {
 	d := releaseData(r.digest, r.app, r.data)
 
 	prereleaseResources, err := r.yamlToAppResource(r.prereleaseYamls, d)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	releaseResources, err := r.yamlToAppResource(r.releaseYamls, d)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	postreleaseResources, err := r.yamlToAppResource(r.postreleaseYamls, d)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	var workloads []appResource
@@ -343,7 +354,11 @@ func (r releaser) resourcesToApply() ([]appResource, []appResource, []appResourc
 		}
 	}
 
-	return filteredPrereleasers, configs, workloads, filteredPostreleasers, nil
+	return &ResourceCollection{
+		Prerelease:  filteredPrereleasers,
+		Configs:     configs,
+		Workloads:   workloads,
+		Postrelease: filteredPostreleasers}, nil
 }
 
 func (r releaser) yamlToAppResource(yamls []string, data map[string]string) (appResources, error) {
@@ -421,8 +436,11 @@ func (r releaser) apply(resources []appResource) ([]appResource, error) {
 	var applied []appResource
 	for _, resource := range resources {
 		scope, logger := resource.scopes(r)
+
+		r.logger.Debug("attempting to apply", zap.String("app name", r.app.Name), zap.ByteString("resource", resource.contents))
 		err := k8s.Apply(resource.contents, r.app.Name)
 		if err != nil {
+			r.logger.Debug("failed to apply", zap.String("app name", r.app.Name), zap.ByteString("resource", resource.contents))
 			return applied, ErrorContext{err: err, scope: scope, logger: logger, context: "apply"}
 		}
 		applied = append(applied, resource)
