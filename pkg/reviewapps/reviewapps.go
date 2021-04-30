@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/freshly/tuber/pkg/core"
@@ -34,7 +34,7 @@ func NewReviewAppSetup(sourceApp string, reviewApp string) error {
 	return nil
 }
 
-func CreateReviewApp(ctx context.Context, l *zap.Logger, branch string, appName string, token string, credentials []byte, projectName string) (string, error) {
+func CreateReviewApp(ctx context.Context, l *zap.Logger, branch string, appName string, credentials []byte, projectName string) (string, error) {
 	reviewAppName := ReviewAppName(appName, branch)
 
 	list, err := core.TuberReviewApps()
@@ -53,16 +53,6 @@ func CreateReviewApp(ctx context.Context, l *zap.Logger, branch string, appName 
 	)
 
 	logger.Info("creating review app")
-
-	logger.Info("checking permissions")
-	permitted, err := canCreate(logger, appName, token)
-	if err != nil {
-		return "", err
-	}
-
-	if !permitted {
-		return "", fmt.Errorf("not permitted to create a review app from %s", appName)
-	}
 
 	sourceApp, err := core.FindApp(appName)
 	if err != nil {
@@ -146,8 +136,32 @@ func DeleteReviewApp(ctx context.Context, reviewAppName string, credentials []by
 	return deleteReviewAppTrigger(ctx, credentials, projectName, reviewAppName)
 }
 
+// yoinked from https://gitlab.com/gitlab-org/gitlab-runner/-/blob/0e2ae0001684f681ff901baa85e0d63ec7838568/executors/kubernetes/util.go#L23
+const (
+	DNS1123NameMaximumLength         = 63
+	DNS1123NotAllowedCharacters      = "[^-a-z0-9]"
+	DNS1123NotAllowedStartCharacters = "^[^a-z0-9]+"
+)
+
+// yoinked from https://gitlab.com/gitlab-org/gitlab-runner/-/blob/0e2ae0001684f681ff901baa85e0d63ec7838568/executors/kubernetes/util.go#L268
+func makeDNS1123Compatible(name string) string {
+	name = strings.ToLower(name)
+
+	nameNotAllowedChars := regexp.MustCompile(DNS1123NotAllowedCharacters)
+	name = nameNotAllowedChars.ReplaceAllString(name, "")
+
+	nameNotAllowedStartChars := regexp.MustCompile(DNS1123NotAllowedStartCharacters)
+	name = nameNotAllowedStartChars.ReplaceAllString(name, "")
+
+	if len(name) > DNS1123NameMaximumLength {
+		name = name[0:DNS1123NameMaximumLength]
+	}
+
+	return name
+}
+
 func ReviewAppName(appName string, branch string) string {
-	return fmt.Sprintf("%s-%s", url.QueryEscape(appName), url.QueryEscape(branch))
+	return makeDNS1123Compatible(fmt.Sprintf("%s-%s", appName, branch))
 }
 
 func copyNamespace(sourceApp string, reviewApp string) error {
