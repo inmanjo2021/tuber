@@ -21,8 +21,11 @@ func bolter(cmd *cobra.Command, args []string) error {
 	}
 	defer db.Close()
 	err = db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("MyBucket"))
-		err := b.Put([]byte("answer"), []byte("42"))
+		b, err := tx.CreateBucketIfNotExists([]byte("MyBucket"))
+		if err != nil {
+			return err
+		}
+		err = b.Put([]byte("answer"), []byte("42"))
 		return err
 	})
 
