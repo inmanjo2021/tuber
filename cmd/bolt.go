@@ -15,22 +15,30 @@ var bolterCmd = &cobra.Command{
 }
 
 func bolter(cmd *cobra.Command, args []string) error {
-	db, err := bolt.Open("/etc/tuber-bolt", 0666, nil)
+	db, err := bolt.Open("/etc/tuber-bolt/db", 0666, nil)
 	if err != nil {
-		panic(err)
+		fmt.Println(err.Error())
 	}
 	defer db.Close()
-	db.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("MyBucket"))
 		err := b.Put([]byte("answer"), []byte("42"))
 		return err
 	})
-	db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("MyBucket"))
-		v := b.Get([]byte("answer"))
-		fmt.Printf("The answer is: %s\n", v)
-		return nil
-	})
+
+	if err == nil {
+		err = db.View(func(tx *bolt.Tx) error {
+			b := tx.Bucket([]byte("MyBucket"))
+			v := b.Get([]byte("answer"))
+			fmt.Printf("The answer is: %s\n", v)
+			return nil
+		})
+	}
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	select {}
 	return nil
 }
 
