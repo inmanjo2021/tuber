@@ -36,7 +36,13 @@ func startAdminServer(cmd *cobra.Command, args []string) {
 	if err != nil {
 		panic(err)
 	}
-	err = adminserver.Start(ctx, logger, triggersProjectName, creds, viper.GetBool("reviewapps-enabled"), viper.GetString("cluster-default-host"))
+
+	db, err := db()
+	if err != nil {
+		panic(err)
+	}
+
+	err = adminserver.Start(ctx, logger, triggersProjectName, creds, viper.GetBool("reviewapps-enabled"), viper.GetString("cluster-default-host"), viper.GetString("adminserver-port"), db)
 	if err != nil {
 		panic(err)
 	}
