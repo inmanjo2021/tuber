@@ -5,13 +5,20 @@ import (
 	"log"
 
 	"github.com/machinebox/graphql"
+	"github.com/spf13/viper"
 )
 
 type GraphqlClient struct {
 	client *graphql.Client
 }
 
-func New(graphqlURL string) *GraphqlClient {
+func New(clusterURL string) *GraphqlClient {
+	graphqlURL := viper.GetString("graphql-url")
+
+	if graphqlURL == "" {
+		graphqlURL = clusterURL + "/graphql"
+	}
+
 	client := graphql.NewClient(graphqlURL)
 	client.Log = func(s string) { log.Println(s) }
 
