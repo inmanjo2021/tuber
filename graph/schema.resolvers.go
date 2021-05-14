@@ -9,10 +9,20 @@ import (
 
 	"github.com/freshly/tuber/graph/generated"
 	"github.com/freshly/tuber/graph/model"
+	"github.com/freshly/tuber/pkg/core"
 )
 
 func (r *mutationResolver) CreateApp(ctx context.Context, input *model.AppInput) (*model.TuberApp, error) {
-	panic(fmt.Errorf("not implemented"))
+	err := core.NewAppSetup(input.Name, input.IsIstio)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := core.AddSourceAppConfig(input.Name, input.Repo, input.Tag); err != nil {
+		return nil, err
+	}
+
+	return &model.TuberApp{}, nil
 }
 
 func (r *mutationResolver) UpdateApp(ctx context.Context, appID string, input *model.AppInput) (*model.TuberApp, error) {

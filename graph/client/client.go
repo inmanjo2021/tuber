@@ -35,3 +35,24 @@ func (g *GraphqlClient) Query(ctx context.Context, gql string, target interface{
 
 	return nil
 }
+
+func (g *GraphqlClient) Mutation(ctx context.Context, gql string, id *int, input interface{}, target interface{}) error {
+	req := graphql.NewRequest(gql)
+
+	if id != nil {
+		req.Var("id", *id)
+	}
+
+	if input != nil {
+		req.Var("input", input)
+	}
+
+	// set header fields
+	req.Header.Set("Cache-Control", "no-cache")
+
+	if err := g.client.Run(ctx, req, &target); err != nil {
+		return err
+	}
+
+	return nil
+}

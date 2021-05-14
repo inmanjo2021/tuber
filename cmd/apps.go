@@ -30,16 +30,32 @@ var appsInstallCmd = &cobra.Command{
 	Args:         cobra.ExactArgs(3),
 	PreRunE:      promptCurrentContext,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		graphql := client.New()
+
 		appName := args[0]
 		repo := args[1]
 		tag := args[2]
 
-		err := core.NewAppSetup(appName, istioEnabled)
-		if err != nil {
-			return err
+		input := &model.AppInput{
+			IsIstio: istioEnabled,
+			Name:    appName,
+			Tag:     tag,
+			Repo:    repo,
 		}
 
-		return core.AddSourceAppConfig(appName, repo, tag)
+		var respData struct {
+			createApp []model.TuberApp
+		}
+
+		gql := `
+			mutation($input: AppInput) {
+				createApp(input: $input) {
+					name
+				}
+			}
+		`
+
+		return graphql.Mutation(context.Background(), gql, nil, input, respData)
 	},
 }
 
@@ -82,6 +98,7 @@ var appsSetRepoCmd = &cobra.Command{
 		return core.AddSourceAppConfig(appName, repo, app.Tag)
 	},
 }
+
 var appsRemoveCmd = &cobra.Command{
 	SilenceUsage: true,
 	Use:          "remove [app name]",

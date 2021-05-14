@@ -437,6 +437,13 @@ type TuberApp {
   vars: [Tuple!]!
 }
 
+input AppInput {
+  name: String!
+  isIstio: Boolean!
+  repo: String!
+  tag: String!
+}
+
 type State {
   Current: [Resource!]!
   Previous: [Resource!]!
@@ -452,11 +459,6 @@ type ReviewAppsConfig {
   enabled: Boolean!
   vars: [Tuple!]!
   skips: [Resource!]!
-}
-
-input AppInput {
-  name: String!
-  isIstio: Boolean!
 }
 
 type Query {
@@ -2839,6 +2841,22 @@ func (ec *executionContext) unmarshalInputAppInput(ctx context.Context, obj inte
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isIstio"))
 			it.IsIstio, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "repo":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repo"))
+			it.Repo, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "tag":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tag"))
+			it.Tag, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}

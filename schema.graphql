@@ -21,6 +21,13 @@ type TuberApp {
   vars: [Tuple!]!
 }
 
+input AppInput {
+  name: String!
+  isIstio: Boolean!
+  repo: String!
+  tag: String!
+}
+
 type State {
   Current: [Resource!]!
   Previous: [Resource!]!
@@ -36,11 +43,6 @@ type ReviewAppsConfig {
   enabled: Boolean!
   vars: [Tuple!]!
   skips: [Resource!]!
-}
-
-input AppInput {
-  name: String!
-  isIstio: Boolean!
 }
 
 type Query {
