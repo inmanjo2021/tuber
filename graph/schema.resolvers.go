@@ -22,6 +22,16 @@ func (r *mutationResolver) CreateApp(ctx context.Context, input *model.AppInput)
 		return nil, err
 	}
 
+	inputApp := model.TuberApp{
+		Name: input.Name,
+		Repo: input.Repo,
+		Tag:  input.Tag,
+	}
+
+	if err := r.Resolver.db.Save(&inputApp); err != nil {
+		return nil, err
+	}
+
 	return &model.TuberApp{}, nil
 }
 

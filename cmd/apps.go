@@ -30,7 +30,7 @@ var appsInstallCmd = &cobra.Command{
 	Args:         cobra.ExactArgs(3),
 	PreRunE:      promptCurrentContext,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		graphql := client.New()
+		graphql := client.New("http://localhost:4040/graphql")
 
 		appName := args[0]
 		repo := args[1]
