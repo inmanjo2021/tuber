@@ -6,7 +6,7 @@ type Tuple {
 type TuberApp {
   cloudSourceRepo: String!
   imageTag: String!
-  name: String!
+  name: ID!
   paused: Boolean!
   repo: String!
   repoHost: String!
@@ -22,7 +22,7 @@ type TuberApp {
 }
 
 input AppInput {
-  name: String!
+  name: ID!
   isIstio: Boolean!
   repo: String!
   tag: String!
@@ -52,6 +52,7 @@ type Query {
 
 type Mutation {
   createApp(input: AppInput): TuberApp
-  updateApp(appID: ID!, input: AppInput): TuberApp
-  deleteApp(appID: ID!): TuberApp
+  updateApp(key: ID!, input: AppInput): TuberApp
+  removeApp(key: ID!): TuberApp
+  destroyApp(key: ID!): TuberApp
 }
