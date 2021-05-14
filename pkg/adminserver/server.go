@@ -52,14 +52,14 @@ func (s server) start(db *core.Data) error {
 
 	router := gin.Default()
 
-	router.Any("/graphql", gin.WrapH(graph.Handler(db)))
-	router.GET("/graphql/playground", gin.WrapF(playground.Handler("GraphQL playground", "/graphql")))
-
 	router.LoadHTMLGlob("pkg/adminserver/templates/*")
 
 	tuber := router.Group("/tuber")
 	{
 		tuber.GET("/", s.dashboard)
+
+		tuber.Any("/graphql", gin.WrapH(graph.Handler(db)))
+		tuber.GET("/graphql/playground", gin.WrapF(playground.Handler("GraphQL playground", "/graphql")))
 
 		apps := tuber.Group("/apps")
 		{
