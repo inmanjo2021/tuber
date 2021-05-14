@@ -3,24 +3,15 @@ package client
 import (
 	"context"
 	"log"
-	"os"
 
 	"github.com/machinebox/graphql"
 )
-
-var graphqlURL = os.Getenv("GRAPHQL_URL")
-
-func init() {
-	if graphqlURL == "" {
-		panic("cannot use graphql package without setting env GRAPHQL_URL")
-	}
-}
 
 type GraphqlClient struct {
 	client *graphql.Client
 }
 
-func New() *GraphqlClient {
+func New(graphqlURL string) *GraphqlClient {
 	client := graphql.NewClient(graphqlURL)
 	client.Log = func(s string) { log.Println(s) }
 

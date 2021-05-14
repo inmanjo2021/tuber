@@ -10,6 +10,7 @@ import (
 	"github.com/freshly/tuber/graph/model"
 	"github.com/freshly/tuber/pkg/core"
 	"github.com/olekukonko/tablewriter"
+	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
 )
@@ -112,7 +113,16 @@ var appsListCmd = &cobra.Command{
 	Use:          "list",
 	Short:        "List tuberapps",
 	RunE: func(*cobra.Command, []string) (err error) {
-		graphql := client.New()
+		graphqlURL := viper.GetString("graphql-url")
+		if graphqlURL == "" {
+			config, err := getTuberConfig()
+			if err != nil {
+				return err
+			}
+			graphqlURL = config.CurrentClusterConfig().URL + "/graphql"
+		}
+
+		graphql := client.New(graphqlURL)
 
 		gql := `
 			query {
