@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/freshly/tuber/graph/model"
 	"github.com/freshly/tuber/pkg/core"
 	"github.com/freshly/tuber/pkg/k8s"
 
@@ -34,15 +35,15 @@ func NewReviewAppSetup(sourceApp string, reviewApp string) error {
 	return nil
 }
 
-func CreateReviewApp(ctx context.Context, l *zap.Logger, branch string, appName string, credentials []byte, projectName string) (string, error) {
+func CreateReviewApp(ctx context.Context, db *core.Data, l *zap.Logger, branch string, appName string, credentials []byte, projectName string) (string, error) {
 	reviewAppName := ReviewAppName(appName, branch)
 
-	list, err := core.TuberReviewApps()
+	exists, err := db.AppExists(reviewAppName)
 	if err != nil {
 		return "", err
 	}
-	_, err = list.FindApp(reviewAppName)
-	if err == nil {
+
+	if exists {
 		return "", fmt.Errorf("review app already exists")
 	}
 
@@ -54,57 +55,67 @@ func CreateReviewApp(ctx context.Context, l *zap.Logger, branch string, appName 
 
 	logger.Info("creating review app")
 
-	sourceApp, err := core.FindApp(appName)
+	sourceApp, err := db.App(appName)
 	if err != nil {
 		return "", fmt.Errorf("can't find source app. is %s managed by tuber", appName)
+	}
+
+	repo, err := core.RepoFromTag(sourceApp.ImageTag)
+	if err != nil {
+		return "", fmt.Errorf("source app image tag misconfigured: %v", err)
 	}
 
 	logger.Info("creating review app resources")
 
 	err = NewReviewAppSetup(appName, reviewAppName)
 	if err != nil {
-		logger.Error("error creating review app resources; tearing down", zap.Error(err))
-
-		teardownErr := core.DestroyTuberApp(reviewAppName)
-		if teardownErr != nil {
-			logger.Error("error tearing down review app resources", zap.Error(teardownErr))
-			return "", teardownErr
-		}
-
-		return "", err
-	}
-
-	logger.Info("creating app entry for review app")
-
-	err = core.AddReviewAppConfig(reviewAppName, sourceApp.Repo, branch)
-	if err != nil {
-		teardownErr := core.DestroyTuberApp(reviewAppName)
-		if teardownErr != nil {
-			logger.Error("error tearing down review app resources", zap.Error(teardownErr))
-			return "", teardownErr
-		}
-
 		return "", err
 	}
 
 	logger.Info("creating and running review app trigger")
 
-	err = CreateAndRunTrigger(ctx, logger, credentials, sourceApp.Repo, projectName, reviewAppName, branch)
+	triggerID, err := CreateAndRunTrigger(ctx, logger, credentials, projectName, branch, sourceApp.CloudSourceRepo, reviewAppName)
 	if err != nil {
-		logger.Error("error creating trigger; no trigger resource created", zap.Error(err))
+		triggerCleanupErr := deleteReviewAppTrigger(ctx, credentials, projectName, triggerID)
+		if triggerCleanupErr != nil {
+			logger.Error("error removing trigger", zap.Error(triggerCleanupErr))
+			return "", triggerCleanupErr
+		}
+	}
 
-		triggerCleanupErr := deleteReviewAppTrigger(ctx, credentials, projectName, reviewAppName)
-		teardownErr := core.DestroyTuberApp(reviewAppName)
-		cleanupConfigErr := core.RemoveReviewAppConfig(reviewAppName)
+	imageTag := repo + ":" + branch
+
+	var vars []*model.Tuple
+	for _, tuple := range sourceApp.ReviewAppsConfig.Vars {
+		vars = append(vars, &model.Tuple{
+			Key:   tuple.Key,
+			Value: tuple.Value,
+		})
+	}
+
+	reviewApp := &model.TuberApp{
+		CloudSourceRepo: sourceApp.CloudSourceRepo,
+		ImageTag:        imageTag,
+		Name:            reviewAppName,
+		Paused:          false,
+		ReviewApp:       true,
+		SlackChannel:    sourceApp.SlackChannel,
+		SourceAppName:   sourceApp.Name,
+		State:           nil,
+		TriggerID:       triggerID,
+		Vars:            vars,
+	}
+
+	err = db.Save(reviewApp)
+	if err != nil {
+		logger.Error("error saving review app", zap.Error(err))
+
+		triggerCleanupErr := deleteReviewAppTrigger(ctx, credentials, projectName, triggerID)
+		teardownErr := db.DeleteTuberApp(reviewApp)
 
 		if teardownErr != nil {
 			logger.Error("error tearing down review app resources", zap.Error(teardownErr))
 			return "", teardownErr
-		}
-
-		if cleanupConfigErr != nil {
-			logger.Error("error removing config entry for app", zap.Error(cleanupConfigErr))
-			return "", cleanupConfigErr
 		}
 
 		if triggerCleanupErr != nil {
@@ -114,26 +125,25 @@ func CreateReviewApp(ctx context.Context, l *zap.Logger, branch string, appName 
 
 		return "", err
 	}
+
 	return reviewAppName, nil
 }
 
-func DeleteReviewApp(ctx context.Context, reviewAppName string, credentials []byte, projectName string) error {
-	_, err := core.FindReviewApp(reviewAppName)
+func DeleteReviewApp(ctx context.Context, db *core.Data, reviewAppName string, credentials []byte, projectName string) error {
+	app, err := db.App(reviewAppName)
 	if err != nil {
 		return fmt.Errorf("review app not found")
 	}
+	if !app.ReviewApp {
+		return fmt.Errorf("review app not found")
+	}
 
-	err = core.DestroyTuberApp(reviewAppName)
+	err = deleteReviewAppTrigger(ctx, credentials, projectName, app.TriggerID)
 	if err != nil {
 		return err
 	}
 
-	err = core.RemoveReviewAppConfig(reviewAppName)
-	if err != nil {
-		return err
-	}
-
-	return deleteReviewAppTrigger(ctx, credentials, projectName, reviewAppName)
+	return db.DeleteTuberApp(app)
 }
 
 // yoinked from https://gitlab.com/gitlab-org/gitlab-runner/-/blob/0e2ae0001684f681ff901baa85e0d63ec7838568/executors/kubernetes/util.go#L23

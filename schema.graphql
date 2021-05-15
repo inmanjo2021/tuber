@@ -8,15 +8,11 @@ type TuberApp {
   imageTag: String!
   name: ID!
   paused: Boolean!
-  repo: String!
-  repoHost: String!
-  repoPath: String!
   reviewApp: Boolean!
   reviewAppsConfig: ReviewAppsConfig
   slackChannel: String!
   sourceAppName: String!
   state: State!
-  tag: String!
   triggerID: String!
   vars: [Tuple!]!
 }
@@ -24,8 +20,7 @@ type TuberApp {
 input AppInput {
   name: ID!
   isIstio: Boolean!
-  repo: String!
-  tag: String!
+  imageTag: String!
 }
 
 type State {

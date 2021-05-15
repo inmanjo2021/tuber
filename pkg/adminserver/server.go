@@ -21,10 +21,11 @@ type server struct {
 	triggersProjectName string
 	logger              *zap.Logger
 	creds               []byte
+	db                  *core.Data
 	port                string
 }
 
-func Start(ctx context.Context, logger *zap.Logger, triggersProjectName string, creds []byte, reviewAppsEnabled bool, clusterDefaultHost string, port string, db *core.Data) error {
+func Start(ctx context.Context, logger *zap.Logger, db *core.Data, triggersProjectName string, creds []byte, reviewAppsEnabled bool, clusterDefaultHost string, port string) error {
 	var cloudbuildClient *cloudbuild.Service
 
 	if reviewAppsEnabled {
@@ -43,11 +44,12 @@ func Start(ctx context.Context, logger *zap.Logger, triggersProjectName string, 
 		triggersProjectName: triggersProjectName,
 		logger:              logger,
 		creds:               creds,
+		db:                  db,
 		port:                port,
-	}.start(db)
+	}.start()
 }
 
-func (s server) start(db *core.Data) error {
+func (s server) start() error {
 	var err error
 
 	router := gin.Default()
@@ -58,8 +60,8 @@ func (s server) start(db *core.Data) error {
 	{
 		tuber.GET("/", s.dashboard)
 
-		tuber.Any("/graphql", gin.WrapH(graph.Handler(db)))
-		tuber.GET("/graphql/playground", gin.WrapF(playground.Handler("GraphQL playground", "/graphql")))
+		tuber.Any("/graphql", gin.WrapH(graph.Handler(s.db)))
+		tuber.GET("/graphql/playground", gin.WrapF(playground.Handler("GraphQL playground", "/tuber/graphql")))
 
 		apps := tuber.Group("/apps")
 		{

@@ -20,6 +20,12 @@ func startAdminServer(cmd *cobra.Command, args []string) {
 	var ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 
+	db, err := db()
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
 	logger, err := createLogger()
 	if err != nil {
 		panic(err)
@@ -27,8 +33,10 @@ func startAdminServer(cmd *cobra.Command, args []string) {
 
 	defer logger.Sync()
 
+	reviewAppsEnabled := viper.GetBool("reviewapps-enabled")
+
 	triggersProjectName := viper.GetString("review-apps-triggers-project-name")
-	if triggersProjectName == "" {
+	if reviewAppsEnabled && triggersProjectName == "" {
 		panic("need a review apps triggers project name")
 	}
 
@@ -36,13 +44,7 @@ func startAdminServer(cmd *cobra.Command, args []string) {
 	if err != nil {
 		panic(err)
 	}
-
-	db, err := db()
-	if err != nil {
-		panic(err)
-	}
-
-	err = adminserver.Start(ctx, logger, triggersProjectName, creds, viper.GetBool("reviewapps-enabled"), viper.GetString("cluster-default-host"), viper.GetString("adminserver-port"), db)
+	err = adminserver.Start(ctx, logger, db, triggersProjectName, creds, viper.GetBool("reviewapps-enabled"), viper.GetString("cluster-default-host"), viper.GetString("adminserver-port"))
 	if err != nil {
 		panic(err)
 	}
