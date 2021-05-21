@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/freshly/tuber/graph/model"
@@ -21,6 +22,13 @@ var bolterCmd = &cobra.Command{
 }
 
 func bolter(cmd *cobra.Command, args []string) error {
+	if reset {
+		wd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		os.Remove(wd + "/localbolt")
+	}
 	db, err := db()
 	if err != nil {
 		return err
@@ -128,7 +136,10 @@ func cloudrepo(a *model.TuberApp, data map[string]string) (string, error) {
 	return "", nil
 }
 
+var reset bool
+
 func init() {
+	appsListCmd.Flags().BoolVar(&reset, "reset", false, "reset local db")
 	rootCmd.AddCommand(bolterCmd)
 }
 
