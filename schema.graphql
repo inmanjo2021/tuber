@@ -63,3 +63,8 @@ type Mutation {
   destroyApp(key: ID!): TuberApp
   createReviewApp(input: CreateReviewAppInput!): TuberApp
 }
+
+schema {
+  query: Query
+  mutation: Mutation
+}

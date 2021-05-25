@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/freshly/tuber/graph/model"
 	"github.com/freshly/tuber/pkg/core"
@@ -86,6 +87,7 @@ func pullLocalDB(db *core.DB) error {
 		if err != nil {
 			return err
 		}
+
 		var sourceAppName string
 		if configApp.ReviewApp {
 			triggerid = reviewAppTriggers.Data[configApp.Name]
@@ -95,6 +97,7 @@ func pullLocalDB(db *core.DB) error {
 			rac.Vars = []*model.Tuple{}
 			rac.Skips = []*model.Resource{}
 		}
+
 		var paused bool
 		if pauses.Data[app.Name] != "" {
 			parseboold, err := strconv.ParseBool(pauses.Data[configApp.Name])
