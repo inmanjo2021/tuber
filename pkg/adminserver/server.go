@@ -3,13 +3,16 @@ package adminserver
 import (
 	"context"
 	"fmt"
-	"time"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"os"
 
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/freshly/tuber/graph"
 	"github.com/freshly/tuber/pkg/core"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/go-http-utils/logger"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"google.golang.org/api/cloudbuild/v1"
 	"google.golang.org/api/option"
@@ -51,43 +54,51 @@ func Start(ctx context.Context, logger *zap.Logger, db *core.DB, triggersProject
 	}.start()
 }
 
+func localDevServer(res http.ResponseWriter, req *http.Request) {
+	remote, err := url.Parse("http://localhost:3002")
+	if err != nil {
+		panic(err)
+	}
+
+	proxy := httputil.NewSingleHostReverseProxy(remote)
+	proxy.Director = func(proxyReq *http.Request) {
+		proxyReq.Header = req.Header
+		proxyReq.Host = remote.Host
+		proxyReq.URL.Scheme = remote.Scheme
+		proxyReq.URL.Host = remote.Host
+		proxyReq.URL.Path = req.URL.Path
+	}
+
+	proxy.ServeHTTP(res, req)
+}
+
+func init() {
+	viper.SetDefault("prefix", "/tuber")
+}
+
+func prefix(p string) string {
+	return fmt.Sprintf("%s%s", viper.GetString("prefix"), p)
+}
+
 func (s server) start() error {
-	var err error
 
-	router := gin.Default()
+	mux := http.NewServeMux()
+	mux.HandleFunc(prefix("/graphql/playground"), playground.Handler("GraphQL playground", prefix("/graphql")))
+	mux.Handle(prefix("/graphql"), graph.Handler(s.db, s.logger, s.creds, s.triggersProjectName))
 
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3002"},
-		AllowMethods:     []string{"POST"},
-		AllowHeaders:     []string{"*"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
-
-	router.LoadHTMLGlob("pkg/adminserver/templates/*")
-
-	tuber := router.Group("/tuber")
-	{
-		tuber.GET("/", s.dashboard)
-
-		tuber.Any("/graphql", gin.WrapH(graph.Handler(s.db, s.logger, s.creds, s.triggersProjectName)))
-		tuber.GET("/graphql/playground", gin.WrapF(playground.Handler("GraphQL playground", "/tuber/graphql")))
-
-		apps := tuber.Group("/apps")
-		{
-			apps.GET("/:appName", s.app)
-			apps.GET("/:appName/reviewapps/:reviewAppName", s.reviewApp)
-			apps.GET("/:appName/reviewapps/:reviewAppName/delete", s.deleteReviewApp)
-			apps.POST("/:appName/createReviewApp", s.createReviewApp)
-		}
-	}
-
-	if s.port == "" {
-		err = router.Run(":3000")
+	if viper.GetBool("use-devserver") {
+		mux.HandleFunc(prefix("/"), localDevServer)
 	} else {
-		err = router.Run(fmt.Sprintf(":%s", s.port))
+		fs := http.FileServer(http.Dir("/static"))
+		mux.Handle(prefix("/"), http.StripPrefix(prefix("/"), fs))
 	}
 
-	return err
+	handler := logger.Handler(mux, os.Stdout, logger.DevLoggerType)
+
+	port := ":3000"
+	if s.port != "" {
+		port = fmt.Sprintf(":%s", s.port)
+	}
+
+	return http.ListenAndServe(port, handler)
 }

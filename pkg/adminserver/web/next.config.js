@@ -11,4 +11,7 @@ module.exports = {
 
 		return config
 	},
+
+	trailingSlash: true,
+	basePath:      process.env.TUBER_PREFIX || '/tuber',
 }
