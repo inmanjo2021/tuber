@@ -19,6 +19,7 @@ export type AppInput = {
   name: Scalars['ID'];
   isIstio: Scalars['Boolean'];
   imageTag: Scalars['String'];
+  paused?: Maybe<Scalars['Boolean']>;
 };
 
 export type CreateReviewAppInput = {
@@ -34,27 +35,28 @@ export type Mutation = {
   destroyApp?: Maybe<TuberApp>;
   createReviewApp?: Maybe<TuberApp>;
   setAppVar?: Maybe<TuberApp>;
+  setAppEnv?: Maybe<TuberApp>;
+  unsetAppEnv?: Maybe<TuberApp>;
 };
 
 
 export type MutationCreateAppArgs = {
-  input?: Maybe<AppInput>;
+  input: AppInput;
 };
 
 
 export type MutationUpdateAppArgs = {
-  key: Scalars['ID'];
-  input?: Maybe<AppInput>;
+  input: AppInput;
 };
 
 
 export type MutationRemoveAppArgs = {
-  key: Scalars['ID'];
+  input: AppInput;
 };
 
 
 export type MutationDestroyAppArgs = {
-  key: Scalars['ID'];
+  input: AppInput;
 };
 
 
@@ -64,7 +66,17 @@ export type MutationCreateReviewAppArgs = {
 
 
 export type MutationSetAppVarArgs = {
-  input: SetAppVarInput;
+  input: SetTupleInput;
+};
+
+
+export type MutationSetAppEnvArgs = {
+  input: SetTupleInput;
+};
+
+
+export type MutationUnsetAppEnvArgs = {
+  input: SetTupleInput;
 };
 
 export type Query = {
@@ -92,7 +104,7 @@ export type ReviewAppsConfig = {
   skips: Array<Resource>;
 };
 
-export type SetAppVarInput = {
+export type SetTupleInput = {
   name: Scalars['ID'];
   key: Scalars['String'];
   value: Scalars['String'];
@@ -118,6 +130,7 @@ export type TuberApp = {
   triggerID: Scalars['String'];
   vars: Array<Tuple>;
   reviewApps?: Maybe<Array<TuberApp>>;
+  env?: Maybe<Array<Tuple>>;
 };
 
 export type Tuple = {
@@ -197,7 +210,7 @@ export type GetFullAppQuery = (
 );
 
 export type SetAppVarMutationVariables = Exact<{
-  input: SetAppVarInput;
+  input: SetTupleInput;
 }>;
 
 
@@ -239,8 +252,11 @@ export default {
               {
                 "name": "input",
                 "type": {
-                  "kind": "SCALAR",
-                  "name": "Any"
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "Any"
+                  }
                 }
               }
             ]
@@ -254,20 +270,13 @@ export default {
             },
             "args": [
               {
-                "name": "key",
+                "name": "input",
                 "type": {
                   "kind": "NON_NULL",
                   "ofType": {
                     "kind": "SCALAR",
                     "name": "Any"
                   }
-                }
-              },
-              {
-                "name": "input",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Any"
                 }
               }
             ]
@@ -281,7 +290,7 @@ export default {
             },
             "args": [
               {
-                "name": "key",
+                "name": "input",
                 "type": {
                   "kind": "NON_NULL",
                   "ofType": {
@@ -301,7 +310,7 @@ export default {
             },
             "args": [
               {
-                "name": "key",
+                "name": "input",
                 "type": {
                   "kind": "NON_NULL",
                   "ofType": {
@@ -334,6 +343,46 @@ export default {
           },
           {
             "name": "setAppVar",
+            "type": {
+              "kind": "OBJECT",
+              "name": "TuberApp",
+              "ofType": null
+            },
+            "args": [
+              {
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "Any"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "setAppEnv",
+            "type": {
+              "kind": "OBJECT",
+              "name": "TuberApp",
+              "ofType": null
+            },
+            "args": [
+              {
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "Any"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "unsetAppEnv",
             "type": {
               "kind": "OBJECT",
               "name": "TuberApp",
@@ -682,6 +731,21 @@ export default {
               }
             },
             "args": []
+          },
+          {
+            "name": "env",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "Tuple",
+                  "ofType": null
+                }
+              }
+            },
+            "args": []
           }
         ],
         "interfaces": []
@@ -790,7 +854,7 @@ export function useGetFullAppQuery(options: Omit<Urql.UseQueryArgs<GetFullAppQue
   return Urql.useQuery<GetFullAppQuery>({ query: GetFullAppDocument, ...options });
 };
 export const SetAppVarDocument = gql`
-    mutation SetAppVar($input: SetAppVarInput!) {
+    mutation SetAppVar($input: SetTupleInput!) {
   setAppVar(input: $input) {
     name
     vars {

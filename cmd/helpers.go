@@ -36,14 +36,17 @@ func db() (*core.DB, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		path = wd + "/localbolt"
 	} else {
 		path = "/etc/tuber-bolt/db"
 	}
+
 	database, err := tuberbolt.NewDefaultDB(path, model.TuberApp{}.DBRoot())
 	if err != nil {
 		return nil, err
 	}
+
 	return core.NewDB(database), nil
 }
 
@@ -112,7 +115,8 @@ func clusterData() (*core.ClusterData, error) {
 	defaultHost := viper.GetString("cluster-default-host")
 	adminGateway := viper.GetString("cluster-admin-gateway")
 	adminHost := viper.GetString("cluster-admin-host")
-	if defaultGateway == "" || defaultHost == "" {
+
+	if defaultGateway == "" || defaultHost == "" || adminGateway == "" || adminHost == "" {
 		config, err := k8s.GetSecret("tuber", "tuber-env")
 		if err != nil {
 			return nil, err

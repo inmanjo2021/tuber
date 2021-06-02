@@ -2,9 +2,10 @@
 import { useRouter } from 'next/dist/client/router'
 import React, { FC, useRef, useState } from 'react'
 import { Heading, TextInput } from '../../src/components'
-import { useGetFullAppQuery, useCreateReviewAppMutation, Tuple, useSetAppVarMutation, useDestroyAppMutation } from '../../src/generated/graphql'
+import { useGetFullAppQuery, useCreateReviewAppMutation, Tuple, useSetAppVarMutation, SetAppVarMutation, Exact, SetTupleInput, useDestroyAppMutation } from '../../src/generated/graphql'
 import { throwError } from '../../src/throwError'
 import { PencilAltIcon, PlusCircleIcon, SaveIcon, TrashIcon } from '@heroicons/react/outline'
+import { UseMutationResponse } from 'urql'
 
 const CreateForm = ({ app }) => {
 	const [{ error }, create] = useCreateReviewAppMutation()
@@ -30,17 +31,19 @@ const CreateForm = ({ app }) => {
 	</form>
 }
 
-
 type AppVarFormProps = {
 	appVar: Tuple
 	defaultEdit?: boolean
 	name: string
 	finished?: () => void
+	mutation: () => UseMutationResponse<any, Exact<{
+		input: SetTupleInput
+	}>>
 }
 
-const AppVarForm: FC<AppVarFormProps> = ({ name, appVar, defaultEdit = false, finished }) => {
+const AppVarForm: FC<AppVarFormProps> = ({ name, appVar, defaultEdit = false, finished, mutation }) => {
 	const [editing, setEditing] = useState<boolean>(defaultEdit)
-	const [{ error }, save] = useSetAppVarMutation()
+	const [{ error }, save] = mutation()
 	const keyRef = useRef(null)
 	const valueRef = useRef(null)
 	const formRef = useRef(null)
@@ -67,8 +70,23 @@ const AppVarForm: FC<AppVarFormProps> = ({ name, appVar, defaultEdit = false, fi
 			{error.message}
 		</div>}
 
-		<TextInput disabled={!editing || !defaultEdit} required name="key" ref={keyRef} defaultValue={appVar.key} placeholder="key" />
-		<TextInput disabled={!editing} required name="value" ref={valueRef} defaultValue={appVar.value} placeholder="value" />
+		<TextInput
+			name="key"
+			disabled={!editing || !defaultEdit}
+			required
+			ref={keyRef}
+			defaultValue={appVar.key}
+			placeholder="key"
+		/>
+
+		<TextInput
+			name="value"
+			disabled={!editing}
+			required
+			ref={valueRef}
+			defaultValue={appVar.value}
+			placeholder="value"
+		/>
 
 		{editing
 			? <button type="submit"><SaveIcon className="w-5" /></button>
@@ -106,9 +124,10 @@ const ShowApp = () => {
 			)}
 
 			<Heading>YAML Interpolation Vars</Heading>
-			{app.vars.map(appVar => <AppVarForm key={appVar.key} name={app.name} appVar={appVar} />)}
+			{app.vars.map(appVar => <AppVarForm key={appVar.key} name={app.name} appVar={appVar} mutation={useSetAppVarMutation} />)}
+
 			{addNew
-				? <AppVarForm name={app.name} appVar={{} as Tuple} defaultEdit finished={() => setAddNew(false)} />
+				? <AppVarForm name={app.name} appVar={{} as Tuple} defaultEdit finished={() => setAddNew(false)} mutation={useSetAppVarMutation} />
 				: <PlusCircleIcon className="w-5" onClick={() => setAddNew(true)} />}
 		</>}
 	</div>
