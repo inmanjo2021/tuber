@@ -226,13 +226,16 @@ func (a appResources) encode() []*model.Resource {
 
 func (r releaser) currentState() (appResources, error) {
 	var resources appResources
-	for _, managed := range r.app.State.Current {
-		contents, err := base64.StdEncoding.DecodeString(managed.Encoded)
-		if err != nil {
-			return nil, err
+	if r.app.State != nil {
+		for _, managed := range r.app.State.Current {
+			contents, err := base64.StdEncoding.DecodeString(managed.Encoded)
+			if err != nil {
+				return nil, err
+			}
+			resources = append(resources, appResource{contents: contents, kind: managed.Kind, name: managed.Name})
 		}
-		resources = append(resources, appResource{contents: contents, kind: managed.Kind, name: managed.Name})
 	}
+
 	return resources, nil
 }
 
