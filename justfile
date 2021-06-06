@@ -12,7 +12,6 @@ gen:
   cd pkg/adminserver/web && yarn generate
 
 web *args:
-  echo $TUBER_PREFIX
   cd pkg/adminserver/web && yarn {{args}}
 
 local-image:

@@ -17,8 +17,8 @@ export type Scalars = {
 
 export type AppInput = {
   name: Scalars['ID'];
-  isIstio: Scalars['Boolean'];
-  imageTag: Scalars['String'];
+  isIstio?: Maybe<Scalars['Boolean']>;
+  imageTag?: Maybe<Scalars['String']>;
   paused?: Maybe<Scalars['Boolean']>;
 };
 
@@ -37,6 +37,7 @@ export type Mutation = {
   setAppVar?: Maybe<TuberApp>;
   setAppEnv?: Maybe<TuberApp>;
   unsetAppEnv?: Maybe<TuberApp>;
+  excludedResources: Array<Resource>;
 };
 
 
@@ -101,7 +102,7 @@ export type ReviewAppsConfig = {
   __typename?: 'ReviewAppsConfig';
   enabled: Scalars['Boolean'];
   vars: Array<Tuple>;
-  skips: Array<Resource>;
+  excludedResources: Array<Resource>;
 };
 
 export type SetTupleInput = {
@@ -153,7 +154,7 @@ export type CreateReviewAppMutation = (
 );
 
 export type DestroyAppMutationVariables = Exact<{
-  key: Scalars['ID'];
+  input: AppInput;
 }>;
 
 
@@ -400,6 +401,24 @@ export default {
                 }
               }
             ]
+          },
+          {
+            "name": "excludedResources",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "Resource",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "args": []
           }
         ],
         "interfaces": []
@@ -523,7 +542,7 @@ export default {
             "args": []
           },
           {
-            "name": "skips",
+            "name": "excludedResources",
             "type": {
               "kind": "NON_NULL",
               "ofType": {
@@ -800,8 +819,8 @@ export function useCreateReviewAppMutation() {
   return Urql.useMutation<CreateReviewAppMutation, CreateReviewAppMutationVariables>(CreateReviewAppDocument);
 };
 export const DestroyAppDocument = gql`
-    mutation DestroyApp($key: ID!) {
-  destroyApp(key: $key) {
+    mutation DestroyApp($input: AppInput!) {
+  destroyApp(input: $input) {
     name
   }
 }
@@ -810,8 +829,6 @@ export const DestroyAppDocument = gql`
 export function useDestroyAppMutation() {
   return Urql.useMutation<DestroyAppMutation, DestroyAppMutationVariables>(DestroyAppDocument);
 };
-
-
 export const GetAppDocument = gql`
     query GetApp($name: String!) {
   getApp(name: $name) {

@@ -26,8 +26,8 @@ type TuberApp {
 
 input AppInput {
   name: ID!
-  isIstio: Boolean!
-  imageTag: String!
+  isIstio: Boolean
+  imageTag: String
   paused: Boolean
 }
 

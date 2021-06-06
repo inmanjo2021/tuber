@@ -33,9 +33,9 @@ var appsInstallCmd = &cobra.Command{
 		imageTag := args[1]
 
 		input := &model.AppInput{
-			IsIstio:  istioEnabled,
+			IsIstio:  &istioEnabled,
 			Name:     appName,
-			ImageTag: imageTag,
+			ImageTag: &imageTag,
 		}
 
 		var respData struct {
@@ -68,7 +68,7 @@ var appsSetImageTagCmd = &cobra.Command{
 
 		input := &model.AppInput{
 			Name:     appName,
-			ImageTag: imageTag,
+			ImageTag: &imageTag,
 		}
 
 		var respData struct {

@@ -3,10 +3,10 @@
 package model
 
 type AppInput struct {
-	Name     string `json:"name"`
-	IsIstio  bool   `json:"isIstio"`
-	ImageTag string `json:"imageTag"`
-	Paused   *bool  `json:"paused"`
+	Name     string  `json:"name"`
+	IsIstio  *bool   `json:"isIstio"`
+	ImageTag *string `json:"imageTag"`
+	Paused   *bool   `json:"paused"`
 }
 
 type CreateReviewAppInput struct {

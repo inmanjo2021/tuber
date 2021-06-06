@@ -18,14 +18,14 @@ import (
 )
 
 func (r *mutationResolver) CreateApp(ctx context.Context, input model.AppInput) (*model.TuberApp, error) {
-	err := core.NewAppSetup(input.Name, input.IsIstio)
+	err := core.NewAppSetup(input.Name, *input.IsIstio)
 	if err != nil {
 		return nil, err
 	}
 
 	inputApp := model.TuberApp{
 		Name:     input.Name,
-		ImageTag: input.ImageTag,
+		ImageTag: *input.ImageTag,
 	}
 
 	if err := r.Resolver.db.SaveApp(&inputApp); err != nil {
@@ -45,8 +45,8 @@ func (r *mutationResolver) UpdateApp(ctx context.Context, input model.AppInput) 
 		return nil, fmt.Errorf("unexpected error while trying to find app: %v", err)
 	}
 
-	if input.ImageTag != "" {
-		app.ImageTag = input.ImageTag
+	if input.ImageTag != nil {
+		app.ImageTag = *input.ImageTag
 	}
 
 	if input.Paused != nil {

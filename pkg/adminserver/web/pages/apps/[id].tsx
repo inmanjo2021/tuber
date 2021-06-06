@@ -8,7 +8,7 @@ import { PencilAltIcon, PlusCircleIcon, SaveIcon, TrashIcon } from '@heroicons/r
 import { UseMutationResponse } from 'urql'
 
 const CreateForm = ({ app }) => {
-	const [{ error }, create] = useCreateReviewAppMutation()
+	const [{ error, fetching }, create] = useCreateReviewAppMutation()
 	const branchNameRef = useRef(null)
 
 	const submit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -26,8 +26,8 @@ const CreateForm = ({ app }) => {
 		{error && <div className="bg-red-700 text-white border-red-700 p-2">
 			{error.message}
 		</div>}
-		<TextInput name="branchName" ref={branchNameRef} placeholder="branch name" required />
-		<button type="submit" className="rounded-sm p-1 underline">Create</button>
+		<TextInput name="branchName" ref={branchNameRef} placeholder="branch name" required disabled={fetching} />
+		<button type="submit" className="rounded-sm p-1 underline" disabled={fetching}>Create</button>
 	</form>
 }
 
@@ -103,32 +103,39 @@ const ShowApp = () => {
 	const [addNew, setAddNew] = useState<boolean>(false)
 
 	return <div>
-		<Heading>{app.name}</Heading>
+		<div className="border-b pb-2 mb-2">
+			<Heading>{app.name}</Heading>
 
-		<p>
-			Available at - <a href={hostname}>{hostname}</a> - if it uses your cluster&apos;s default hostname.
-		</p>
+			<p>
+				Available at - <a href={hostname}>{hostname}</a> - if it uses your cluster&apos;s default hostname.
+			</p>
+		</div>
 
 		{app.reviewApp || <>
-			<Heading>Create a review app</Heading>
-			<CreateForm app={app} />
-			<Heading>Review apps</Heading>
-			{error && <div className="bg-red-700 text-white border-red-700 p-2">
-				{error.message}
-			</div>}
-			{app.reviewApps && app.reviewApps.map(reviewApp =>
-				<div key={reviewApp.name}>
-					<span>{reviewApp.name}</span>
-					<TrashIcon className="w-5" onClick={() => destroy({ key: reviewApp.name })}/>
-				</div>,
-			)}
+			<div className="border-b pb-2 mb-2">
+				<Heading>Create a review app</Heading>
+				<CreateForm app={app} />
+				<Heading>Review apps</Heading>
+				{error && <div className="bg-red-700 text-white border-red-700 p-2">
+					{error.message}
+				</div>}
 
-			<Heading>YAML Interpolation Vars</Heading>
-			{app.vars.map(appVar => <AppVarForm key={appVar.key} name={app.name} appVar={appVar} mutation={useSetAppVarMutation} />)}
+				{app.reviewApps && app.reviewApps.map(reviewApp =>
+					<div key={reviewApp.name}>
+						<span>{reviewApp.name}</span>
+						<TrashIcon className="w-5" onClick={() => destroy({ input: { name: reviewApp.name } })}/>
+					</div>,
+				)}
+			</div>
 
-			{addNew
-				? <AppVarForm name={app.name} appVar={{} as Tuple} defaultEdit finished={() => setAddNew(false)} mutation={useSetAppVarMutation} />
-				: <PlusCircleIcon className="w-5" onClick={() => setAddNew(true)} />}
+			<div className="border-b pb-2 mb-2">
+				<Heading>YAML Interpolation Vars</Heading>
+				{app.vars.map(appVar => <AppVarForm key={appVar.key} name={app.name} appVar={appVar} mutation={useSetAppVarMutation} />)}
+
+				{addNew
+					? <AppVarForm name={app.name} appVar={{} as Tuple} defaultEdit finished={() => setAddNew(false)} mutation={useSetAppVarMutation} />
+					: <PlusCircleIcon className="w-5" onClick={() => setAddNew(true)} />}
+			</div>
 		</>}
 	</div>
 }

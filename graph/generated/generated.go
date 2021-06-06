@@ -510,8 +510,8 @@ type TuberApp {
 
 input AppInput {
   name: ID!
-  isIstio: Boolean!
-  imageTag: String!
+  isIstio: Boolean
+  imageTag: String
   paused: Boolean
 }
 
@@ -3153,7 +3153,7 @@ func (ec *executionContext) unmarshalInputAppInput(ctx context.Context, obj inte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isIstio"))
-			it.IsIstio, err = ec.unmarshalNBoolean2bool(ctx, v)
+			it.IsIstio, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3161,7 +3161,7 @@ func (ec *executionContext) unmarshalInputAppInput(ctx context.Context, obj inte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageTag"))
-			it.ImageTag, err = ec.unmarshalNString2string(ctx, v)
+			it.ImageTag, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
