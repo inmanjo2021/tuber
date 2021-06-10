@@ -39,10 +39,10 @@ const ShowApp = () => {
 	const hostname = `https://${app.name}.staging.freshlyservices.net/`
 
 	return <div>
-		<section className="p-3 mb-2 bg-white shadow-md rounded-sm">
+		<section className="p-3 mb-2">
 			<h1 className="text-2xl">{app.name}</h1>
 			<small>
-				<a href={hostname}>{hostname}</a>
+				<a href={hostname} target="_blank" rel="noreferrer">{hostname}</a>
 			</small>
 		</section>
 
@@ -67,7 +67,7 @@ const ShowApp = () => {
 		</section>
 
 		{app.reviewApp || <>
-			<div className="border-b pb-2 mb-2">
+			<div className="border-b p-3 mb-2 bg-white shadow-md rounded-sm">
 				<Heading>Create a review app</Heading>
 				<CreateForm app={app} />
 				<Heading>Review apps</Heading>
