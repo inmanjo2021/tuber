@@ -14,7 +14,7 @@ const HomePage = () => {
 				<Link href={`/apps/${app.name}`} passHref>
 					<a className="text-blue-500 text-lg">
 						<h1>{app.name}</h1>
-					</a>vs
+					</a>
 				</Link>
 
 				<div>

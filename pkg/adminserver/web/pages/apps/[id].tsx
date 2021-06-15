@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useRouter } from 'next/dist/client/router'
 import React, { useRef } from 'react'
-import { Card, Heading, TextInput, TextInputGroup, ExcludedResources } from '../../src/components'
+import { Card, Heading, TextInput, TextInputGroup, ExcludedResources, Collapsible } from '../../src/components'
 import { throwError } from '../../src/throwError'
 import { TrashIcon } from '@heroicons/react/outline'
 import {
@@ -47,15 +47,27 @@ const ShowApp = () => {
 
 	return <div>
 		<section className="p-3 mb-2">
-			<h1 className="text-2xl">{app.name}</h1>
-			<small>
-				<a href={hostname} target="_blank" rel="noreferrer">{hostname}</a>
-			</small>
+			<h1 className="text-3xl">{app.name}</h1>
+			<div>
+				<small>
+					<a href={hostname} target="_blank" rel="noreferrer">{hostname}</a>
+				</small>
+			</div>
+			<div>
+				<small>
+					<a href="https://app.datadoghq.com/apm/home?env=production" target="_blank" rel="noreferrer">DataDog Logs</a>
+				</small>
+			</div>
+			<div>
+				<small>
+					<a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer">GKE Dashboard</a>
+				</small>
+			</div>
 		</section>
 
 		<section>
 			<Card className="mb-2">
-				<h2 className="border-b-2 mb-2">YAML Interpolation Vars</h2>
+				<h2 className="text-xl mb-2">YAML Interpolation Vars</h2>
 				<TextInputGroup
 					vars={app.vars} appName={app.name}
 					useSet={useSetAppVarMutation}
@@ -64,18 +76,19 @@ const ShowApp = () => {
 			</Card>
 
 			<Card className="mb-2">
-				<h2 className="border-b-2 mb-2"> Environment Variables </h2>
-				<TextInputGroup
-					vars={app.env} appName={app.name}
-					useSet={useSetAppEnvMutation}
-					useUnset={useUnsetAppEnvMutation}
-				/>
+				<Collapsible heading={'Environment Variables'} collapsed={true}>
+					<TextInputGroup
+						vars={app.env} appName={app.name}
+						useSet={useSetAppEnvMutation}
+						useUnset={useUnsetAppEnvMutation}
+					/>
+				</Collapsible>
 			</Card>
 		</section>
 
 		{app.reviewApp || <>
 			<Card className="mb-2">
-				<Heading>Create a review app</Heading>
+				<h2 className="text-xl mb-2">Create a review app</h2>
 				<CreateForm app={app} />
 				<Heading>Review apps</Heading>
 				{destroyAppError && <div className="bg-red-700 text-white border-red-700 p-2">
