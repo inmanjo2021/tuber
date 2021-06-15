@@ -35,6 +35,12 @@ type ReviewAppsConfig struct {
 	ExcludedResources []*Resource `json:"excludedResources"`
 }
 
+type SetResourceInput struct {
+	AppName string `json:"appName"`
+	Name    string `json:"name"`
+	Kind    string `json:"kind"`
+}
+
 type SetTupleInput struct {
 	Name  string `json:"name"`
 	Key   string `json:"key"`
@@ -47,20 +53,21 @@ type State struct {
 }
 
 type TuberApp struct {
-	CloudSourceRepo  string            `json:"cloudSourceRepo"`
-	CurrentTags      []string          `json:"currentTags"`
-	ImageTag         string            `json:"imageTag"`
-	Name             string            `json:"name"`
-	Paused           bool              `json:"paused"`
-	ReviewApp        bool              `json:"reviewApp"`
-	ReviewAppsConfig *ReviewAppsConfig `json:"reviewAppsConfig"`
-	SlackChannel     string            `json:"slackChannel"`
-	SourceAppName    string            `json:"sourceAppName"`
-	State            *State            `json:"state"`
-	TriggerID        string            `json:"triggerID"`
-	Vars             []*Tuple          `json:"vars"`
-	ReviewApps       []*TuberApp       `json:"reviewApps"`
-	Env              []*Tuple          `json:"env"`
+	CloudSourceRepo   string            `json:"cloudSourceRepo"`
+	CurrentTags       []string          `json:"currentTags"`
+	ImageTag          string            `json:"imageTag"`
+	Name              string            `json:"name"`
+	Paused            bool              `json:"paused"`
+	ReviewApp         bool              `json:"reviewApp"`
+	ReviewAppsConfig  *ReviewAppsConfig `json:"reviewAppsConfig"`
+	SlackChannel      string            `json:"slackChannel"`
+	SourceAppName     string            `json:"sourceAppName"`
+	State             *State            `json:"state"`
+	TriggerID         string            `json:"triggerID"`
+	Vars              []*Tuple          `json:"vars"`
+	ReviewApps        []*TuberApp       `json:"reviewApps"`
+	Env               []*Tuple          `json:"env"`
+	ExcludedResources []*Resource       `json:"excludedResources"`
 }
 
 type Tuple struct {

@@ -23,7 +23,7 @@ type TuberApp {
   vars: [Tuple!]!
   reviewApps: [TuberApp!] @goField(forceResolver: true)
   env: [Tuple!] @goField(forceResolver: true)
-
+  excludedResources: [Resource!]!
 }
 
 input AppInput {
@@ -66,6 +66,13 @@ input SetTupleInput {
   value: String!
 }
 
+
+input SetResourceInput {
+  appName: ID!
+  name: String!
+  kind: String!
+}
+
 input DeployInput {
   name: String!
   tag: String
@@ -86,7 +93,8 @@ type Mutation {
   unsetAppVar(input: SetTupleInput!): TuberApp
   setAppEnv(input: SetTupleInput!): TuberApp
   unsetAppEnv(input: SetTupleInput!): TuberApp
-  excludedResources: [Resource!]!
+  setExcludedResource(input: SetResourceInput!): TuberApp
+  unsetExcludedResource(input: SetResourceInput!): TuberApp
   rollback(input: AppNameInput!): TuberApp
 }
 

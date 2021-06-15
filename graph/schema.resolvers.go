@@ -216,8 +216,53 @@ func (r *mutationResolver) UnsetAppEnv(ctx context.Context, input model.SetTuple
 	return &model.TuberApp{Name: input.Name}, nil
 }
 
-func (r *mutationResolver) ExcludedResources(ctx context.Context) ([]*model.Resource, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) SetExcludedResource(ctx context.Context, input model.SetResourceInput) (*model.TuberApp, error) {
+	app, err := r.Resolver.db.App(input.AppName)
+	if err != nil {
+		if errors.As(err, &db.NotFoundError{}) {
+			return nil, errors.New("could not find app")
+		}
+
+		return nil, fmt.Errorf("unexpected error while trying to find app: %v", err)
+	}
+
+	res := &model.Resource{Name: input.Name, Kind: input.Kind}
+	app.ExcludedResources = append(app.ExcludedResources, res)
+
+	if err := r.Resolver.db.SaveApp(app); err != nil {
+		return nil, err
+	}
+
+	return app, nil
+}
+
+func (r *mutationResolver) UnsetExcludedResource(ctx context.Context, input model.SetResourceInput) (*model.TuberApp, error) {
+	app, err := r.Resolver.db.App(input.AppName)
+	if err != nil {
+		if errors.As(err, &db.NotFoundError{}) {
+			return nil, errors.New("could not find app")
+		}
+
+		return nil, fmt.Errorf("unexpected error while trying to find app: %v", err)
+	}
+
+	if app.ExcludedResources == nil {
+		return app, nil
+	}
+
+	resources := []*model.Resource{}
+	for _, rs := range app.ExcludedResources {
+		if !(rs.Name == input.Name && rs.Kind == input.Kind) {
+			resources = append(resources, rs)
+		}
+	}
+	app.ExcludedResources = resources
+
+	if err := r.Resolver.db.SaveApp(app); err != nil {
+		return nil, fmt.Errorf("could not save changes: %v", err)
+	}
+
+	return app, nil
 }
 
 func (r *mutationResolver) Rollback(ctx context.Context, input model.AppNameInput) (*model.TuberApp, error) {
@@ -330,3 +375,13 @@ func (r *Resolver) TuberApp() generated.TuberAppResolver { return &tuberAppResol
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type tuberAppResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *mutationResolver) ExcludedResources(ctx context.Context) ([]*model.Resource, error) {
+	panic(fmt.Errorf("not implemented"))
+}

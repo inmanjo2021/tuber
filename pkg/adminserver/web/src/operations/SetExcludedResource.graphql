@@ -1,0 +1,8 @@
+mutation SetExcludedResource($input: SetResourceInput!) {
+	setExcludedResource(input: $input) {
+    excludedResources {
+      name
+      kind
+    }
+	}
+}

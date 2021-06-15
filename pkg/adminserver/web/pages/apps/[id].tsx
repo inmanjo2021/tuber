@@ -1,10 +1,17 @@
 /* eslint-disable react/prop-types */
 import { useRouter } from 'next/dist/client/router'
 import React, { useRef } from 'react'
-import { Card, Heading, TextInput, TextInputGroup } from '../../src/components'
-import { useGetFullAppQuery, useCreateReviewAppMutation, useSetAppVarMutation, useUnsetAppVarMutation, useSetAppEnvMutation, useDestroyAppMutation, useUnsetAppEnvMutation } from '../../src/generated/graphql'
+import { Card, Heading, TextInput, TextInputGroup, ExcludedResources } from '../../src/components'
 import { throwError } from '../../src/throwError'
 import { TrashIcon } from '@heroicons/react/outline'
+import {
+	useGetFullAppQuery,
+	useDestroyAppMutation,
+	useCreateReviewAppMutation,
+	useSetExcludedResourceMutation, useUnsetExcludedResourceMutation,
+	useSetAppVarMutation, useUnsetAppVarMutation,
+	useSetAppEnvMutation, useUnsetAppEnvMutation,
+} from '../../src/generated/graphql'
 
 
 const CreateForm = ({ app }) => {
@@ -48,7 +55,7 @@ const ShowApp = () => {
 
 		<section>
 			<Card className="mb-2">
-				<h2 className="border-b-2">YAML Interpolation Vars</h2>
+				<h2 className="border-b-2 mb-2">YAML Interpolation Vars</h2>
 				<TextInputGroup
 					vars={app.vars} appName={app.name}
 					useSet={useSetAppVarMutation}
@@ -57,7 +64,7 @@ const ShowApp = () => {
 			</Card>
 
 			<Card className="mb-2">
-				<h2 className="border-b-2"> Environment Variables </h2>
+				<h2 className="border-b-2 mb-2"> Environment Variables </h2>
 				<TextInputGroup
 					vars={app.env} appName={app.name}
 					useSet={useSetAppEnvMutation}
@@ -83,6 +90,13 @@ const ShowApp = () => {
 				)}
 			</Card>
 		</>}
+
+		<ExcludedResources
+			appName={app.name}
+			resources={app.excludedResources} 
+			useSet={useSetExcludedResourceMutation}
+			useUnset={useUnsetExcludedResourceMutation}
+		/>
 	</div>
 }
 

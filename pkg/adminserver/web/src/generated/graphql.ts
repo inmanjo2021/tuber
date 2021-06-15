@@ -38,7 +38,8 @@ export type Mutation = {
   unsetAppVar?: Maybe<TuberApp>;
   setAppEnv?: Maybe<TuberApp>;
   unsetAppEnv?: Maybe<TuberApp>;
-  excludedResources: Array<Resource>;
+  setExcludedResource?: Maybe<TuberApp>;
+  unsetExcludedResource?: Maybe<TuberApp>;
 };
 
 
@@ -86,6 +87,16 @@ export type MutationUnsetAppEnvArgs = {
   input: SetTupleInput;
 };
 
+
+export type MutationSetExcludedResourceArgs = {
+  input: SetResourceInput;
+};
+
+
+export type MutationUnsetExcludedResourceArgs = {
+  input: SetResourceInput;
+};
+
 export type Query = {
   __typename?: 'Query';
   getApp?: Maybe<TuberApp>;
@@ -111,6 +122,12 @@ export type ReviewAppsConfig = {
   excludedResources: Array<Resource>;
 };
 
+export type SetResourceInput = {
+  appName: Scalars['ID'];
+  name: Scalars['String'];
+  kind: Scalars['String'];
+};
+
 export type SetTupleInput = {
   name: Scalars['ID'];
   key: Scalars['String'];
@@ -126,6 +143,7 @@ export type State = {
 export type TuberApp = {
   __typename?: 'TuberApp';
   cloudSourceRepo: Scalars['String'];
+  currentTags?: Maybe<Array<Scalars['String']>>;
   imageTag: Scalars['String'];
   name: Scalars['ID'];
   paused: Scalars['Boolean'];
@@ -138,6 +156,7 @@ export type TuberApp = {
   vars: Array<Tuple>;
   reviewApps?: Maybe<Array<TuberApp>>;
   env?: Maybe<Array<Tuple>>;
+  excludedResources: Array<Resource>;
 };
 
 export type Tuple = {
@@ -215,7 +234,10 @@ export type GetFullAppQuery = (
     )>>, reviewApps?: Maybe<Array<(
       { __typename?: 'TuberApp' }
       & Pick<TuberApp, 'name'>
-    )>> }
+    )>>, excludedResources: Array<(
+      { __typename?: 'Resource' }
+      & Pick<Resource, 'name' | 'kind'>
+    )> }
   )> }
 );
 
@@ -253,6 +275,22 @@ export type SetAppVarMutation = (
   )> }
 );
 
+export type SetExcludedResourceMutationVariables = Exact<{
+  input: SetResourceInput;
+}>;
+
+
+export type SetExcludedResourceMutation = (
+  { __typename?: 'Mutation' }
+  & { setExcludedResource?: Maybe<(
+    { __typename?: 'TuberApp' }
+    & { excludedResources: Array<(
+      { __typename?: 'Resource' }
+      & Pick<Resource, 'name' | 'kind'>
+    )> }
+  )> }
+);
+
 export type UnsetAppEnvMutationVariables = Exact<{
   input: SetTupleInput;
 }>;
@@ -284,6 +322,22 @@ export type UnsetAppVarMutation = (
       { __typename?: 'Tuple' }
       & Pick<Tuple, 'key' | 'value'>
     )>> }
+  )> }
+);
+
+export type UnsetExcludedResourceMutationVariables = Exact<{
+  input: SetResourceInput;
+}>;
+
+
+export type UnsetExcludedResourceMutation = (
+  { __typename?: 'Mutation' }
+  & { unsetExcludedResource?: Maybe<(
+    { __typename?: 'TuberApp' }
+    & { excludedResources: Array<(
+      { __typename?: 'Resource' }
+      & Pick<Resource, 'name' | 'kind'>
+    )> }
   )> }
 );
 
@@ -483,22 +537,44 @@ export default {
             ]
           },
           {
-            "name": "excludedResources",
+            "name": "setExcludedResource",
             "type": {
-              "kind": "NON_NULL",
-              "ofType": {
-                "kind": "LIST",
-                "ofType": {
+              "kind": "OBJECT",
+              "name": "TuberApp",
+              "ofType": null
+            },
+            "args": [
+              {
+                "name": "input",
+                "type": {
                   "kind": "NON_NULL",
                   "ofType": {
-                    "kind": "OBJECT",
-                    "name": "Resource",
-                    "ofType": null
+                    "kind": "SCALAR",
+                    "name": "Any"
                   }
                 }
               }
+            ]
+          },
+          {
+            "name": "unsetExcludedResource",
+            "type": {
+              "kind": "OBJECT",
+              "name": "TuberApp",
+              "ofType": null
             },
-            "args": []
+            "args": [
+              {
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "Any"
+                  }
+                }
+              }
+            ]
           }
         ],
         "interfaces": []
@@ -701,6 +777,20 @@ export default {
             "args": []
           },
           {
+            "name": "currentTags",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "Any"
+                }
+              }
+            },
+            "args": []
+          },
+          {
             "name": "imageTag",
             "type": {
               "kind": "NON_NULL",
@@ -845,6 +935,24 @@ export default {
               }
             },
             "args": []
+          },
+          {
+            "name": "excludedResources",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "Resource",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "args": []
           }
         ],
         "interfaces": []
@@ -949,6 +1057,10 @@ export const GetFullAppDocument = gql`
     reviewApps {
       name
     }
+    excludedResources {
+      name
+      kind
+    }
   }
 }
     `;
@@ -986,6 +1098,20 @@ export const SetAppVarDocument = gql`
 export function useSetAppVarMutation() {
   return Urql.useMutation<SetAppVarMutation, SetAppVarMutationVariables>(SetAppVarDocument);
 };
+export const SetExcludedResourceDocument = gql`
+    mutation SetExcludedResource($input: SetResourceInput!) {
+  setExcludedResource(input: $input) {
+    excludedResources {
+      name
+      kind
+    }
+  }
+}
+    `;
+
+export function useSetExcludedResourceMutation() {
+  return Urql.useMutation<SetExcludedResourceMutation, SetExcludedResourceMutationVariables>(SetExcludedResourceDocument);
+};
 export const UnsetAppEnvDocument = gql`
     mutation UnsetAppEnv($input: SetTupleInput!) {
   unsetAppEnv(input: $input) {
@@ -1015,4 +1141,18 @@ export const UnsetAppVarDocument = gql`
 
 export function useUnsetAppVarMutation() {
   return Urql.useMutation<UnsetAppVarMutation, UnsetAppVarMutationVariables>(UnsetAppVarDocument);
+};
+export const UnsetExcludedResourceDocument = gql`
+    mutation UnsetExcludedResource($input: SetResourceInput!) {
+  unsetExcludedResource(input: $input) {
+    excludedResources {
+      name
+      kind
+    }
+  }
+}
+    `;
+
+export function useUnsetExcludedResourceMutation() {
+  return Urql.useMutation<UnsetExcludedResourceMutation, UnsetExcludedResourceMutationVariables>(UnsetExcludedResourceDocument);
 };
