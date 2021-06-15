@@ -1,10 +1,9 @@
 import React, { FC, useState, useRef } from 'react'
-import { Heading, TextInput } from '../../src/components'
+import { TextInput } from '../../src/components'
 import { SetResourceInput, Exact, Resource } from '../generated/graphql'
 import { UseMutationResponse } from 'urql'
 import { AddButton } from './AddButton'
 import { SaveIcon, XCircleIcon, TrashIcon } from '@heroicons/react/outline'
-import { Card } from './Card'
 
 type Props = {
 	appName: string
@@ -48,7 +47,7 @@ export const ExcludedResources:FC<Props> = ({ appName, resources, useSet, useUns
 	}
 
 	return <div>
-		<Heading>Excluded Resources</Heading>
+		<h2 className="text-xl mb-2">Excluded Resources</h2>
 		{resources.map(resource =>
 			<div key={resource.name} className="bg-gray-50 pb-1">
 				<span>{resource.name}</span>
