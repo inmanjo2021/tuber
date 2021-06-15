@@ -47,7 +47,7 @@ export const ExcludedResources:FC<Props> = ({ appName, resources, useSet, useUns
 		})
 	}
 
-	return <Card>
+	return <div>
 		<Heading>Excluded Resources</Heading>
 		{resources.map(resource =>
 			<div key={resource.name} className="bg-gray-50 pb-1">
@@ -73,5 +73,5 @@ export const ExcludedResources:FC<Props> = ({ appName, resources, useSet, useUns
 
 		{addNew ||
 			<AddButton onClick={() => setAddNew(true)} />}
-	</Card>
+	</div>
 }

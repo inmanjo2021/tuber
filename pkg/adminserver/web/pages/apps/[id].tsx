@@ -89,16 +89,6 @@ const ShowApp = () => {
 					useUnset={useUnsetAppVarMutation}
 				/>
 			</Card>
-
-			<Card className="mb-2">
-				<Collapsible heading={'Environment Variables'} collapsed={true}>
-					<TextInputGroup
-						vars={app.env} appName={app.name}
-						useSet={useSetAppEnvMutation}
-						useUnset={useUnsetAppEnvMutation}
-					/>
-				</Collapsible>
-			</Card>
 		</section>
 
 		{app.reviewApp || <>
@@ -118,13 +108,25 @@ const ShowApp = () => {
 				)}
 			</Card>
 		</>}
+			
+		<Card className="mb-2">
+			<ExcludedResources
+				appName={app.name}
+				resources={app.excludedResources} 
+				useSet={useSetExcludedResourceMutation}
+				useUnset={useUnsetExcludedResourceMutation}
+			/>
+		</Card>
 
-		<ExcludedResources
-			appName={app.name}
-			resources={app.excludedResources} 
-			useSet={useSetExcludedResourceMutation}
-			useUnset={useUnsetExcludedResourceMutation}
-		/>
+		<Card>
+			<Collapsible heading={'Environment Variables'} collapsed={true}>
+				<TextInputGroup
+					vars={app.env} appName={app.name}
+					useSet={useSetAppEnvMutation}
+					useUnset={useUnsetAppEnvMutation}
+				/>
+			</Collapsible>
+		</Card>
 	</div>
 }
 
