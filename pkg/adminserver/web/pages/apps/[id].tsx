@@ -5,6 +5,7 @@ import { Card, Heading, TextInput, TextInputGroup, ExcludedResources, Collapsibl
 import { throwError } from '../../src/throwError'
 import { TrashIcon } from '@heroicons/react/outline'
 import {
+	useDeployMutation,
 	useGetFullAppQuery,
 	useDestroyAppMutation,
 	useCreateReviewAppMutation,
@@ -45,23 +46,37 @@ const ShowApp = () => {
 	const [{ error: destroyAppError }, destroyApp] = useDestroyAppMutation()
 	const hostname = `https://${app.name}.staging.freshlyservices.net/`
 
+	const [{ error: deployErr }, deploy] = useDeployMutation()
+
 	return <div>
-		<section className="p-3 mb-2">
-			<h1 className="text-3xl">{app.name}</h1>
+		<section className="flex justify-between p-3 mb-2">
 			<div>
-				<small>
-					<a href={hostname} target="_blank" rel="noreferrer">{hostname}</a>
-				</small>
+				<h1 className="text-3xl">{app.name}</h1>
+				<div>
+					<small>
+						<a href={hostname} target="_blank" rel="noreferrer">{hostname}</a>
+					</small>
+				</div>
+				<div>
+					<small>
+						<a href="https://app.datadoghq.com/apm/home?env=production" target="_blank" rel="noreferrer">DataDog Logs</a>
+					</small>
+				</div>
+				<div>
+					<small>
+						<a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer">GKE Dashboard</a>
+					</small>
+				</div>
 			</div>
+
 			<div>
-				<small>
-					<a href="https://app.datadoghq.com/apm/home?env=production" target="_blank" rel="noreferrer">DataDog Logs</a>
-				</small>
-			</div>
-			<div>
-				<small>
-					<a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer">GKE Dashboard</a>
-				</small>
+				{deployErr && <div className="bg-red-700 text-white border-red-700 p-2">
+					{deployErr.message}
+				</div>}
+
+				<div className="text-white bg-green-700 p-2 rounded-md cursor-pointer" onClick={() => deploy({ input: { name: app.name } }) }>
+					<span>Deploy</span>
+				</div>
 			</div>
 		</section>
 

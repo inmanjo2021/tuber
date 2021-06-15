@@ -22,9 +22,18 @@ export type AppInput = {
   paused?: Maybe<Scalars['Boolean']>;
 };
 
+export type AppNameInput = {
+  name: Scalars['String'];
+};
+
 export type CreateReviewAppInput = {
   name: Scalars['String'];
   branchName: Scalars['String'];
+};
+
+export type DeployInput = {
+  name: Scalars['String'];
+  tag?: Maybe<Scalars['String']>;
 };
 
 export type Mutation = {
@@ -32,6 +41,7 @@ export type Mutation = {
   createApp?: Maybe<TuberApp>;
   updateApp?: Maybe<TuberApp>;
   removeApp?: Maybe<TuberApp>;
+  deploy?: Maybe<TuberApp>;
   destroyApp?: Maybe<TuberApp>;
   createReviewApp?: Maybe<TuberApp>;
   setAppVar?: Maybe<TuberApp>;
@@ -40,6 +50,7 @@ export type Mutation = {
   unsetAppEnv?: Maybe<TuberApp>;
   setExcludedResource?: Maybe<TuberApp>;
   unsetExcludedResource?: Maybe<TuberApp>;
+  rollback?: Maybe<TuberApp>;
 };
 
 
@@ -55,6 +66,11 @@ export type MutationUpdateAppArgs = {
 
 export type MutationRemoveAppArgs = {
   input: AppInput;
+};
+
+
+export type MutationDeployArgs = {
+  input: DeployInput;
 };
 
 
@@ -95,6 +111,11 @@ export type MutationSetExcludedResourceArgs = {
 
 export type MutationUnsetExcludedResourceArgs = {
   input: SetResourceInput;
+};
+
+
+export type MutationRollbackArgs = {
+  input: AppNameInput;
 };
 
 export type Query = {
@@ -173,6 +194,19 @@ export type CreateReviewAppMutationVariables = Exact<{
 export type CreateReviewAppMutation = (
   { __typename?: 'Mutation' }
   & { createReviewApp?: Maybe<(
+    { __typename?: 'TuberApp' }
+    & Pick<TuberApp, 'name'>
+  )> }
+);
+
+export type DeployMutationVariables = Exact<{
+  input: DeployInput;
+}>;
+
+
+export type DeployMutation = (
+  { __typename?: 'Mutation' }
+  & { deploy?: Maybe<(
     { __typename?: 'TuberApp' }
     & Pick<TuberApp, 'name'>
   )> }
@@ -417,6 +451,26 @@ export default {
             ]
           },
           {
+            "name": "deploy",
+            "type": {
+              "kind": "OBJECT",
+              "name": "TuberApp",
+              "ofType": null
+            },
+            "args": [
+              {
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "Any"
+                  }
+                }
+              }
+            ]
+          },
+          {
             "name": "destroyApp",
             "type": {
               "kind": "OBJECT",
@@ -558,6 +612,26 @@ export default {
           },
           {
             "name": "unsetExcludedResource",
+            "type": {
+              "kind": "OBJECT",
+              "name": "TuberApp",
+              "ofType": null
+            },
+            "args": [
+              {
+                "name": "input",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "Any"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "rollback",
             "type": {
               "kind": "OBJECT",
               "name": "TuberApp",
@@ -1005,6 +1079,17 @@ export const CreateReviewAppDocument = gql`
 
 export function useCreateReviewAppMutation() {
   return Urql.useMutation<CreateReviewAppMutation, CreateReviewAppMutationVariables>(CreateReviewAppDocument);
+};
+export const DeployDocument = gql`
+    mutation Deploy($input: DeployInput!) {
+  deploy(input: $input) {
+    name
+  }
+}
+    `;
+
+export function useDeployMutation() {
+  return Urql.useMutation<DeployMutation, DeployMutationVariables>(DeployDocument);
 };
 export const DestroyAppDocument = gql`
     mutation DestroyApp($input: AppInput!) {
