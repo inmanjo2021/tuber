@@ -400,6 +400,55 @@ func (r *mutationResolver) SetSlackChannel(ctx context.Context, input model.AppI
 	return app, nil
 }
 
+func (r *mutationResolver) ManualApply(ctx context.Context, input model.ManualApplyInput) (*model.TuberApp, error) {
+	app, err := r.Resolver.db.App(input.Name)
+	if err != nil {
+		if errors.As(err, &db.NotFoundError{}) {
+			return nil, errors.New("error finding app, nothing applied")
+		}
+
+		return nil, fmt.Errorf("error finding app, nothing applied: %v", err)
+	}
+
+	var resources []string
+	for _, resource := range input.Resources {
+		if resource == nil {
+			return nil, errors.New("nil string pointer found in resources, nothing applied")
+		}
+
+		decoded, decodeErr := base64.StdEncoding.DecodeString(*resource)
+		if decodeErr != nil {
+			return nil, errors.New("decode error, nothing applied")
+		}
+		resources = append(resources, string(decoded))
+	}
+
+	branch, err := gcr.TagFromRef(app.ImageTag)
+	if err == nil {
+		return nil, errors.New("unable to parse app's current image tag, nothing applied")
+	}
+
+	var digest string
+	for _, tag := range app.CurrentTags {
+		if branch != tag {
+			digest = tag
+			break
+		}
+	}
+
+	imageTagWithDigest, err := gcr.SwapTags(app.ImageTag, digest)
+	if err == nil {
+		return nil, errors.New("unable to parse currently deployed image, nothing applied")
+	}
+
+	err = core.BypassReleaser(app, imageTagWithDigest, resources, r.Resolver.processor.ClusterData)
+	if err != nil {
+		return nil, err
+	}
+
+	return app, nil
+}
+
 func (r *queryResolver) GetApp(ctx context.Context, name string) (*model.TuberApp, error) {
 	return r.Resolver.db.App(name)
 }
