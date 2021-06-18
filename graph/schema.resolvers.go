@@ -439,7 +439,7 @@ func (r *mutationResolver) ManualApply(ctx context.Context, input model.ManualAp
 	}
 
 	imageTagWithDigest, err := gcr.SwapTags(app.ImageTag, digest)
-	if err == nil {
+	if err != nil {
 		r.logger.Error(err.Error())
 		return nil, errors.New("unable to parse currently deployed image, nothing applied")
 	}
