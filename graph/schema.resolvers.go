@@ -418,6 +418,7 @@ func (r *mutationResolver) ManualApply(ctx context.Context, input model.ManualAp
 
 		decoded, decodeErr := base64.StdEncoding.DecodeString(*resource)
 		if decodeErr != nil {
+			r.logger.Error(decodeErr.Error())
 			return nil, errors.New("decode error, nothing applied")
 		}
 		resources = append(resources, string(decoded))
@@ -425,7 +426,8 @@ func (r *mutationResolver) ManualApply(ctx context.Context, input model.ManualAp
 
 	branch, err := gcr.TagFromRef(app.ImageTag)
 	if err == nil {
-		return nil, errors.New("unable to parse app's current image tag, nothing applied")
+		r.logger.Error(err.Error())
+		return nil, fmt.Errorf("unable to parse app's current image tag, nothing applied: %v", err)
 	}
 
 	var digest string
@@ -438,11 +440,13 @@ func (r *mutationResolver) ManualApply(ctx context.Context, input model.ManualAp
 
 	imageTagWithDigest, err := gcr.SwapTags(app.ImageTag, digest)
 	if err == nil {
+		r.logger.Error(err.Error())
 		return nil, errors.New("unable to parse currently deployed image, nothing applied")
 	}
 
 	err = core.BypassReleaser(app, imageTagWithDigest, resources, r.Resolver.processor.ClusterData)
 	if err != nil {
+		r.logger.Error(err.Error())
 		return nil, err
 	}
 

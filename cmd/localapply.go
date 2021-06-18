@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/freshly/tuber/graph/model"
@@ -50,7 +51,7 @@ func runLocalApplyCmd(cmd *cobra.Command, args []string) error {
 
 	var yamls []string
 	for _, file := range files {
-		if file == ".tuber" {
+		if file == ".tuber" || file == filepath.FromSlash(`.tuber\postrelease`) || strings.HasPrefix(file, filepath.FromSlash(`.tuber\prerelease`)) {
 			continue
 		}
 		raw, readErr := ioutil.ReadFile(file)
