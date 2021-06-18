@@ -425,7 +425,7 @@ func (r *mutationResolver) ManualApply(ctx context.Context, input model.ManualAp
 	}
 
 	branch, err := gcr.TagFromRef(app.ImageTag)
-	if err == nil {
+	if err != nil {
 		r.logger.Error(err.Error())
 		return nil, fmt.Errorf("unable to parse app's current image tag, nothing applied: %v", err)
 	}
