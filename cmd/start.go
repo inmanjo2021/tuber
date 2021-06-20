@@ -80,7 +80,7 @@ func start(cmd *cobra.Command, args []string) error {
 	}
 
 	slackClient := slack.New(viper.GetString("slack-token"), viper.GetBool("slack-enabled"), viper.GetString("slack-catchall-channel"))
-	processor := events.NewProcessor(ctx, logger, db, creds, data, viper.GetBool("reviewapps-enabled"), slackClient, viper.GetString("sentry-bearer-token"))
+	processor := events.NewProcessor(ctx, logger, db, creds, data, viper.GetBool("reviewapps-enabled"), slackClient, viper.GetString("sentry-bearer-token"), viper.GetString("events-project"), viper.GetString("events-topic"))
 	listener, err := pubsub.NewListener(
 		ctx,
 		logger,
