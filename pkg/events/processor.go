@@ -177,6 +177,7 @@ func (p Processor) StartRelease(event *Event, app *model.TuberApp) {
 	logger.Info("release complete", zap.Duration("duration", time.Since(startTime)))
 
 	if ti.hasEventData() {
+		logger.Info("posting completed event")
 		err = p.postCompleted(app, ti)
 		if err != nil {
 			logger.Error("error prevented sending release completed event", zap.Error(err))
