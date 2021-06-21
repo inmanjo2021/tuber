@@ -75,7 +75,7 @@ const ShowApp = () => {
 					{deployErr.message}
 				</div>}
 
-				<div className="text-white bg-green-700 p-2 rounded-md cursor-pointer" onClick={() => deploy({ input: { name: app.name } }) }>
+				<div className="text-white bg-green-700 p-2 rounded-md cursor-pointer" onClick={() => { confirm(`Deploy ${app.name}?`) && deploy({ input: { name: app.name } }) } }>
 					<span>Deploy</span>
 				</div>
 			</div>
