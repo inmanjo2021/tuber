@@ -79,6 +79,7 @@ export const TextInputPair: FC<Props> = ({ useSet, useUnset, finished, appName, 
 			<form onSubmit={onSubmit} className={c('flex', { 'opacity-10': loading })}>
 				<TextInput
 					name="key"
+					className="w-5/12"
 					disabled={!isNew || loading}
 					required
 					ref={keyRef}
@@ -88,6 +89,7 @@ export const TextInputPair: FC<Props> = ({ useSet, useUnset, finished, appName, 
 
 				<TextInput
 					name="value"
+					className="w-5/12"
 					disabled={(!editing && !isNew) || loading}
 					required
 					ref={valRef}
