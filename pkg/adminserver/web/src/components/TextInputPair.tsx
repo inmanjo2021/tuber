@@ -98,11 +98,10 @@ export const TextInputPair: FC<Props> = ({ useSet, useUnset, finished, appName, 
 				{editing
 					? <XCircleIcon className="w-5 select-none" onClick={() => { setEditing(false); finished(); valRef.current.value = value }}/>
 					: <PencilAltIcon className="w-5 select-none" onClick={() => setEditing(true)} />}
-				
+
 				{editing
 					? <button type="submit"><SaveIcon className="w-5" /></button>
-					: <TrashIcon className="w-5 text-red-600" onClick={() => { onDelete(keyName, value) }}/>}
-
+					: <TrashIcon className="w-5 text-red-600" onClick={() => { confirm(`Delete "${keyName}"?`) && onDelete(keyName, value) } }/>}
 			</form>
 		</>
 	)
