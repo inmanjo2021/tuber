@@ -289,7 +289,7 @@ export type GetFullAppQuery = (
   { __typename?: 'Query' }
   & { getApp?: Maybe<(
     { __typename?: 'TuberApp' }
-    & Pick<TuberApp, 'name' | 'reviewApp' | 'cloudSourceRepo' | 'githubURL' | 'slackChannel'>
+    & Pick<TuberApp, 'name' | 'reviewApp' | 'cloudSourceRepo' | 'githubURL' | 'slackChannel' | 'paused'>
     & { vars: Array<(
       { __typename?: 'Tuple' }
       & Pick<Tuple, 'key' | 'value'>
@@ -442,6 +442,19 @@ export type UnsetExcludedResourceMutation = (
       { __typename?: 'Resource' }
       & Pick<Resource, 'name' | 'kind'>
     )> }
+  )> }
+);
+
+export type UpdateAppMutationVariables = Exact<{
+  input: AppInput;
+}>;
+
+
+export type UpdateAppMutation = (
+  { __typename?: 'Mutation' }
+  & { updateApp?: Maybe<(
+    { __typename?: 'TuberApp' }
+    & Pick<TuberApp, 'name' | 'paused'>
   )> }
 );
 
@@ -1336,6 +1349,7 @@ export const GetFullAppDocument = gql`
     cloudSourceRepo
     githubURL
     slackChannel
+    paused
     vars {
       key
       value
@@ -1481,4 +1495,16 @@ export const UnsetExcludedResourceDocument = gql`
 
 export function useUnsetExcludedResourceMutation() {
   return Urql.useMutation<UnsetExcludedResourceMutation, UnsetExcludedResourceMutationVariables>(UnsetExcludedResourceDocument);
+};
+export const UpdateAppDocument = gql`
+    mutation UpdateApp($input: AppInput!) {
+  updateApp(input: $input) {
+    name
+    paused
+  }
+}
+    `;
+
+export function useUpdateAppMutation() {
+  return Urql.useMutation<UpdateAppMutation, UpdateAppMutationVariables>(UpdateAppDocument);
 };
