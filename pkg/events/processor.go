@@ -137,7 +137,7 @@ func (p Processor) StartRelease(event *Event, app *model.TuberApp) {
 
 	logger.Info("release starting")
 
-	yamls, err := gcr.GetTuberLayer(event.digest, p.creds)
+	yamls, err := gcr.GetTuberLayer(logger, event.digest, p.creds)
 	logger.Debug("current tags detected from gcr digest: " + strings.Join(yamls.Tags, ", ") + " :<-")
 	if err != nil {
 		p.slackClient.Message(logger, ":skull_and_crossbones: image or tuber layer not found for "+app.Name, app.SlackChannel)
