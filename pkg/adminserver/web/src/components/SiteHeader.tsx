@@ -8,7 +8,7 @@ const ClusterInfo = () => {
 
 	return error
 		? <span>error</span>
-		: <span>{data.getClusterInfo.name}</span>
+		: <span className="text-sm ml-3 inline-block">{data.getClusterInfo.name}</span>
 }
 
 export const SiteHeader = () => {
