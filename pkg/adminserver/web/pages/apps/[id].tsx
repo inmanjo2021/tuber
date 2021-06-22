@@ -84,29 +84,39 @@ const ShowApp = () => {
 
 		<section>
 			<Card className="mb-2">
-				<div className="inline-grid grid-cols-2 leading-7">
+				<div
+					className="inline-grid leading-7"
+					style={{ 'gridTemplateColumns': 'repeat(2, minmax(300px, 352px))' }}>
 					<div>Slack Channel</div>
 					<TextInputForm
 						value={app.slackChannel}
-						keyName="slackChannel"
-						appName={app.name}
 						useSet={useSetSlackChannelMutation}
+						appName={app.name}
+						keyName="slackChannel"
 					/>
 
 					<div>Github URL</div>
 					<TextInputForm
 						value={app.githubURL}
-						keyName="githubURL"
-						appName={app.name}
 						useSet={useSetGithubUrlMutation}
+						appName={app.name}
+						keyName="githubURL"
 					/>
 
 					<div>Cloud Source Repo</div>
 					<TextInputForm
 						value={app.cloudSourceRepo}
-						keyName="cloudSourceRepo"
-						appName={app.name}
 						useSet={useSetCloudSourceRepoMutation}
+						appName={app.name}
+						keyName="cloudSourceRepo"
+					/>
+
+					<div>Image Tag</div>
+					<TextInputForm
+						value={app.imageTag}
+						useSet={useUpdateAppMutation}
+						appName={app.name}
+						keyName="imageTag"
 					/>
 				</div>
 			</Card>

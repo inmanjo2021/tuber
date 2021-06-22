@@ -15,7 +15,7 @@ type Props = {
 	keyName: keyof AppInput
 }
 
-export const TextInputForm: FC<Props> = ({ useSet, finished, appName, value, keyName }) => {
+export const TextInputForm: FC<Props> = ({ appName, keyName, useSet, finished, value }) => {
 	const [editing, setEditing] = useState<boolean>(false)
 	const [loading, setLoading] = useState<boolean>(false)
 	const valRef = useRef(null)

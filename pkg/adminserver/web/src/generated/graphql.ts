@@ -454,7 +454,7 @@ export type UpdateAppMutation = (
   { __typename?: 'Mutation' }
   & { updateApp?: Maybe<(
     { __typename?: 'TuberApp' }
-    & Pick<TuberApp, 'name' | 'paused'>
+    & Pick<TuberApp, 'name' | 'paused' | 'slackChannel' | 'githubURL' | 'cloudSourceRepo' | 'imageTag'>
   )> }
 );
 
@@ -1502,6 +1502,10 @@ export const UpdateAppDocument = gql`
   updateApp(input: $input) {
     name
     paused
+    slackChannel
+    githubURL
+    cloudSourceRepo
+    imageTag
   }
 }
     `;

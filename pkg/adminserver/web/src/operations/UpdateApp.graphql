@@ -2,5 +2,9 @@ mutation UpdateApp($input: AppInput!) {
 	updateApp(input: $input) {
 		name
 		paused
+		slackChannel
+		githubURL
+		cloudSourceRepo
+		imageTag
 	}
 }
