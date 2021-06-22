@@ -13,9 +13,10 @@ type Props = {
 	value: string
 	appName: string
 	keyName: keyof AppInput
+	className?: string
 }
 
-export const TextInputForm: FC<Props> = ({ appName, keyName, useSet, finished, value }) => {
+export const TextInputForm: FC<Props> = ({ appName, keyName, useSet, finished, value, className }) => {
 	const [editing, setEditing] = useState<boolean>(false)
 	const [loading, setLoading] = useState<boolean>(false)
 	const valRef = useRef(null)
@@ -54,6 +55,7 @@ export const TextInputForm: FC<Props> = ({ appName, keyName, useSet, finished, v
 						ref={valRef}
 						defaultValue={value}
 						placeholder="value"
+						className={className}
 					/>
 					: <span>{value}</span>
 				}
