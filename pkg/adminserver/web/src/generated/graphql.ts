@@ -289,7 +289,7 @@ export type GetFullAppQuery = (
   { __typename?: 'Query' }
   & { getApp?: Maybe<(
     { __typename?: 'TuberApp' }
-    & Pick<TuberApp, 'name' | 'reviewApp' | 'cloudSourceRepo' | 'githubURL' | 'slackChannel' | 'paused'>
+    & Pick<TuberApp, 'name' | 'reviewApp' | 'cloudSourceRepo' | 'githubURL' | 'slackChannel' | 'paused' | 'imageTag'>
     & { vars: Array<(
       { __typename?: 'Tuple' }
       & Pick<Tuple, 'key' | 'value'>
@@ -1350,6 +1350,7 @@ export const GetFullAppDocument = gql`
     githubURL
     slackChannel
     paused
+    imageTag
     vars {
       key
       value
