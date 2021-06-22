@@ -137,11 +137,11 @@ const ShowApp = () => {
 			<Card className="mb-2">
 				<h2 className="text-xl mb-2">Create a review app</h2>
 				<CreateForm app={app} />
-				<Heading>Review apps</Heading>
 				{destroyAppError && <div className="bg-red-700 text-white border-red-700 p-2">
 					{destroyAppError.message}
 				</div>}
 
+				{app.reviewApps && <Heading>Review apps</Heading>}
 				{app.reviewApps && app.reviewApps.map(reviewApp =>
 					<div key={reviewApp.name}>
 						<a href={`/tuber/apps/${reviewApp.name}`}>{reviewApp.name}</a>
