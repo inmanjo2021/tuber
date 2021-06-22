@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useRouter } from 'next/dist/client/router'
 import React, { useRef } from 'react'
-import { Card, Heading, TextInput, TextInputGroup, ExcludedResources, Collapsible, TextInputForm, ConfirmButton } from '../../src/components'
+import { Card, Heading, TextInput, TextInputGroup, ExcludedResources, Collapsible, TextInputForm, ConfirmButton, Button } from '../../src/components'
 import { throwError } from '../../src/throwError'
 import { TrashIcon } from '@heroicons/react/outline'
 import {
@@ -14,7 +14,6 @@ import {
 	useSetAppVarMutation, useUnsetAppVarMutation,
 	useSetAppEnvMutation, useUnsetAppEnvMutation, useSetCloudSourceRepoMutation, useSetSlackChannelMutation, useSetGithubUrlMutation,
 } from '../../src/generated/graphql'
-
 
 const CreateForm = ({ app }) => {
 	const [{ error, fetching }, create] = useCreateReviewAppMutation()
@@ -72,7 +71,7 @@ const ShowApp = () => {
 
 			<div className="flex">
 				<div className="mr-1">
-					<ConfirmButton
+					<Button
 						input={{ name: app.name, paused: !app.paused }}
 						title={app.paused ? 'Resume' : 'Pause'}
 						useMutation={useUpdateAppMutation}
