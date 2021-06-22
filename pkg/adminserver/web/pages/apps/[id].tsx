@@ -83,7 +83,7 @@ const ShowApp = () => {
 		</section>
 
 		<section>
-			<Card className="mb-2">
+			<Card className="mb-2 shadow-dark-50 shadow">
 				<div
 					className="inline-grid leading-8"
 					style={{ 'gridTemplateColumns': 'repeat(2, minmax(300px, 352px))' }}>
@@ -127,7 +127,7 @@ const ShowApp = () => {
 		</section>
 
 		<section>
-			<Card className="mb-2">
+			<Card className="mb-2 shadow-dark-50 shadow">
 				<h2 className="text-xl mb-2">YAML Interpolation Vars</h2>
 				<TextInputGroup
 					vars={app.vars} appName={app.name}
@@ -138,7 +138,7 @@ const ShowApp = () => {
 		</section>
 
 		{app.reviewApp || <>
-			<Card className="mb-2">
+			<Card className="mb-2 shadow-dark-50 shadow">
 				<h2 className="text-xl mb-2">Create a review app</h2>
 				<CreateForm app={app} />
 				{destroyAppError && <div className="bg-red-700 text-white border-red-700 p-2">
@@ -155,7 +155,7 @@ const ShowApp = () => {
 			</Card>
 		</>}
 
-		<Card className="mb-2">
+		<Card className="mb-2 shadow-dark-50 shadow">
 			<ExcludedResources
 				appName={app.name}
 				resources={app.excludedResources}
@@ -164,7 +164,7 @@ const ShowApp = () => {
 			/>
 		</Card>
 
-		<Card>
+		<Card className="shadow-dark-50 shadow">
 			<Collapsible heading={'Environment Variables'} collapsed={true}>
 				<TextInputGroup
 					vars={app.env} appName={app.name}
