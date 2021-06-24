@@ -39,6 +39,11 @@ type ReviewAppsConfig struct {
 	ExcludedResources []*Resource `json:"excludedResources"`
 }
 
+type SetRacEnabledInput struct {
+	Name    string `json:"name"`
+	Enabled bool   `json:"enabled"`
+}
+
 type SetResourceInput struct {
 	AppName string `json:"appName"`
 	Name    string `json:"name"`

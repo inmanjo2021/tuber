@@ -453,6 +453,180 @@ func (r *mutationResolver) ManualApply(ctx context.Context, input model.ManualAp
 	return app, nil
 }
 
+func (r *mutationResolver) SetRacEnabled(ctx context.Context, input model.SetRacEnabledInput) (*model.TuberApp, error) {
+	app, err := r.Resolver.db.App(input.Name)
+	if err != nil {
+		if errors.As(err, &db.NotFoundError{}) {
+			return nil, errors.New("could not find app")
+		}
+
+		return nil, fmt.Errorf("unexpected error while trying to find app: %v", err)
+	}
+
+	app.ReviewAppsConfig.Enabled = input.Enabled
+
+	err = r.Resolver.db.SaveApp(app)
+	if err != nil {
+		return nil, fmt.Errorf("could not save changes: %v", err)
+	}
+
+	return app, nil
+}
+
+func (r *mutationResolver) SetRacVar(ctx context.Context, input model.SetTupleInput) (*model.TuberApp, error) {
+	app, err := r.Resolver.db.App(input.Name)
+	if err != nil {
+		if errors.As(err, &db.NotFoundError{}) {
+			return nil, errors.New("could not find app")
+		}
+
+		return nil, fmt.Errorf("unexpected error while trying to find app: %v", err)
+	}
+
+	if input.Key == "" {
+		return nil, fmt.Errorf("key required for SetRacVar")
+	}
+
+	if input.Value == "" {
+		return nil, fmt.Errorf("value required for SetRacVar")
+	}
+
+	rac := app.ReviewAppsConfig
+	vars := rac.Vars
+
+	var found bool
+	for _, t := range vars {
+		if t.Key == input.Key {
+			t.Value = input.Value
+			found = true
+		}
+	}
+	if !found {
+		vars = append(vars, &model.Tuple{Key: input.Key, Value: input.Value})
+	}
+	rac.Vars = vars
+	app.ReviewAppsConfig = rac
+
+	err = r.Resolver.db.SaveApp(app)
+	if err != nil {
+		return nil, fmt.Errorf("could not save changes: %v", err)
+	}
+
+	return app, nil
+}
+
+func (r *mutationResolver) UnsetRacVar(ctx context.Context, input model.SetTupleInput) (*model.TuberApp, error) {
+	app, err := r.Resolver.db.App(input.Name)
+	if err != nil {
+		if errors.As(err, &db.NotFoundError{}) {
+			return nil, errors.New("could not find app")
+		}
+
+		return nil, fmt.Errorf("unexpected error while trying to find app: %v", err)
+	}
+
+	if input.Key == "" {
+		return nil, fmt.Errorf("key required for UnsetRacVar")
+	}
+
+	rac := app.ReviewAppsConfig
+	vars := rac.Vars
+
+	var updatedVars []*model.Tuple
+	for _, t := range vars {
+		if t.Key != input.Key {
+			updatedVars = append(vars, t)
+		}
+	}
+	rac.Vars = updatedVars
+	app.ReviewAppsConfig = rac
+
+	err = r.Resolver.db.SaveApp(app)
+	if err != nil {
+		return nil, fmt.Errorf("could not save changes: %v", err)
+	}
+
+	return app, nil
+}
+
+func (r *mutationResolver) SetRacExclusion(ctx context.Context, input model.SetResourceInput) (*model.TuberApp, error) {
+	app, err := r.Resolver.db.App(input.AppName)
+	if err != nil {
+		if errors.As(err, &db.NotFoundError{}) {
+			return nil, errors.New("could not find app")
+		}
+
+		return nil, fmt.Errorf("unexpected error while trying to find app: %v", err)
+	}
+
+	if input.Name == "" {
+		return nil, fmt.Errorf("resource name required for SetRacExclusion")
+	}
+
+	if input.Kind == "" {
+		return nil, fmt.Errorf("resource kind required for SetRacExclusion")
+	}
+
+	rac := app.ReviewAppsConfig
+	exclusions := rac.ExcludedResources
+
+	for _, t := range exclusions {
+		if strings.ToLower(t.Name) == strings.ToLower(input.Name) && strings.ToLower(t.Kind) == strings.ToLower(input.Kind) {
+			return app, nil
+		}
+	}
+
+	exclusions = append(exclusions, &model.Resource{Name: input.Name, Kind: input.Kind})
+	rac.ExcludedResources = exclusions
+	app.ReviewAppsConfig = rac
+
+	err = r.Resolver.db.SaveApp(app)
+	if err != nil {
+		return nil, fmt.Errorf("could not save changes: %v", err)
+	}
+
+	return app, nil
+}
+
+func (r *mutationResolver) UnsetRacExclusion(ctx context.Context, input model.SetResourceInput) (*model.TuberApp, error) {
+	app, err := r.Resolver.db.App(input.AppName)
+	if err != nil {
+		if errors.As(err, &db.NotFoundError{}) {
+			return nil, errors.New("could not find app")
+		}
+
+		return nil, fmt.Errorf("unexpected error while trying to find app: %v", err)
+	}
+
+	if input.Name == "" {
+		return nil, fmt.Errorf("resource name required for UnsetRacExclusion")
+	}
+
+	if input.Kind == "" {
+		return nil, fmt.Errorf("resource kind required for UnsetRacExclusion")
+	}
+
+	rac := app.ReviewAppsConfig
+	exclusions := rac.ExcludedResources
+
+	var updatedExclusions []*model.Resource
+	for _, t := range exclusions {
+		if strings.ToLower(t.Name) != strings.ToLower(input.Name) && strings.ToLower(t.Kind) != strings.ToLower(input.Kind) {
+			updatedExclusions = append(updatedExclusions, t)
+		}
+	}
+
+	rac.ExcludedResources = updatedExclusions
+	app.ReviewAppsConfig = rac
+
+	err = r.Resolver.db.SaveApp(app)
+	if err != nil {
+		return nil, fmt.Errorf("could not save changes: %v", err)
+	}
+
+	return app, nil
+}
+
 func (r *queryResolver) GetApp(ctx context.Context, name string) (*model.TuberApp, error) {
 	return r.Resolver.db.App(name)
 }

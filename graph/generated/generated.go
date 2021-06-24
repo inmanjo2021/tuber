@@ -62,10 +62,15 @@ type ComplexityRoot struct {
 		SetCloudSourceRepo    func(childComplexity int, input model.AppInput) int
 		SetExcludedResource   func(childComplexity int, input model.SetResourceInput) int
 		SetGithubURL          func(childComplexity int, input model.AppInput) int
+		SetRacEnabled         func(childComplexity int, input model.SetRacEnabledInput) int
+		SetRacExclusion       func(childComplexity int, input model.SetResourceInput) int
+		SetRacVar             func(childComplexity int, input model.SetTupleInput) int
 		SetSlackChannel       func(childComplexity int, input model.AppInput) int
 		UnsetAppEnv           func(childComplexity int, input model.SetTupleInput) int
 		UnsetAppVar           func(childComplexity int, input model.SetTupleInput) int
 		UnsetExcludedResource func(childComplexity int, input model.SetResourceInput) int
+		UnsetRacExclusion     func(childComplexity int, input model.SetResourceInput) int
+		UnsetRacVar           func(childComplexity int, input model.SetTupleInput) int
 		UpdateApp             func(childComplexity int, input model.AppInput) int
 	}
 
@@ -135,6 +140,11 @@ type MutationResolver interface {
 	SetCloudSourceRepo(ctx context.Context, input model.AppInput) (*model.TuberApp, error)
 	SetSlackChannel(ctx context.Context, input model.AppInput) (*model.TuberApp, error)
 	ManualApply(ctx context.Context, input model.ManualApplyInput) (*model.TuberApp, error)
+	SetRacEnabled(ctx context.Context, input model.SetRacEnabledInput) (*model.TuberApp, error)
+	SetRacVar(ctx context.Context, input model.SetTupleInput) (*model.TuberApp, error)
+	UnsetRacVar(ctx context.Context, input model.SetTupleInput) (*model.TuberApp, error)
+	SetRacExclusion(ctx context.Context, input model.SetResourceInput) (*model.TuberApp, error)
+	UnsetRacExclusion(ctx context.Context, input model.SetResourceInput) (*model.TuberApp, error)
 }
 type QueryResolver interface {
 	GetApp(ctx context.Context, name string) (*model.TuberApp, error)
@@ -319,6 +329,42 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.SetGithubURL(childComplexity, args["input"].(model.AppInput)), true
 
+	case "Mutation.setRacEnabled":
+		if e.complexity.Mutation.SetRacEnabled == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setRacEnabled_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetRacEnabled(childComplexity, args["input"].(model.SetRacEnabledInput)), true
+
+	case "Mutation.setRacExclusion":
+		if e.complexity.Mutation.SetRacExclusion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setRacExclusion_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetRacExclusion(childComplexity, args["input"].(model.SetResourceInput)), true
+
+	case "Mutation.setRacVar":
+		if e.complexity.Mutation.SetRacVar == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setRacVar_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetRacVar(childComplexity, args["input"].(model.SetTupleInput)), true
+
 	case "Mutation.setSlackChannel":
 		if e.complexity.Mutation.SetSlackChannel == nil {
 			break
@@ -366,6 +412,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UnsetExcludedResource(childComplexity, args["input"].(model.SetResourceInput)), true
+
+	case "Mutation.unsetRacExclusion":
+		if e.complexity.Mutation.UnsetRacExclusion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_unsetRacExclusion_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UnsetRacExclusion(childComplexity, args["input"].(model.SetResourceInput)), true
+
+	case "Mutation.unsetRacVar":
+		if e.complexity.Mutation.UnsetRacVar == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_unsetRacVar_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UnsetRacVar(childComplexity, args["input"].(model.SetTupleInput)), true
 
 	case "Mutation.updateApp":
 		if e.complexity.Mutation.UpdateApp == nil {
@@ -740,6 +810,11 @@ type ClusterInfo {
   region: String!
 }
 
+input SetRacEnabledInput {
+  name: ID!
+  enabled: Boolean!
+}
+
 type Mutation {
   createApp(input: AppInput!): TuberApp
   updateApp(input: AppInput!): TuberApp
@@ -758,6 +833,11 @@ type Mutation {
   setCloudSourceRepo(input: AppInput!): TuberApp
   setSlackChannel(input: AppInput!): TuberApp
   manualApply(input: ManualApplyInput!): TuberApp
+  setRacEnabled(input: SetRacEnabledInput!): TuberApp
+  setRacVar(input: SetTupleInput!): TuberApp
+  unsetRacVar(input: SetTupleInput!): TuberApp
+  setRacExclusion(input: SetResourceInput!): TuberApp
+  unsetRacExclusion(input: SetResourceInput!): TuberApp
 }
 
 schema {
@@ -952,6 +1032,51 @@ func (ec *executionContext) field_Mutation_setGithubURL_args(ctx context.Context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_setRacEnabled_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.SetRacEnabledInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNSetRacEnabledInput2githubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐSetRacEnabledInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setRacExclusion_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.SetResourceInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNSetResourceInput2githubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐSetResourceInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setRacVar_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.SetTupleInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNSetTupleInput2githubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐSetTupleInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_setSlackChannel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1004,6 +1129,36 @@ func (ec *executionContext) field_Mutation_unsetExcludedResource_args(ctx contex
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNSetResourceInput2githubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐSetResourceInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_unsetRacExclusion_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.SetResourceInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNSetResourceInput2githubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐSetResourceInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_unsetRacVar_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.SetTupleInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNSetTupleInput2githubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐSetTupleInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1815,6 +1970,201 @@ func (ec *executionContext) _Mutation_manualApply(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().ManualApply(rctx, args["input"].(model.ManualApplyInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.TuberApp)
+	fc.Result = res
+	return ec.marshalOTuberApp2ᚖgithubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐTuberApp(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_setRacEnabled(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_setRacEnabled_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetRacEnabled(rctx, args["input"].(model.SetRacEnabledInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.TuberApp)
+	fc.Result = res
+	return ec.marshalOTuberApp2ᚖgithubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐTuberApp(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_setRacVar(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_setRacVar_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetRacVar(rctx, args["input"].(model.SetTupleInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.TuberApp)
+	fc.Result = res
+	return ec.marshalOTuberApp2ᚖgithubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐTuberApp(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_unsetRacVar(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_unsetRacVar_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UnsetRacVar(rctx, args["input"].(model.SetTupleInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.TuberApp)
+	fc.Result = res
+	return ec.marshalOTuberApp2ᚖgithubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐTuberApp(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_setRacExclusion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_setRacExclusion_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetRacExclusion(rctx, args["input"].(model.SetResourceInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.TuberApp)
+	fc.Result = res
+	return ec.marshalOTuberApp2ᚖgithubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐTuberApp(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_unsetRacExclusion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_unsetRacExclusion_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UnsetRacExclusion(rctx, args["input"].(model.SetResourceInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4117,6 +4467,34 @@ func (ec *executionContext) unmarshalInputManualApplyInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSetRacEnabledInput(ctx context.Context, obj interface{}) (model.SetRacEnabledInput, error) {
+	var it model.SetRacEnabledInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "enabled":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
+			it.Enabled, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSetResourceInput(ctx context.Context, obj interface{}) (model.SetResourceInput, error) {
 	var it model.SetResourceInput
 	var asMap = obj.(map[string]interface{})
@@ -4278,6 +4656,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_setSlackChannel(ctx, field)
 		case "manualApply":
 			out.Values[i] = ec._Mutation_manualApply(ctx, field)
+		case "setRacEnabled":
+			out.Values[i] = ec._Mutation_setRacEnabled(ctx, field)
+		case "setRacVar":
+			out.Values[i] = ec._Mutation_setRacVar(ctx, field)
+		case "unsetRacVar":
+			out.Values[i] = ec._Mutation_unsetRacVar(ctx, field)
+		case "setRacExclusion":
+			out.Values[i] = ec._Mutation_setRacExclusion(ctx, field)
+		case "unsetRacExclusion":
+			out.Values[i] = ec._Mutation_unsetRacExclusion(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4953,6 +5341,11 @@ func (ec *executionContext) marshalNResource2ᚖgithubᚗcomᚋfreshlyᚋtuber�
 		return graphql.Null
 	}
 	return ec._Resource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSetRacEnabledInput2githubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐSetRacEnabledInput(ctx context.Context, v interface{}) (model.SetRacEnabledInput, error) {
+	res, err := ec.unmarshalInputSetRacEnabledInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNSetResourceInput2githubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐSetResourceInput(ctx context.Context, v interface{}) (model.SetResourceInput, error) {

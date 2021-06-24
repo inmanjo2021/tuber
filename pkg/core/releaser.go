@@ -307,7 +307,7 @@ type ResourceCollection struct {
 }
 
 func exclusionKey(kind string, name string) string {
-	return kind + ":" + name
+	return strings.ToLower(kind) + ":" + strings.ToLower(name)
 }
 
 func (r releaser) exclusions(data map[string]string) (map[string]bool, error) {
