@@ -7,6 +7,17 @@ query GetFullApp($name: String!) {
     slackChannel
     paused
     imageTag
+    reviewAppsConfig {
+      enabled
+      excludedResources {
+        kind
+        name
+      }
+      vars {
+        key
+        value
+      }
+    }
 
     vars {
       key

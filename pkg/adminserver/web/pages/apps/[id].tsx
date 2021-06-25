@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useRouter } from 'next/dist/client/router'
 import React, { useRef } from 'react'
+import Switch from 'react-switch'
 import { Card, Heading, TextInput, TextInputGroup, ExcludedResources, Collapsible, TextInputForm, ConfirmButton, Button } from '../../src/components'
 import { throwError } from '../../src/throwError'
 import { TrashIcon } from '@heroicons/react/outline'
@@ -88,7 +89,7 @@ const ShowApp = () => {
 		</section>
 
 		<section>
-			<Card className="mb-2 shadow-dark-50 shadow">
+			<Card>
 				<div
 					className="inline-grid leading-8"
 					style={{ 'gridTemplateColumns': 'repeat(2, minmax(300px, 352px))' }}>
@@ -132,7 +133,7 @@ const ShowApp = () => {
 		</section>
 
 		<section>
-			<Card className="mb-2 shadow-dark-50 shadow">
+			<Card>
 				<h2 className="text-xl mb-2">YAML Interpolation Vars</h2>
 				<TextInputGroup
 					vars={app.vars} appName={app.name}
@@ -143,7 +144,7 @@ const ShowApp = () => {
 		</section>
 
 		{app.reviewApp || <>
-			<Card className="mb-2 shadow-dark-50 shadow">
+			<Card>
 				<h2 className="text-xl mb-2">Create a review app</h2>
 				<CreateForm app={app} />
 				{destroyAppError && <div className="bg-red-700 text-white border-red-700 p-2">
@@ -158,9 +159,27 @@ const ShowApp = () => {
 					</div>,
 				)}
 			</Card>
+
+			<Card>
+				<h2 className="text-xl">Configure Review Apps</h2>
+				<p className="mb-2"><small>Configure how review apps created based off this app behave</small></p>
+				<label>
+					<span>Enabled</span>
+					<Switch
+						onChange={() => console.log('switched')}
+						checked={false}
+					/>
+				</label>
+
+				<TextInputGroup
+					vars={app.reviewAppsConfig.vars} appName={app.name}
+					useSet={useSetAppEnvMutation}
+					useUnset={useUnsetAppEnvMutation}
+				/>
+			</Card>
 		</>}
 
-		<Card className="mb-2 shadow-dark-50 shadow">
+		<Card>
 			<ExcludedResources
 				appName={app.name}
 				resources={app.excludedResources}
