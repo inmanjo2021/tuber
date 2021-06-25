@@ -166,11 +166,14 @@ const ShowApp = () => {
 			</Card>
 
 			<Card>
-				<div className="mb-2">
+				<div className="mb-4">
 					<h2 className="text-xl">Configure Review Apps</h2>
-					<p className="mb-2"><small>Configure how review apps created based off this app behave</small></p>
+					<p className=""><small>Configure how review apps created based off this app behave</small></p>
+				</div>
+
+				<div className="mb-4">
 					<label>
-						<span>Enabled</span>
+						<div className="mb-2">Enable/Disable Review Apps</div>
 						<Switch
 							onChange={() => { setEnabled({ input: { name: app.name, enabled: !app.reviewAppsConfig.enabled } }) }}
 							checked={app.reviewAppsConfig.enabled}
@@ -178,23 +181,29 @@ const ShowApp = () => {
 					</label>
 				</div>
 
-				<h3>Review App Vars</h3>
-				<TextInputGroup
-					vars={app.reviewAppsConfig.vars} appName={app.name}
-					useSet={useSetRacVarMutation}
-					useUnset={useUnsetRacVarMutation}
-				/>
+				<div className="mb-4">
+					<h3>Review App Vars</h3>
+					<TextInputGroup
+						vars={app.reviewAppsConfig.vars} appName={app.name}
+						useSet={useSetRacVarMutation}
+						useUnset={useUnsetRacVarMutation}
+					/>
+				</div>
 
-				<ExcludedResources
-					appName={app.name}
-					resources={app.reviewAppsConfig.excludedResources}
-					useSet={useSetRacExclusionMutation}
-					useUnset={useUnsetRacExclusionMutation}
-				/>
+				<div className="mb-4">
+					<h3 className="text-l mb-2">Excluded Resources</h3>
+					<ExcludedResources
+						appName={app.name}
+						resources={app.reviewAppsConfig.excludedResources}
+						useSet={useSetRacExclusionMutation}
+						useUnset={useUnsetRacExclusionMutation}
+					/>
+				</div>
 			</Card>
 		</>}
 
 		<Card>
+			<h2 className="text-xl mb-2">Excluded Resources</h2>
 			<ExcludedResources
 				appName={app.name}
 				resources={app.excludedResources}
