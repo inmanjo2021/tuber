@@ -328,7 +328,7 @@ func (r *mutationResolver) Rollback(ctx context.Context, input model.AppInput) (
 	return app, nil
 }
 
-func (r *mutationResolver) SetGithubURL(ctx context.Context, input model.AppInput) (*model.TuberApp, error) {
+func (r *mutationResolver) SetGithubRepo(ctx context.Context, input model.AppInput) (*model.TuberApp, error) {
 	app, err := r.Resolver.db.App(input.Name)
 	if err != nil {
 		if errors.As(err, &db.NotFoundError{}) {
@@ -338,11 +338,11 @@ func (r *mutationResolver) SetGithubURL(ctx context.Context, input model.AppInpu
 		return nil, fmt.Errorf("unexpected error while trying to find app: %v", err)
 	}
 
-	if input.GithubURL == nil {
-		return nil, fmt.Errorf("GithubURL required for SetGithubURL")
+	if input.GithubRepo == nil {
+		return nil, fmt.Errorf("GithubRepo required for SetGithubRepo")
 	}
 
-	app.GithubURL = *input.GithubURL
+	app.GithubRepo = *input.GithubRepo
 
 	err = r.Resolver.db.SaveApp(app)
 	if err != nil {

@@ -7,7 +7,7 @@ type AppInput struct {
 	IsIstio         *bool   `json:"isIstio"`
 	ImageTag        *string `json:"imageTag"`
 	Paused          *bool   `json:"paused"`
-	GithubURL       *string `json:"githubURL"`
+	GithubRepo      *string `json:"githubRepo"`
 	SlackChannel    *string `json:"slackChannel"`
 	CloudSourceRepo *string `json:"cloudSourceRepo"`
 }
@@ -64,7 +64,7 @@ type State struct {
 type TuberApp struct {
 	CloudSourceRepo   string            `json:"cloudSourceRepo"`
 	CurrentTags       []string          `json:"currentTags"`
-	GithubURL         string            `json:"githubURL"`
+	GithubRepo        string            `json:"githubRepo"`
 	ImageTag          string            `json:"imageTag"`
 	Name              string            `json:"name"`
 	Paused            bool              `json:"paused"`

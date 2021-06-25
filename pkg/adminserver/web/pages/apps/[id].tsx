@@ -12,7 +12,7 @@ import {
 	useCreateReviewAppMutation,
 	useSetExcludedResourceMutation, useUnsetExcludedResourceMutation,
 	useSetAppVarMutation, useUnsetAppVarMutation,
-	useSetAppEnvMutation, useUnsetAppEnvMutation, useSetCloudSourceRepoMutation, useSetSlackChannelMutation, useSetGithubUrlMutation,
+	useSetAppEnvMutation, useUnsetAppEnvMutation, useSetCloudSourceRepoMutation, useSetSlackChannelMutation, useSetGithubRepoMutation,
 } from '../../src/generated/graphql'
 import Head from 'next/head'
 
@@ -101,12 +101,12 @@ const ShowApp = () => {
 						className="min-w-300px"
 					/>
 
-					<div>Github URL</div>
+					<div>Github Repo</div>
 					<TextInputForm
-						value={app.githubURL}
-						useSet={useSetGithubUrlMutation}
+						value={app.githubRepo}
+						useSet={useSetGithubRepoMutation}
 						appName={app.name}
-						keyName="githubURL"
+						keyName="githubRepo"
 						className="min-w-300px"
 					/>
 

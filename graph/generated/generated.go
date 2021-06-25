@@ -61,7 +61,7 @@ type ComplexityRoot struct {
 		SetAppVar             func(childComplexity int, input model.SetTupleInput) int
 		SetCloudSourceRepo    func(childComplexity int, input model.AppInput) int
 		SetExcludedResource   func(childComplexity int, input model.SetResourceInput) int
-		SetGithubURL          func(childComplexity int, input model.AppInput) int
+		SetGithubRepo         func(childComplexity int, input model.AppInput) int
 		SetRacEnabled         func(childComplexity int, input model.SetRacEnabledInput) int
 		SetRacExclusion       func(childComplexity int, input model.SetResourceInput) int
 		SetRacVar             func(childComplexity int, input model.SetTupleInput) int
@@ -102,7 +102,7 @@ type ComplexityRoot struct {
 		CurrentTags       func(childComplexity int) int
 		Env               func(childComplexity int) int
 		ExcludedResources func(childComplexity int) int
-		GithubURL         func(childComplexity int) int
+		GithubRepo        func(childComplexity int) int
 		ImageTag          func(childComplexity int) int
 		Name              func(childComplexity int) int
 		Paused            func(childComplexity int) int
@@ -136,7 +136,7 @@ type MutationResolver interface {
 	SetExcludedResource(ctx context.Context, input model.SetResourceInput) (*model.TuberApp, error)
 	UnsetExcludedResource(ctx context.Context, input model.SetResourceInput) (*model.TuberApp, error)
 	Rollback(ctx context.Context, input model.AppInput) (*model.TuberApp, error)
-	SetGithubURL(ctx context.Context, input model.AppInput) (*model.TuberApp, error)
+	SetGithubRepo(ctx context.Context, input model.AppInput) (*model.TuberApp, error)
 	SetCloudSourceRepo(ctx context.Context, input model.AppInput) (*model.TuberApp, error)
 	SetSlackChannel(ctx context.Context, input model.AppInput) (*model.TuberApp, error)
 	ManualApply(ctx context.Context, input model.ManualApplyInput) (*model.TuberApp, error)
@@ -317,17 +317,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.SetExcludedResource(childComplexity, args["input"].(model.SetResourceInput)), true
 
-	case "Mutation.setGithubURL":
-		if e.complexity.Mutation.SetGithubURL == nil {
+	case "Mutation.setGithubRepo":
+		if e.complexity.Mutation.SetGithubRepo == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_setGithubURL_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_setGithubRepo_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SetGithubURL(childComplexity, args["input"].(model.AppInput)), true
+		return e.complexity.Mutation.SetGithubRepo(childComplexity, args["input"].(model.AppInput)), true
 
 	case "Mutation.setRacEnabled":
 		if e.complexity.Mutation.SetRacEnabled == nil {
@@ -559,12 +559,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TuberApp.ExcludedResources(childComplexity), true
 
-	case "TuberApp.githubURL":
-		if e.complexity.TuberApp.GithubURL == nil {
+	case "TuberApp.githubRepo":
+		if e.complexity.TuberApp.GithubRepo == nil {
 			break
 		}
 
-		return e.complexity.TuberApp.GithubURL(childComplexity), true
+		return e.complexity.TuberApp.GithubRepo(childComplexity), true
 
 	case "TuberApp.imageTag":
 		if e.complexity.TuberApp.ImageTag == nil {
@@ -734,7 +734,7 @@ type Tuple {
 type TuberApp {
   cloudSourceRepo: String!
   currentTags: [String!]
-  githubURL: String!
+  githubRepo: String!
   imageTag: String!
   name: ID!
   paused: Boolean!
@@ -755,7 +755,7 @@ input AppInput {
   isIstio: Boolean
   imageTag: String
   paused: Boolean
-  githubURL: String
+  githubRepo: String
   slackChannel: String
   cloudSourceRepo: String
 }
@@ -829,7 +829,7 @@ type Mutation {
   setExcludedResource(input: SetResourceInput!): TuberApp
   unsetExcludedResource(input: SetResourceInput!): TuberApp
   rollback(input: AppInput!): TuberApp
-  setGithubURL(input: AppInput!): TuberApp
+  setGithubRepo(input: AppInput!): TuberApp
   setCloudSourceRepo(input: AppInput!): TuberApp
   setSlackChannel(input: AppInput!): TuberApp
   manualApply(input: ManualApplyInput!): TuberApp
@@ -1017,7 +1017,7 @@ func (ec *executionContext) field_Mutation_setExcludedResource_args(ctx context.
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_setGithubURL_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_setGithubRepo_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 model.AppInput
@@ -1827,7 +1827,7 @@ func (ec *executionContext) _Mutation_rollback(ctx context.Context, field graphq
 	return ec.marshalOTuberApp2ᚖgithubᚗcomᚋfreshlyᚋtuberᚋgraphᚋmodelᚐTuberApp(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_setGithubURL(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_setGithubRepo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1844,7 +1844,7 @@ func (ec *executionContext) _Mutation_setGithubURL(ctx context.Context, field gr
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_setGithubURL_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_setGithubRepo_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -1852,7 +1852,7 @@ func (ec *executionContext) _Mutation_setGithubURL(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SetGithubURL(rctx, args["input"].(model.AppInput))
+		return ec.resolvers.Mutation().SetGithubRepo(rctx, args["input"].(model.AppInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2705,7 +2705,7 @@ func (ec *executionContext) _TuberApp_currentTags(ctx context.Context, field gra
 	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _TuberApp_githubURL(ctx context.Context, field graphql.CollectedField, obj *model.TuberApp) (ret graphql.Marshaler) {
+func (ec *executionContext) _TuberApp_githubRepo(ctx context.Context, field graphql.CollectedField, obj *model.TuberApp) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2723,7 +2723,7 @@ func (ec *executionContext) _TuberApp_githubURL(ctx context.Context, field graph
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.GithubURL, nil
+		return obj.GithubRepo, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4381,11 +4381,11 @@ func (ec *executionContext) unmarshalInputAppInput(ctx context.Context, obj inte
 			if err != nil {
 				return it, err
 			}
-		case "githubURL":
+		case "githubRepo":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("githubURL"))
-			it.GithubURL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("githubRepo"))
+			it.GithubRepo, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4648,8 +4648,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_unsetExcludedResource(ctx, field)
 		case "rollback":
 			out.Values[i] = ec._Mutation_rollback(ctx, field)
-		case "setGithubURL":
-			out.Values[i] = ec._Mutation_setGithubURL(ctx, field)
+		case "setGithubRepo":
+			out.Values[i] = ec._Mutation_setGithubRepo(ctx, field)
 		case "setCloudSourceRepo":
 			out.Values[i] = ec._Mutation_setCloudSourceRepo(ctx, field)
 		case "setSlackChannel":
@@ -4870,8 +4870,8 @@ func (ec *executionContext) _TuberApp(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "currentTags":
 			out.Values[i] = ec._TuberApp_currentTags(ctx, field, obj)
-		case "githubURL":
-			out.Values[i] = ec._TuberApp_githubURL(ctx, field, obj)
+		case "githubRepo":
+			out.Values[i] = ec._TuberApp_githubRepo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}

@@ -3,7 +3,7 @@ query GetFullApp($name: String!) {
     name
     reviewApp
     cloudSourceRepo
-    githubURL
+    githubRepo
     slackChannel
     paused
     imageTag

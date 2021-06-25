@@ -147,7 +147,7 @@ func (p Processor) StartRelease(event *Event, app *model.TuberApp) {
 	}
 
 	var ti tagInfo
-	if app.GithubURL != "" {
+	if app.GithubRepo != "" {
 		var err error
 		ti, err = getTagInfo(app, yamls)
 		if err != nil {
@@ -229,7 +229,7 @@ func getTagInfo(app *model.TuberApp, yamls *gcr.AppYamls) (tagInfo, error) {
 
 	var diffText string
 	if oldSHA != "" {
-		diffText = fmt.Sprintf(" - <%s|Compare Diff>", "https://github.com/"+app.GithubURL+"/compare/"+oldSHA+"..."+newSHA)
+		diffText = fmt.Sprintf(" - <%s|Compare Diff>", "https://github.com/"+app.GithubRepo+"/compare/"+oldSHA+"..."+newSHA)
 	}
 
 	return tagInfo{
@@ -257,7 +257,7 @@ func (p Processor) postCompleted(app *model.TuberApp, t tagInfo) error {
 	msg := Message{
 		AppName:   app.Name,
 		CommitSha: t.newSHA,
-		Repo:      app.GithubURL,
+		Repo:      app.GithubRepo,
 		Branch:    t.branch,
 	}
 	marshalled, err := json.Marshal(&msg)
