@@ -8,17 +8,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var appsSetRacVarCmd = &cobra.Command{
+var appsSetVarCmd = &cobra.Command{
 	SilenceErrors: true,
 	SilenceUsage:  true,
 	Use:           "var [app name] [var key] [(optional if --unset) var value]",
-	Short:         "override default vars for yaml interpolation that review apps from this source app will be created with",
+	Short:         "set or unset yaml interpolation a var",
 	Args:          cobra.RangeArgs(2, 3),
 	PreRunE:       promptCurrentContext,
-	RunE:          runAppsSetRacVar,
+	RunE:          runAppsSetVar,
 }
 
-func runAppsSetRacVar(cmd *cobra.Command, args []string) error {
+func runAppsSetVar(cmd *cobra.Command, args []string) error {
 	graphql, err := gqlClient()
 	if err != nil {
 		return err
@@ -28,10 +28,10 @@ func runAppsSetRacVar(cmd *cobra.Command, args []string) error {
 	varKey := args[1]
 	var varValue string
 	var gql string
-	if appsSetRacVarUnsetFlag {
+	if appsSetVarUnsetFlag {
 		gql = `
 			mutation($input: SetTupleInput!) {
-				unsetRacVar(input: $input) {
+				unsetAppVar(input: $input) {
 					name
 				}
 			}
@@ -43,7 +43,7 @@ func runAppsSetRacVar(cmd *cobra.Command, args []string) error {
 		}
 
 		var respData struct {
-			unsetRacVar *model.TuberApp
+			unsetAppVar *model.TuberApp
 		}
 
 		return graphql.Mutation(context.Background(), gql, nil, input, &respData)
@@ -55,12 +55,11 @@ func runAppsSetRacVar(cmd *cobra.Command, args []string) error {
 	varValue = args[2]
 	gql = `
 			mutation($input: SetTupleInput!) {
-				setRacVar(input: $input) {
+				setAppVar(input: $input) {
 					name
 				}
 			}
 		`
-
 	input := &model.SetTupleInput{
 		Name:  appName,
 		Key:   varKey,
@@ -68,15 +67,14 @@ func runAppsSetRacVar(cmd *cobra.Command, args []string) error {
 	}
 
 	var respData struct {
-		setRacVar *model.TuberApp
+		setAppVar *model.TuberApp
 	}
-
 	return graphql.Mutation(context.Background(), gql, nil, input, &respData)
 }
 
-var appsSetRacVarUnsetFlag bool
+var appsSetVarUnsetFlag bool
 
 func init() {
-	appsSetRacVarCmd.Flags().BoolVar(&appsSetRacVarUnsetFlag, "unset", false, "unset rather than default set")
-	appsSetReviewappsConfigCmd.AddCommand(appsSetRacVarCmd)
+	appsSetVarCmd.Flags().BoolVar(&appsSetVarUnsetFlag, "unset", false, "unset rather than default set")
+	appsSetCmd.AddCommand(appsSetVarCmd)
 }

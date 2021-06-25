@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -34,7 +35,12 @@ func runAppsInfoCmd(cmd *cobra.Command, args []string) error {
 	table.Append([]string{"Current Tags", strings.Join(app.CurrentTags, "\n")})
 	var vars []string
 	for _, tuple := range app.Vars {
-		vars = append(vars, tuple.Key+": "+tuple.Value)
+		value := tuple.Value
+		if len(value) > 70 {
+
+			value = value[:69] + fmt.Sprintf("\n%*s%v", len(tuple.Key)+3, " ", value[69:])
+		}
+		vars = append(vars, tuple.Key+": "+value)
 	}
 	table.Append([]string{"Vars", strings.Join(vars, "\n")})
 	table.Append([]string{"Paused", strconv.FormatBool(app.Paused)})

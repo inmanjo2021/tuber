@@ -419,7 +419,7 @@ func (r *mutationResolver) ManualApply(ctx context.Context, input model.ManualAp
 		decoded, decodeErr := base64.StdEncoding.DecodeString(*resource)
 		if decodeErr != nil {
 			r.logger.Error(decodeErr.Error())
-			return nil, errors.New("decode error, nothing applied")
+			return nil, fmt.Errorf("decode error, nothing applied: %v", err)
 		}
 		resources = append(resources, string(decoded))
 	}
@@ -430,18 +430,28 @@ func (r *mutationResolver) ManualApply(ctx context.Context, input model.ManualAp
 		return nil, fmt.Errorf("unable to parse app's current image tag, nothing applied: %v", err)
 	}
 
-	var digest string
+	var gitSha string
 	for _, tag := range app.CurrentTags {
 		if branch != tag {
-			digest = tag
+			gitSha = tag
 			break
 		}
+	}
+
+	if gitSha == "" {
+		return nil, fmt.Errorf("git sha not found in current tags, nothing applied: %v", err)
+	}
+
+	digest, err := gcr.DigestFromTag(gitSha, r.Resolver.credentials)
+	if err != nil {
+		r.logger.Error(err.Error())
+		return nil, fmt.Errorf("unable to pull digest from git sha, nothing applied: %v", err)
 	}
 
 	imageTagWithDigest, err := gcr.SwapTags(app.ImageTag, digest)
 	if err != nil {
 		r.logger.Error(err.Error())
-		return nil, errors.New("unable to parse currently deployed image, nothing applied")
+		return nil, fmt.Errorf("unable to parse currently deployed image, nothing applied: %v", err)
 	}
 
 	err = core.BypassReleaser(app, imageTagWithDigest, resources, r.Resolver.processor.ClusterData)
