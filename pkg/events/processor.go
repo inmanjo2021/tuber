@@ -148,9 +148,9 @@ func (p Processor) StartRelease(event *Event, app *model.TuberApp) {
 
 	var ti tagInfo
 	if app.GithubRepo != "" {
-		var err error
-		ti, err = getTagInfo(app, yamls)
-		if err != nil {
+		var tagErr error
+		ti, tagErr = getTagInfo(app, yamls)
+		if tagErr != nil {
 			logger.Error("error prevented git diffs and release events for a release", zap.Error(err))
 			// report.Error(err, errorScope.WithContext("error prevented git diffs and release events for a release"))
 		}
@@ -176,7 +176,7 @@ func (p Processor) StartRelease(event *Event, app *model.TuberApp) {
 		return
 	}
 
-	p.slackClient.Message(logger, ":checkered_flag: *"+app.Name+"*: release complete", app.SlackChannel)
+	p.slackClient.Message(logger, ":checkered_flag: *"+app.Name+"*: release complete"+ti.diffText, app.SlackChannel)
 	logger.Info("release complete", zap.Duration("duration", time.Since(startTime)))
 
 	logger.Debug("completed event taginfo", zap.String("branch", ti.branch), zap.String("newsha", ti.newSHA))
