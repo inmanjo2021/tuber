@@ -11,6 +11,9 @@ import {
 	useGetFullAppQuery,
 	useDestroyAppMutation,
 	useCreateReviewAppMutation,
+	useSetRacEnabledMutation,
+	useSetRacExclusionMutation, useUnsetRacExclusionMutation,
+	useSetRacVarMutation, useUnsetRacVarMutation,
 	useSetExcludedResourceMutation, useUnsetExcludedResourceMutation,
 	useSetAppVarMutation, useUnsetAppVarMutation,
 	useSetAppEnvMutation, useUnsetAppEnvMutation, useSetCloudSourceRepoMutation, useSetSlackChannelMutation, useSetGithubRepoMutation,
@@ -47,6 +50,8 @@ const ShowApp = () => {
 	const [{ data: { getApp: app } }] = throwError(useGetFullAppQuery({ variables: { name: id } }))
 	const [{ error: destroyAppError }, destroyApp] = useDestroyAppMutation()
 	const hostname = `https://${app.name}.staging.freshlyservices.net/`
+
+	const [{ error: racEnableError }, setEnabled] = useSetRacEnabledMutation()
 
 	return <div>
 		<Head>
@@ -161,20 +166,30 @@ const ShowApp = () => {
 			</Card>
 
 			<Card>
-				<h2 className="text-xl">Configure Review Apps</h2>
-				<p className="mb-2"><small>Configure how review apps created based off this app behave</small></p>
-				<label>
-					<span>Enabled</span>
-					<Switch
-						onChange={() => console.log('switched')}
-						checked={false}
-					/>
-				</label>
+				<div className="mb-2">
+					<h2 className="text-xl">Configure Review Apps</h2>
+					<p className="mb-2"><small>Configure how review apps created based off this app behave</small></p>
+					<label>
+						<span>Enabled</span>
+						<Switch
+							onChange={() => { setEnabled({ input: { name: app.name, enabled: !app.reviewAppsConfig.enabled } }) }}
+							checked={app.reviewAppsConfig.enabled}
+						/>
+					</label>
+				</div>
 
+				<h3>Review App Vars</h3>
 				<TextInputGroup
 					vars={app.reviewAppsConfig.vars} appName={app.name}
-					useSet={useSetAppEnvMutation}
-					useUnset={useUnsetAppEnvMutation}
+					useSet={useSetRacVarMutation}
+					useUnset={useUnsetRacVarMutation}
+				/>
+
+				<ExcludedResources
+					appName={app.name}
+					resources={app.reviewAppsConfig.excludedResources}
+					useSet={useSetRacExclusionMutation}
+					useUnset={useUnsetRacExclusionMutation}
 				/>
 			</Card>
 		</>}
