@@ -14,6 +14,7 @@ var (
 )
 
 func init() {
+	viper.AutomaticEnv()
 	rootCmd.PersistentFlags().BoolP("debug", "d", false, "debug")
 	rootCmd.PersistentFlags().BoolP("confirm", "y", false, "automatic yes to prompts")
 	_ = viper.BindPFlag("TUBER_DEBUG", rootCmd.PersistentFlags().Lookup("debug"))
