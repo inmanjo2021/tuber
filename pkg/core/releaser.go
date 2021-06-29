@@ -310,9 +310,9 @@ func exclusionKey(kind string, name string) string {
 	return strings.ToLower(kind) + ":" + strings.ToLower(name)
 }
 
-func (r releaser) exclusions(data map[string]string) (map[string]bool, error) {
+func exclusions(app *model.TuberApp, data map[string]string) (map[string]bool, error) {
 	exc := make(map[string]bool)
-	for _, resource := range r.app.ExcludedResources {
+	for _, resource := range app.ExcludedResources {
 		name, err := interpolate(resource.Name, data)
 		if err != nil {
 			return nil, err
@@ -371,7 +371,7 @@ func (r releaser) yamlToAppResource(yamls []string, data map[string]string) (app
 		}
 	}
 
-	exc, err := r.exclusions(data)
+	exc, err := exclusions(r.app, data)
 	if err != nil {
 		return nil, ErrorContext{err: err, context: "interpolation"}
 	}

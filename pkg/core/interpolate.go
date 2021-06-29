@@ -8,6 +8,7 @@ import (
 
 	"github.com/freshly/tuber/graph/model"
 	"github.com/freshly/tuber/pkg/k8s"
+	"github.com/goccy/go-yaml"
 )
 
 // ApplyTemplate interpolates and applies a yaml to a given namespace
@@ -22,17 +23,52 @@ func ApplyTemplate(namespace string, templateString string, data map[string]stri
 // BypassReleaser is for when you're feeling frisky and want to cowboy code
 func BypassReleaser(app *model.TuberApp, imageTagWithDigest string, yamls []string, data *ClusterData) error {
 	var interpolated [][]byte
+	interplationData := releaseData(imageTagWithDigest, app, data)
 	for _, y := range yamls {
-		i, err := interpolate(y, releaseData(imageTagWithDigest, app, data))
+		i, err := interpolate(y, interplationData)
 		if err != nil {
 			return fmt.Errorf("interpolation error prior to apply: %v", err)
+		}
+
+		split := strings.Split(string(i), "\n---\n")
+		for _, s := range split {
+			interpolated = append(interpolated, []byte(s))
 		}
 		interpolated = append(interpolated, i)
 	}
 
+	exc, err := exclusions(app, interplationData)
+	if err != nil {
+		return fmt.Errorf("error pulling  prior to apply: %v", err)
+	}
+
+	var resources appResources
+
+	for _, resourceYaml := range interpolated {
+		var parsed parsedResource
+		err = yaml.Unmarshal(resourceYaml, &parsed)
+		if err != nil {
+			return fmt.Errorf("unmarshal error prior to apply: %v", err)
+		}
+
+		if exc[exclusionKey(parsed.Kind, parsed.Metadata.Name)] {
+			continue
+		}
+
+		resource := appResource{
+			kind:     parsed.Kind,
+			name:     parsed.Metadata.Name,
+			contents: resourceYaml,
+		}
+
+		if resource.canBeManaged() {
+			resources = append(resources, resource)
+		}
+	}
+
 	var errors []error
-	for _, resource := range interpolated {
-		applyErr := k8s.Apply(resource, app.Name)
+	for _, resource := range resources {
+		applyErr := k8s.Apply(resource.contents, app.Name)
 		if applyErr != nil {
 			errors = append(errors, applyErr)
 			continue
