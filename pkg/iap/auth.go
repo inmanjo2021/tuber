@@ -107,11 +107,6 @@ func newOAuthConfig() (*oauth2.Config, error) {
 }
 
 func CreateRefreshToken() error {
-	c, err := newOAuthConfig()
-	if err != nil {
-		return err
-	}
-
 	cnf, err := config.Load()
 	if err != nil {
 		return err
@@ -122,12 +117,21 @@ func CreateRefreshToken() error {
 		return err
 	}
 
+	if cluster.Auth.TuberDesktopClientID == "" || cluster.Auth.TuberDesktopClientSecret == "" || cluster.Auth.Audience == "" {
+		return fmt.Errorf("tuber config auth section incomplete for this cluster, please run 'tuber config'")
+	}
+
 	rts, err := LoadOrCreateRefreshTokens()
 	if err != nil {
 		return err
 	}
 
 	path, err := RefreshTokenPath()
+	if err != nil {
+		return err
+	}
+
+	c, err := newOAuthConfig()
 	if err != nil {
 		return err
 	}
