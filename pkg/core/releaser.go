@@ -152,6 +152,11 @@ func (r releaser) release() error {
 			_ = r.releaseError(err)
 		} else {
 			r.slackClient.Message(r.logger, "<!here> :loudspeaker: *"+r.app.Name+"*: monitoring failed for "+strings.ToLower(rolloutErr.resource.kind)+" "+rolloutErr.resource.name+" - "+rolloutErr.monitorFailMessage, r.app.SlackChannel)
+			r.app.Paused = true
+			saveErr := r.db.SaveApp(r.app)
+			if saveErr != nil {
+				_ = r.releaseError(err)
+			}
 		}
 		_, configRollbackErrors := r.rollback(appliedConfigs, decodedStateBeforeApply)
 		rolledBackResources, workloadRollbackErrors := r.rollback(appliedWorkloads, decodedStateBeforeApply)
@@ -190,6 +195,11 @@ func (r releaser) release() error {
 			_ = r.releaseError(err)
 		} else {
 			r.slackClient.Message(r.logger, "<!here> :loudspeaker: *"+r.app.Name+"*: monitoring failed for "+rolloutErr.resource.kind+" "+rolloutErr.resource.name+"+"+rolloutErr.monitorFailMessage, r.app.SlackChannel)
+			r.app.Paused = true
+			saveErr := r.db.SaveApp(r.app)
+			if saveErr != nil {
+				_ = r.releaseError(err)
+			}
 		}
 		_, configRollbackErrors := r.rollback(appliedConfigs, decodedStateBeforeApply)
 		rolledBackResources, workloadRollbackErrors := r.rollback(appliedWorkloads, decodedStateBeforeApply)
