@@ -28,7 +28,7 @@ func runExec(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	execArgs := []string{"-c", containerName}
+	execArgs := []string{"-c", containerName, "--"}
 	execArgs = append(execArgs, args...)
 
 	return k8s.Exec(podName, appNameFlag, execArgs...)
