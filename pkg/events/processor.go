@@ -111,14 +111,22 @@ func (p Processor) ReleaseApp(event *Event, app *model.TuberApp) {
 
 	cond := (*p.locks)[app.Name]
 	cond.L.Lock()
-
-	if app.Paused {
-		p.slackClient.Message(event.logger, ":double_vertical_bar: release skipped for "+app.Name+" as it is paused", app.SlackChannel)
-		event.logger.Warn("deployments are paused for this app; skipping", zap.String("appName", app.Name))
+	reloadedApp, err := p.db.ReloadApp(app)
+	if err != nil {
+		event.logger.Error("app could not be reloaded", zap.Error(err))
+		report.Error(err, event.errorScope.WithContext("reload prior to paused check for release"))
+		p.slackClient.Message(event.logger, ":double_vertical_bar: release skipped for "+app.Name+" as it could not be reloaded", app.SlackChannel)
 		cond.L.Unlock()
 		return
 	}
-	p.StartRelease(event, app)
+
+	if reloadedApp.Paused {
+		p.slackClient.Message(event.logger, ":double_vertical_bar: release skipped for "+reloadedApp.Name+" as it is paused", reloadedApp.SlackChannel)
+		event.logger.Warn("deployments are paused for this app; skipping", zap.String("appName", reloadedApp.Name))
+		cond.L.Unlock()
+		return
+	}
+	p.StartRelease(event, reloadedApp)
 	cond.L.Unlock()
 	cond.Signal()
 }

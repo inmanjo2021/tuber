@@ -19,6 +19,10 @@ func (d *DB) Close() {
 	d.db.Close()
 }
 
+func (d *DB) ReloadApp(app *model.TuberApp) (*model.TuberApp, error) {
+	return d.App(app.Name)
+}
+
 func (d *DB) ReviewAppsFor(app *model.TuberApp) ([]*model.TuberApp, error) {
 	r, err := d.db.Get(model.TuberApp{}, db.Q().String("sourceAppName", app.Name).Bool("reviewApp", true))
 	if err != nil {
