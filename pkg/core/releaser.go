@@ -155,7 +155,7 @@ func (r releaser) release() error {
 			r.app.Paused = true
 			saveErr := r.db.SaveApp(r.app)
 			if saveErr != nil {
-				_ = r.releaseError(err)
+				_ = r.releaseError(ErrorContext{context: "save app as paused on monitor fail", err: saveErr})
 			}
 		}
 		_, configRollbackErrors := r.rollback(appliedConfigs, decodedStateBeforeApply)
@@ -198,7 +198,7 @@ func (r releaser) release() error {
 			r.app.Paused = true
 			saveErr := r.db.SaveApp(r.app)
 			if saveErr != nil {
-				_ = r.releaseError(err)
+				_ = r.releaseError(ErrorContext{context: "save app as paused on monitor fail", err: saveErr})
 			}
 		}
 		_, configRollbackErrors := r.rollback(appliedConfigs, decodedStateBeforeApply)
