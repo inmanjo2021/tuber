@@ -647,8 +647,9 @@ func (r *queryResolver) GetApps(ctx context.Context) ([]*model.TuberApp, error) 
 
 func (r *queryResolver) GetClusterInfo(ctx context.Context) (*model.ClusterInfo, error) {
 	return &model.ClusterInfo{
-		Name:   r.Resolver.clusterName,
-		Region: r.Resolver.clusterRegion,
+		Name:              r.Resolver.clusterName,
+		Region:            r.Resolver.clusterRegion,
+		ReviewAppsEnabled: r.Resolver.reviewAppsEnabled,
 	}, nil
 }
 

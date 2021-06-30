@@ -13,8 +13,9 @@ type AppInput struct {
 }
 
 type ClusterInfo struct {
-	Name   string `json:"name"`
-	Region string `json:"region"`
+	Name              string `json:"name"`
+	Region            string `json:"region"`
+	ReviewAppsEnabled bool   `json:"reviewAppsEnabled"`
 }
 
 type CreateReviewAppInput struct {
