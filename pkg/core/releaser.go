@@ -637,18 +637,20 @@ func (r releaser) deleteRemovedResources(stateBeforeApply []appResource, applied
 	}
 
 	for _, cached := range stateBeforeApply {
-		var inPreviousState bool
+		var cachedWasPartOfRelease bool
 		for _, applied := range appliedResources {
 			if applied.kind == cached.kind && applied.name == cached.name {
-				inPreviousState = true
+				cachedWasPartOfRelease = true
 				break
 			}
 		}
-		if !inPreviousState {
+		if !cachedWasPartOfRelease {
 			scope, logger := cached.scopes(r)
 			out, err := k8s.Get(cached.kind, cached.name, r.app.Name, "-o", "yaml")
 			if err != nil {
-				if _, ok := err.(k8s.NotFoundError); !ok {
+				if _, notFound := err.(k8s.NotFoundError); notFound {
+					continue
+				} else {
 					return ErrorContext{err: err, context: "exists check resource removed from state", scope: scope, logger: logger}
 				}
 			}
@@ -662,7 +664,7 @@ func (r releaser) deleteRemovedResources(stateBeforeApply []appResource, applied
 			if parsed.Metadata.OwnerReferences == nil {
 				deleteErr := k8s.Delete(cached.kind, cached.name, r.app.Name)
 				if deleteErr != nil {
-					return ErrorContext{err: err, context: "delete resource removed from state", scope: scope, logger: logger}
+					return ErrorContext{err: deleteErr, context: "delete resource removed from state", scope: scope, logger: logger}
 				}
 			}
 		}
