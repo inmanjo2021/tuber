@@ -19,6 +19,7 @@ import {
 	useSetAppEnvMutation, useUnsetAppEnvMutation, useSetCloudSourceRepoMutation, useSetSlackChannelMutation, useSetGithubRepoMutation,
 } from '../../src/generated/graphql'
 import Head from 'next/head'
+import { usePageTitle } from '../../src/usePageTitle'
 
 const CreateForm = ({ app }) => {
 	const [{ error, fetching }, create] = useCreateReviewAppMutation()
@@ -50,12 +51,13 @@ const ShowApp = () => {
 	const [{ data: { getApp: app } }] = throwError(useGetFullAppQuery({ variables: { name: id } }))
 	const [{ error: destroyAppError }, destroyApp] = useDestroyAppMutation()
 	const hostname = `https://${app.name}.staging.freshlyservices.net/`
+	const pageTitle = usePageTitle(app.name)
 
 	const [{ error: racEnableError }, setEnabled] = useSetRacEnabledMutation()
 
 	return <div>
 		<Head>
-			<title>{app.name}</title>
+			<title>{pageTitle}</title>
 		</Head>
 
 		<section className="flex justify-between p-3 mb-2">

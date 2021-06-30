@@ -5,11 +5,13 @@ import { throwError } from '../src/throwError'
 import { Card, TextInput } from '../src/components'
 import { useFuzzy } from 'react-use-fuzzy'
 import Head from 'next/head'
+import { usePageTitle } from '../src/usePageTitle'
 
 const HomePage = () => {
 	const [{ data }] = throwError(useGetAppsQuery())
 	const { result, search, keyword } = useFuzzy<Pick<TuberApp, 'name' | 'paused' | 'imageTag'>>(data.getApps, { keys: ['name', 'imageTag'] })
 	const searchRef = useRef(null)
+	const pageTitle = usePageTitle('Tuber')
 
 	const handleKeyDown = (ev) => {
 		let i = searchRef.current
@@ -26,7 +28,7 @@ const HomePage = () => {
 
 	return <>
 		<Head>
-			<title>Tuber Dashboard</title>
+			<title>{pageTitle}</title>
 		</Head>
 
 		<TextInput
