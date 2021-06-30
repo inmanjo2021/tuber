@@ -11,7 +11,7 @@ const HomePage = () => {
 	const [{ data }] = throwError(useGetAppsQuery())
 	const { result, search, keyword } = useFuzzy<Pick<TuberApp, 'name' | 'paused' | 'imageTag'>>(data.getApps, { keys: ['name', 'imageTag'] })
 	const searchRef = useRef(null)
-	const pageTitle = usePageTitle('Tuber')
+	const pageTitle = usePageTitle('Tuber Dashboard')
 
 	const handleKeyDown = (ev) => {
 		let i = searchRef.current
