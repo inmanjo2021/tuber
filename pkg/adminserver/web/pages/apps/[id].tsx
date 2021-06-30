@@ -16,7 +16,7 @@ import {
 	useSetRacVarMutation, useUnsetRacVarMutation,
 	useSetExcludedResourceMutation, useUnsetExcludedResourceMutation,
 	useSetAppVarMutation, useUnsetAppVarMutation,
-	useSetAppEnvMutation, useUnsetAppEnvMutation, useSetCloudSourceRepoMutation, useSetSlackChannelMutation, useSetGithubRepoMutation,
+	useSetAppEnvMutation, useUnsetAppEnvMutation, useSetCloudSourceRepoMutation, useSetSlackChannelMutation, useSetGithubRepoMutation, useGetClusterInfoQuery,
 } from '../../src/generated/graphql'
 import Head from 'next/head'
 import { usePageTitle } from '../../src/usePageTitle'
@@ -54,6 +54,7 @@ const ShowApp = () => {
 	const pageTitle = usePageTitle(app.name)
 
 	const [{ error: racEnableError }, setEnabled] = useSetRacEnabledMutation()
+	const [{ data: clusterInfo }] = useGetClusterInfoQuery()
 
 	return <div>
 		<Head>
@@ -150,7 +151,7 @@ const ShowApp = () => {
 			</Card>
 		</section>
 
-		{app.reviewApp || <>
+		{(clusterInfo.getClusterInfo.reviewAppsEnabled && !app.reviewApp) && <>
 			<Card>
 				<h2 className="text-xl mb-2">Create a review app</h2>
 				<CreateForm app={app} />
