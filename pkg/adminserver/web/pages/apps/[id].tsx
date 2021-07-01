@@ -108,6 +108,7 @@ const ShowApp = () => {
 						appName={app.name}
 						keyName="slackChannel"
 						className="min-w-300px"
+						required={false}
 					/>
 
 					<div>Github Repo</div>
