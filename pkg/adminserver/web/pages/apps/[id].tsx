@@ -19,7 +19,7 @@ import {
 	useSetAppEnvMutation, useUnsetAppEnvMutation, useSetCloudSourceRepoMutation, useSetSlackChannelMutation, useSetGithubRepoMutation, useGetClusterInfoQuery,
 } from '../../src/generated/graphql'
 import Head from 'next/head'
-import { usePageTitle } from '../../src/usePageTitle'
+import { useClusterInfo } from '../../src/useClusterInfo'
 
 const CreateForm = ({ app }) => {
 	const [{ error, fetching }, create] = useCreateReviewAppMutation()
@@ -50,26 +50,18 @@ const ShowApp = () => {
 	const id = router.query.id as string
 	const [{ data: { getApp: app } }] = throwError(useGetFullAppQuery({ variables: { name: id } }))
 	const [{ error: destroyAppError }, destroyApp] = useDestroyAppMutation()
-	const hostname = `https://${app.name}.staging.freshlyservices.net/`
-	const pageTitle = usePageTitle(app.name)
-
-	const [{ error: racEnableError }, setEnabled] = useSetRacEnabledMutation()
-	const [{ data: clusterInfo }] = useGetClusterInfoQuery()
+	const [, setEnabled] = useSetRacEnabledMutation()
+	const clusterInfo = useClusterInfo()
 
 	return <div>
 		<Head>
-			<title>{pageTitle}</title>
+			<title>{`${app.name} - ${clusterInfo.name}`}</title>
 		</Head>
 
 		<section className="flex justify-between p-3 mb-2">
 			<div className="flex justify-between">
 				<div className="mr-3">
 					<h1 className="text-3xl">{app.name}</h1>
-					<div>
-						<small>
-							<a href={hostname} target="_blank" rel="noreferrer">{hostname}</a>
-						</small>
-					</div>
 					<div>
 						<small>
 							<a href="https://app.datadoghq.com/apm/home?env=production" target="_blank" rel="noreferrer">DataDog Logs</a>
@@ -152,7 +144,7 @@ const ShowApp = () => {
 			</Card>
 		</section>
 
-		{(clusterInfo.getClusterInfo.reviewAppsEnabled && !app.reviewApp) && <>
+		{(clusterInfo.reviewAppsEnabled && !app.reviewApp) && <>
 			<Card>
 				<h2 className="text-xl mb-2">Create a review app</h2>
 				<CreateForm app={app} />

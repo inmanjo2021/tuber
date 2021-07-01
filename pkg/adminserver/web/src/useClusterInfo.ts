@@ -1,7 +1,7 @@
 import { useGetClusterInfoQuery } from './generated/graphql'
 
-export const usePageTitle = (pageTitle: string) => {
+export const useClusterInfo = () => {
 	const [{ data }] = useGetClusterInfoQuery()
 
-	return `${pageTitle} - ${data.getClusterInfo.name}`
+	return data.getClusterInfo
 }
