@@ -49,9 +49,10 @@ const ShowApp = () => {
 	const router = useRouter()
 	const id = router.query.id as string
 	const [{ data: { getApp: app } }] = throwError(useGetFullAppQuery({ variables: { name: id } }))
+	const clusterInfo = useClusterInfo()
 	const [{ error: destroyAppError }, destroyApp] = useDestroyAppMutation()
 	const [, setEnabled] = useSetRacEnabledMutation()
-	const clusterInfo = useClusterInfo()
+	const hostname = `https://${app.name}.${clusterInfo.name}.freshlyservices.net/`
 
 	return <div>
 		<Head>
@@ -92,7 +93,11 @@ const ShowApp = () => {
 			<Card>
 				<div
 					className="inline-grid leading-8"
-					style={{ 'gridTemplateColumns': 'repeat(2, minmax(300px, 352px))' }}>
+					style={{ 'gridTemplateColumns': 'repeat(2, minmax(300px, 352px))' }}
+				>
+					<div>Cluster Link</div>
+					<div><a href={hostname} target="_blank" rel="noreferrer" className="underline whitespace-nowrap">{hostname}</a></div>
+
 					<div>Slack Channel</div>
 					<TextInputForm
 						value={app.slackChannel}
