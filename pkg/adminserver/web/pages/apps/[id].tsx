@@ -93,7 +93,11 @@ const ShowApp = () => {
 			<Card>
 				<div
 					className="inline-grid leading-8"
-					style={{ 'gridTemplateColumns': 'repeat(2, minmax(300px, 352px))' }}>
+					style={{ 'gridTemplateColumns': 'repeat(2, minmax(300px, 352px))' }}
+				>
+					<div>Cluster Link</div>
+					<div><a href={hostname} target="_blank" rel="noreferrer" className="underline whitespace-nowrap">{hostname}</a></div>
+
 					<div>Slack Channel</div>
 					<TextInputForm
 						value={app.slackChannel}
@@ -130,9 +134,6 @@ const ShowApp = () => {
 						keyName="imageTag"
 						className="min-w-300px"
 					/>
-
-					<div>Cluster Link</div>
-					<div>{hostname}</div>
 				</div>
 			</Card>
 		</section>
