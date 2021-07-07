@@ -40,12 +40,11 @@ func bolter(cmd *cobra.Command, args []string) error {
 
 func pullLocalDB(db *core.DB) error {
 	fmt.Println("pulling db from configmaps, takes a sec")
-	configApps, err := getallconfigapps()
-	if err != nil {
-		return err
-	}
 
-	repos, err := k8s.GetConfigResource("tuber-repos", "tuber", "configmap")
+	viper.SetDefault("TUBER_REVIEWAPPS_ENABLED", false)
+	reviewAppsEnabled := viper.GetBool("TUBER_REVIEWAPPS_ENABLED")
+
+	configApps, err := getallconfigapps(reviewAppsEnabled)
 	if err != nil {
 		return err
 	}
@@ -56,18 +55,23 @@ func pullLocalDB(db *core.DB) error {
 	}
 
 	var reviewAppTriggers *k8s.ConfigResource
-
-	reviewAppsEnabled := true
+	var repos *k8s.ConfigResource
 
 	if reviewAppsEnabled {
 		reviewAppTriggers, err = k8s.GetConfigResource("tuber-review-triggers", "tuber", "configmap")
 		if err != nil {
 			return err
 		}
+
+		repos, err = k8s.GetConfigResource("tuber-repos", "tuber", "configmap")
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, configApp := range configApps {
-		appState, err := currentState(configApp)
+		var appState *model.State
+		appState, err = currentState(configApp)
 		if err != nil {
 			return err
 		}
@@ -81,10 +85,14 @@ func pullLocalDB(db *core.DB) error {
 			Vars:              []*model.Tuple{},
 		}
 
-		cloudrepo, err := cloudrepo(app, repos.Data)
-		if err != nil {
-			return err
+		var cloudRepo string
+		if reviewAppsEnabled {
+			cloudRepo, err = cloudrepo(app, repos.Data)
+			if err != nil {
+				return err
+			}
 		}
+
 		var triggerid string
 		rac := model.ReviewAppsConfig{}
 		if err != nil {
@@ -109,7 +117,7 @@ func pullLocalDB(db *core.DB) error {
 			paused = parseboold
 		}
 		app.Paused = paused
-		app.CloudSourceRepo = cloudrepo
+		app.CloudSourceRepo = cloudRepo
 		app.TriggerID = triggerid
 		app.State = appState
 		app.ReviewAppsConfig = &rac
@@ -122,6 +130,14 @@ func pullLocalDB(db *core.DB) error {
 	}
 
 	fmt.Println("done pulling db")
+
+	apps, err := db.Apps()
+	if err != nil {
+		return err
+	}
+	for _, a := range apps {
+		fmt.Println(a)
+	}
 	return nil
 }
 
@@ -226,7 +242,7 @@ func currentState(app *model.TuberApp) (*model.State, error) {
 //
 // ^ mostly copied from releaser cus this is the most temporary nonsense ever
 
-func getallconfigapps() ([]*model.TuberApp, error) {
+func getallconfigapps(reviewappsenabled bool) ([]*model.TuberApp, error) {
 	sourceAppsConfig, err := k8s.GetConfigResource("tuber-apps", "tuber", "ConfigMap")
 	if err != nil {
 		return nil, err
@@ -240,7 +256,7 @@ func getallconfigapps() ([]*model.TuberApp, error) {
 
 	configapps = append(configapps, sourceApps...)
 
-	if viper.GetBool("reviewapps-enabled") {
+	if reviewappsenabled {
 		reviewAppsConfig, err := k8s.GetConfigResource("tuber-review-apps", "tuber", "ConfigMap")
 		if err != nil {
 			return nil, err

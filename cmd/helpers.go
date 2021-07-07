@@ -63,7 +63,7 @@ func gqlClient() (*graph.GraphqlClient, error) {
 		return nil, err
 	}
 
-	return graph.NewClient(cluster.URL, cluster.IAPClientID), nil
+	return graph.NewClient(cluster.URL, cluster.Auth.Audience), nil
 }
 
 func getApp(appName string) (*model.TuberApp, error) {
@@ -137,10 +137,10 @@ func getApp(appName string) (*model.TuberApp, error) {
 }
 
 func clusterData() (*core.ClusterData, error) {
-	defaultGateway := viper.GetString("cluster-default-gateway")
-	defaultHost := viper.GetString("cluster-default-host")
-	adminGateway := viper.GetString("cluster-admin-gateway")
-	adminHost := viper.GetString("cluster-admin-host")
+	defaultGateway := viper.GetString("TUBER_CLUSTER_DEFAULT_GATEWAY")
+	defaultHost := viper.GetString("TUBER_CLUSTER_DEFAULT_HOST")
+	adminGateway := viper.GetString("TUBER_CLUSTER_ADMIN_GATEWAY")
+	adminHost := viper.GetString("TUBER_CLUSTER_ADMIN_HOST")
 
 	if defaultGateway == "" || defaultHost == "" || adminGateway == "" || adminHost == "" {
 		config, err := k8s.GetSecret("tuber", "tuber-env")
@@ -172,8 +172,8 @@ func clusterData() (*core.ClusterData, error) {
 }
 
 func credentials() ([]byte, error) {
-	viper.SetDefault("credentials-path", "/etc/tuber-credentials/credentials.json")
-	credentialsPath := viper.GetString("credentials-path")
+	viper.SetDefault("TUBER_CREDENTIALS_PATH", "/etc/tuber-credentials/credentials.json")
+	credentialsPath := viper.GetString("TUBER_CREDENTIALS_PATH")
 	creds, err := ioutil.ReadFile(credentialsPath)
 
 	if err != nil {
@@ -187,8 +187,12 @@ func credentials() ([]byte, error) {
 	return creds, nil
 }
 
-func checkAuth() error {
-	if !iap.RefreshTokenExists() {
+func checkAuth(audience string) error {
+	exists, err := iap.RefreshTokenExists(audience)
+	if err != nil {
+		return err
+	}
+	if !exists {
 		return errors.New("tuber is not authorized. Please run `tuber auth`")
 	}
 
@@ -196,10 +200,6 @@ func checkAuth() error {
 }
 
 func promptCurrentContext(cmd *cobra.Command, args []string) error {
-	if err := checkAuth(); err != nil {
-		return err
-	}
-
 	skipConfirmation, err := cmd.Flags().GetBool("confirm")
 	if err != nil {
 		return err
@@ -217,6 +217,11 @@ func promptCurrentContext(cmd *cobra.Command, args []string) error {
 	cluster, err := c.CurrentClusterConfig()
 	if err != nil {
 		return fmt.Errorf("unable to get current cluster context. reason: %s", err.Error())
+	}
+
+	err = checkAuth(cluster.Auth.Audience)
+	if err != nil {
+		return err
 	}
 
 	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
@@ -241,10 +246,6 @@ func promptCurrentContext(cmd *cobra.Command, args []string) error {
 }
 
 func displayCurrentContext(cmd *cobra.Command, args []string) error {
-	if err := checkAuth(); err != nil {
-		return err
-	}
-
 	skipConfirmation, err := cmd.Flags().GetBool("confirm")
 	if err != nil {
 		return err
@@ -264,6 +265,11 @@ func displayCurrentContext(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	err = checkAuth(cluster.Auth.Audience)
+	if err != nil {
+		return err
+	}
+
 	fmt.Fprintf(os.Stderr, "--- Running on %s\n", color.YellowString(cluster.Shorthand))
 
 	return nil
@@ -272,10 +278,10 @@ func displayCurrentContext(cmd *cobra.Command, args []string) error {
 func initErrorReporters() {
 	report.ErrorReporters = []report.ErrorReporter{
 		report.Sentry{
-			Enable: viper.GetBool("sentry-enabled"),
+			Enable: viper.GetBool("TUBER_SENTRY_ENABLED"),
 			Options: sentry.ClientOptions{
-				Dsn:              viper.GetString("sentry-dsn"),
-				Environment:      viper.GetString("sentry-environment"),
+				Dsn:              viper.GetString("TUBER_SENTRY_DSN"),
+				Environment:      viper.GetString("TUBER_SENTRY_ENVIRONMENT"),
 				AttachStacktrace: true,
 			},
 		},

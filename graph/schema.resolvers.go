@@ -581,7 +581,7 @@ func (r *mutationResolver) SetRacExclusion(ctx context.Context, input model.SetR
 	exclusions := rac.ExcludedResources
 
 	for _, t := range exclusions {
-		if strings.ToLower(t.Name) == strings.ToLower(input.Name) && strings.ToLower(t.Kind) == strings.ToLower(input.Kind) {
+		if strings.EqualFold(t.Name, input.Name) && strings.EqualFold(t.Kind, input.Kind) {
 			return app, nil
 		}
 	}
@@ -621,7 +621,7 @@ func (r *mutationResolver) UnsetRacExclusion(ctx context.Context, input model.Se
 
 	var updatedExclusions []*model.Resource
 	for _, t := range exclusions {
-		if strings.ToLower(t.Name) != strings.ToLower(input.Name) && strings.ToLower(t.Kind) != strings.ToLower(input.Kind) {
+		if !strings.EqualFold(t.Name, input.Name) && !strings.EqualFold(t.Kind, input.Kind) {
 			updatedExclusions = append(updatedExclusions, t)
 		}
 	}
@@ -647,8 +647,9 @@ func (r *queryResolver) GetApps(ctx context.Context) ([]*model.TuberApp, error) 
 
 func (r *queryResolver) GetClusterInfo(ctx context.Context) (*model.ClusterInfo, error) {
 	return &model.ClusterInfo{
-		Name:   r.Resolver.clusterName,
-		Region: r.Resolver.clusterRegion,
+		Name:              r.Resolver.clusterName,
+		Region:            r.Resolver.clusterRegion,
+		ReviewAppsEnabled: r.Resolver.reviewAppsEnabled,
 	}, nil
 }
 

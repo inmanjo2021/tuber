@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"runtime"
@@ -16,28 +18,51 @@ var configCmd = &cobra.Command{
 	Use:           "config",
 	Short:         "open local tuber config in your default editor",
 	Args:          cobra.NoArgs,
-	RunE:          openConfig,
+	RunE:          runConfigCmd,
 }
 
 var defaultTuberConfig = `# clusters:
 #   - shorthand: some-shorthand-name
 #     name: fully_qualified_gke_cluster_name <- run 'kubectl config current-context'
 #     url: https://tuber-url-for-this-cluster-without-slash-tuber.com
-#     iap_client_id: client id from the OAuth client
-# auth:
-#   oauth_client_id: client id for the OAuth application
-#   oauth_secret: secret (public - this is NOT used for auth) from the OAuth client
+#     auth:
+#     	tuber_desktop_client_id: desktop client id specific to tuber
+#     	tuber_desktop_client_secret: desktop client secret specific to tuber (not actually secret)
+#     	iap_backend_web_client_id: client ID from the backend powering your cluster's IAP ingress
 `
 
-func openConfig(cmd *cobra.Command, args []string) error {
-	configPath, notFoundErr := config.Path()
-	if notFoundErr != nil {
-		return notFoundErr
+func configGetFromUrl(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	contents, err := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	return contents, nil
+}
+
+func runConfigCmd(cmd *cobra.Command, args []string) error {
+	configPath, pathNotFoundErr := config.Path()
+	if pathNotFoundErr != nil {
+		return pathNotFoundErr
 	}
 
-	_, notFoundErr = os.Stat(configPath)
-	if notFoundErr != nil {
-		dir, err := config.Dir()
+	var err error
+	var configFromUrl []byte
+	if configFromUrlFlag != "" {
+		configFromUrl, err = configGetFromUrl(configFromUrlFlag)
+		if err != nil {
+			return err
+		}
+	}
+
+	conf, loadErr := config.Load()
+	if loadErr != nil {
+		var dir string
+		dir, err = config.Dir()
 		if err != nil {
 			return err
 		}
@@ -46,16 +71,41 @@ func openConfig(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+	}
 
-		f, err := os.Create(configPath)
+	if conf != nil && configUpdateFlag {
+		if conf.ConfigSourceUrl == "" {
+			return fmt.Errorf("config source url not set")
+		}
+		configFromUrl, err = configGetFromUrl(conf.ConfigSourceUrl)
 		if err != nil {
 			return err
 		}
-		f.Write([]byte(defaultTuberConfig))
+	}
+
+	if conf == nil || configUpdateFlag || configFromUrlFlag != "" {
+		var data []byte
+
+		if string(configFromUrl) == "" {
+			data = []byte(defaultTuberConfig)
+		} else {
+			data = configFromUrl
+		}
+
+		err = os.WriteFile(configPath, data, os.ModePerm)
+		if err != nil {
+			return err
+		}
+		_, err = config.Load()
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	var command *exec.Cmd
 
+	fmt.Println("opening " + configPath + " in your default editor (or vscode if that doesn't work)...")
 	switch currentOS := runtime.GOOS; currentOS {
 	case "darwin":
 		command = exec.Command("open", configPath)
@@ -68,7 +118,7 @@ func openConfig(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unsupported os for auto-open, tuber config located at %v", configPath)
 	}
 
-	err := command.Run()
+	err = command.Run()
 	if err != nil {
 		vsCodeFallbackErr := exec.Command("code", configPath).Run()
 		if vsCodeFallbackErr == nil {
@@ -79,6 +129,11 @@ func openConfig(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+var configFromUrlFlag string
+var configUpdateFlag bool
+
 func init() {
+	configCmd.Flags().StringVar(&configFromUrlFlag, "from-url", "", "pass in a url we'll curl for config contents")
+	configCmd.Flags().BoolVar(&configUpdateFlag, "update", false, "re-pull config from the url you created it with, using --from-url")
 	rootCmd.AddCommand(configCmd)
 }

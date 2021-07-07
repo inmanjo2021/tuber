@@ -19,6 +19,7 @@ import {
 	useSetAppEnvMutation, useUnsetAppEnvMutation, useSetCloudSourceRepoMutation, useSetSlackChannelMutation, useSetGithubRepoMutation, useGetClusterInfoQuery,
 } from '../../src/generated/graphql'
 import Head from 'next/head'
+import { useClusterInfo } from '../../src/useClusterInfo'
 
 const CreateForm = ({ app }) => {
 	const [{ error, fetching }, create] = useCreateReviewAppMutation()
@@ -48,26 +49,20 @@ const ShowApp = () => {
 	const router = useRouter()
 	const id = router.query.id as string
 	const [{ data: { getApp: app } }] = throwError(useGetFullAppQuery({ variables: { name: id } }))
-	const [{ data: { getClusterInfo: { name: clusterName } } }] = useGetClusterInfoQuery()
+	const clusterInfo = useClusterInfo()
 	const [{ error: destroyAppError }, destroyApp] = useDestroyAppMutation()
-	const hostname = `https://${app.name}.${clusterName}.freshlyservices.net/`
-
-	const [{ error: racEnableError }, setEnabled] = useSetRacEnabledMutation()
+	const [, setEnabled] = useSetRacEnabledMutation()
+  const hostname = `https://${app.name}.${clusterInfo.name}.freshlyservices.net/`
 
 	return <div>
 		<Head>
-			<title>{app.name}</title>
+			<title>{`${app.name} - ${clusterInfo.name}`}</title>
 		</Head>
 
 		<section className="flex justify-between p-3 mb-2">
 			<div className="flex justify-between">
 				<div className="mr-3">
 					<h1 className="text-3xl">{app.name}</h1>
-					<div>
-						<small>
-							<a href={hostname} target="_blank" rel="noreferrer">{hostname}</a>
-						</small>
-					</div>
 					<div>
 						<small>
 							<a href="https://app.datadoghq.com/apm/home?env=production" target="_blank" rel="noreferrer">DataDog Logs</a>
@@ -106,6 +101,7 @@ const ShowApp = () => {
 						appName={app.name}
 						keyName="slackChannel"
 						className="min-w-300px"
+						required={false}
 					/>
 
 					<div>Github Repo</div>
@@ -152,7 +148,7 @@ const ShowApp = () => {
 			</Card>
 		</section>
 
-		{app.reviewApp || <>
+		{(clusterInfo.reviewAppsEnabled && !app.reviewApp) && <>
 			<Card>
 				<h2 className="text-xl mb-2">Create a review app</h2>
 				<CreateForm app={app} />
@@ -170,11 +166,14 @@ const ShowApp = () => {
 			</Card>
 
 			<Card>
-				<div className="mb-2">
+				<div className="mb-4">
 					<h2 className="text-xl">Configure Review Apps</h2>
-					<p className="mb-2"><small>Configure how review apps created based off this app behave</small></p>
+					<p className=""><small>Configure how review apps created based off this app behave</small></p>
+				</div>
+
+				<div className="mb-4">
 					<label>
-						<span>Enabled</span>
+						<div className="mb-2">Enable/Disable Review Apps</div>
 						<Switch
 							onChange={() => { setEnabled({ input: { name: app.name, enabled: !app.reviewAppsConfig.enabled } }) }}
 							checked={app.reviewAppsConfig.enabled}
@@ -182,23 +181,29 @@ const ShowApp = () => {
 					</label>
 				</div>
 
-				<h3>Review App Vars</h3>
-				<TextInputGroup
-					vars={app.reviewAppsConfig.vars} appName={app.name}
-					useSet={useSetRacVarMutation}
-					useUnset={useUnsetRacVarMutation}
-				/>
+				<div className="mb-4">
+					<h3>Review App Vars</h3>
+					<TextInputGroup
+						vars={app.reviewAppsConfig.vars} appName={app.name}
+						useSet={useSetRacVarMutation}
+						useUnset={useUnsetRacVarMutation}
+					/>
+				</div>
 
-				<ExcludedResources
-					appName={app.name}
-					resources={app.reviewAppsConfig.excludedResources}
-					useSet={useSetRacExclusionMutation}
-					useUnset={useUnsetRacExclusionMutation}
-				/>
+				<div className="mb-4">
+					<h3 className="text-l mb-2">Excluded Resources</h3>
+					<ExcludedResources
+						appName={app.name}
+						resources={app.reviewAppsConfig.excludedResources}
+						useSet={useSetRacExclusionMutation}
+						useUnset={useUnsetRacExclusionMutation}
+					/>
+				</div>
 			</Card>
 		</>}
 
 		<Card>
+			<h2 className="text-xl mb-2">Excluded Resources</h2>
 			<ExcludedResources
 				appName={app.name}
 				resources={app.excludedResources}

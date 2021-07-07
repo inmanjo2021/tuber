@@ -47,7 +47,6 @@ export const ExcludedResources:FC<Props> = ({ appName, resources, useSet, useUns
 	}
 
 	return <div>
-		<h2 className="text-xl mb-2">Excluded Resources</h2>
 		{resources.map(resource =>
 			<div key={resource.name} className="pb-1">
 				<span>{resource.name}</span>
@@ -66,8 +65,8 @@ export const ExcludedResources:FC<Props> = ({ appName, resources, useSet, useUns
 				<TextInput required ref={nameRef} />
 				<label>Kind</label>
 				<TextInput required ref={kindRef} />
-				<button><SaveIcon className="w-5" /></button>
 				<XCircleIcon className="w-5 select-none" onClick={() => { setAddNew(false) }} />
+				<button><SaveIcon className="w-5" /></button>
 			</form>}
 
 		{addNew ||

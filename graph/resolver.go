@@ -13,23 +13,25 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	db            *core.DB
-	logger        *zap.Logger
-	credentials   []byte
-	projectName   string
-	processor     *events.Processor
-	clusterName   string
-	clusterRegion string
+	db                *core.DB
+	logger            *zap.Logger
+	credentials       []byte
+	projectName       string
+	processor         *events.Processor
+	clusterName       string
+	clusterRegion     string
+	reviewAppsEnabled bool
 }
 
-func NewResolver(db *core.DB, logger *zap.Logger, processor *events.Processor, credentials []byte, projectName string, clusterName string, clusterRegion string) *Resolver {
+func NewResolver(db *core.DB, logger *zap.Logger, processor *events.Processor, credentials []byte, projectName string, clusterName string, clusterRegion string, reviewAppsEnabled bool) *Resolver {
 	return &Resolver{
-		db:            db,
-		logger:        logger,
-		credentials:   credentials,
-		projectName:   projectName,
-		processor:     processor,
-		clusterName:   clusterName,
-		clusterRegion: clusterRegion,
+		db:                db,
+		logger:            logger,
+		credentials:       credentials,
+		projectName:       projectName,
+		processor:         processor,
+		clusterName:       clusterName,
+		clusterRegion:     clusterRegion,
+		reviewAppsEnabled: reviewAppsEnabled,
 	}
 }

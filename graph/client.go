@@ -11,27 +11,28 @@ import (
 
 type GraphqlClient struct {
 	client      *graphql.Client
-	IAPClientID string
+	IAPAudience string
 }
 
-func NewClient(clusterURL string, IAPClientID string) *GraphqlClient {
-	graphqlURL := viper.GetString("graphql-host")
+func NewClient(clusterURL string, IAPAudience string) *GraphqlClient {
+	graphqlURL := viper.GetString("TUBER_GRAPHQL_HOST")
 
+	viper.SetDefault("TUBER_ADMINSERVER_PREFIX", "/tuber")
 	if graphqlURL == "" {
-		graphqlURL = clusterURL + viper.GetString("prefix") + "/graphql"
+		graphqlURL = clusterURL + viper.GetString("TUBER_ADMINSERVER_PREFIX") + "/graphql"
 	} else {
-		graphqlURL = graphqlURL + viper.GetString("prefix") + "/graphql"
+		graphqlURL = graphqlURL + viper.GetString("TUBER_ADMINSERVER_PREFIX") + "/graphql"
 	}
 
 	client := graphql.NewClient(graphqlURL)
 
-	if viper.GetBool("debug") {
+	if viper.GetBool("TUBER_DEBUG") {
 		client.Log = func(s string) { log.Println(s) }
 	}
 
 	return &GraphqlClient{
 		client:      client,
-		IAPClientID: IAPClientID,
+		IAPAudience: IAPAudience,
 	}
 }
 
@@ -62,7 +63,7 @@ func (g *GraphqlClient) Query(ctx context.Context, gql string, target interface{
 		}
 	}
 
-	token, err := iap.CreateIDToken(g.IAPClientID)
+	token, err := iap.CreateIDToken(g.IAPAudience)
 	if err != nil {
 		return err
 	}
@@ -88,7 +89,7 @@ func (g *GraphqlClient) Mutation(ctx context.Context, gql string, key *int, inpu
 		req.Var("input", input)
 	}
 
-	token, err := iap.CreateIDToken(g.IAPClientID)
+	token, err := iap.CreateIDToken(g.IAPAudience)
 	if err != nil {
 		return err
 	}

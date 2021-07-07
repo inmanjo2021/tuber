@@ -29,6 +29,7 @@ export type ClusterInfo = {
   __typename?: 'ClusterInfo';
   name: Scalars['String'];
   region: Scalars['String'];
+  reviewAppsEnabled: Scalars['Boolean'];
 };
 
 export type CreateReviewAppInput = {
@@ -322,7 +323,7 @@ export type GetClusterInfoQuery = (
   { __typename?: 'Query' }
   & { getClusterInfo: (
     { __typename?: 'ClusterInfo' }
-    & Pick<ClusterInfo, 'name' | 'region'>
+    & Pick<ClusterInfo, 'name' | 'region' | 'reviewAppsEnabled'>
   ) }
 );
 
@@ -639,6 +640,17 @@ export default {
           },
           {
             "name": "region",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Any"
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "reviewAppsEnabled",
             "type": {
               "kind": "NON_NULL",
               "ofType": {
@@ -1599,6 +1611,7 @@ export const GetClusterInfoDocument = gql`
   getClusterInfo {
     name
     region
+    reviewAppsEnabled
   }
 }
     `;

@@ -152,6 +152,11 @@ func (r releaser) release() error {
 			_ = r.releaseError(err)
 		} else {
 			r.slackClient.Message(r.logger, "<!here> :loudspeaker: *"+r.app.Name+"*: monitoring failed for "+strings.ToLower(rolloutErr.resource.kind)+" "+rolloutErr.resource.name+" - "+rolloutErr.monitorFailMessage, r.app.SlackChannel)
+			r.app.Paused = true
+			saveErr := r.db.SaveApp(r.app)
+			if saveErr != nil {
+				_ = r.releaseError(ErrorContext{context: "save app as paused on monitor fail", err: saveErr})
+			}
 		}
 		_, configRollbackErrors := r.rollback(appliedConfigs, decodedStateBeforeApply)
 		rolledBackResources, workloadRollbackErrors := r.rollback(appliedWorkloads, decodedStateBeforeApply)
@@ -190,6 +195,11 @@ func (r releaser) release() error {
 			_ = r.releaseError(err)
 		} else {
 			r.slackClient.Message(r.logger, "<!here> :loudspeaker: *"+r.app.Name+"*: monitoring failed for "+rolloutErr.resource.kind+" "+rolloutErr.resource.name+"+"+rolloutErr.monitorFailMessage, r.app.SlackChannel)
+			r.app.Paused = true
+			saveErr := r.db.SaveApp(r.app)
+			if saveErr != nil {
+				_ = r.releaseError(ErrorContext{context: "save app as paused on monitor fail", err: saveErr})
+			}
 		}
 		_, configRollbackErrors := r.rollback(appliedConfigs, decodedStateBeforeApply)
 		rolledBackResources, workloadRollbackErrors := r.rollback(appliedWorkloads, decodedStateBeforeApply)
@@ -310,9 +320,9 @@ func exclusionKey(kind string, name string) string {
 	return strings.ToLower(kind) + ":" + strings.ToLower(name)
 }
 
-func (r releaser) exclusions(data map[string]string) (map[string]bool, error) {
+func exclusions(app *model.TuberApp, data map[string]string) (map[string]bool, error) {
 	exc := make(map[string]bool)
-	for _, resource := range r.app.ExcludedResources {
+	for _, resource := range app.ExcludedResources {
 		name, err := interpolate(resource.Name, data)
 		if err != nil {
 			return nil, err
@@ -371,7 +381,7 @@ func (r releaser) yamlToAppResource(yamls []string, data map[string]string) (app
 		}
 	}
 
-	exc, err := r.exclusions(data)
+	exc, err := exclusions(r.app, data)
 	if err != nil {
 		return nil, ErrorContext{err: err, context: "interpolation"}
 	}
@@ -627,18 +637,20 @@ func (r releaser) deleteRemovedResources(stateBeforeApply []appResource, applied
 	}
 
 	for _, cached := range stateBeforeApply {
-		var inPreviousState bool
+		var cachedWasPartOfRelease bool
 		for _, applied := range appliedResources {
 			if applied.kind == cached.kind && applied.name == cached.name {
-				inPreviousState = true
+				cachedWasPartOfRelease = true
 				break
 			}
 		}
-		if !inPreviousState {
+		if !cachedWasPartOfRelease {
 			scope, logger := cached.scopes(r)
 			out, err := k8s.Get(cached.kind, cached.name, r.app.Name, "-o", "yaml")
 			if err != nil {
-				if _, ok := err.(k8s.NotFoundError); !ok {
+				if _, notFound := err.(k8s.NotFoundError); notFound {
+					continue
+				} else {
 					return ErrorContext{err: err, context: "exists check resource removed from state", scope: scope, logger: logger}
 				}
 			}
@@ -652,7 +664,7 @@ func (r releaser) deleteRemovedResources(stateBeforeApply []appResource, applied
 			if parsed.Metadata.OwnerReferences == nil {
 				deleteErr := k8s.Delete(cached.kind, cached.name, r.app.Name)
 				if deleteErr != nil {
-					return ErrorContext{err: err, context: "delete resource removed from state", scope: scope, logger: logger}
+					return ErrorContext{err: deleteErr, context: "delete resource removed from state", scope: scope, logger: logger}
 				}
 			}
 		}
