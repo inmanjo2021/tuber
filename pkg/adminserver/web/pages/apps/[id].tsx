@@ -52,7 +52,7 @@ const ShowApp = () => {
 	const clusterInfo = useClusterInfo()
 	const [{ error: destroyAppError }, destroyApp] = useDestroyAppMutation()
 	const [, setEnabled] = useSetRacEnabledMutation()
-  const hostname = `https://${app.name}.${clusterInfo.name}.freshlyservices.net/`
+	const hostname = `https://${app.name}.${clusterInfo.name}.freshlyservices.net/`
 
 	return <div>
 		<Head>
