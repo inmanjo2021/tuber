@@ -16,7 +16,7 @@ import {
 	useSetRacVarMutation, useUnsetRacVarMutation,
 	useSetExcludedResourceMutation, useUnsetExcludedResourceMutation,
 	useSetAppVarMutation, useUnsetAppVarMutation,
-	useSetAppEnvMutation, useUnsetAppEnvMutation, useSetCloudSourceRepoMutation, useSetSlackChannelMutation, useSetGithubRepoMutation,
+	useSetAppEnvMutation, useUnsetAppEnvMutation, useSetCloudSourceRepoMutation, useSetSlackChannelMutation, useSetGithubRepoMutation, useGetClusterInfoQuery,
 } from '../../src/generated/graphql'
 import Head from 'next/head'
 
@@ -48,8 +48,9 @@ const ShowApp = () => {
 	const router = useRouter()
 	const id = router.query.id as string
 	const [{ data: { getApp: app } }] = throwError(useGetFullAppQuery({ variables: { name: id } }))
+	const [{ data: { getClusterInfo: { name: clusterName } } }] = useGetClusterInfoQuery()
 	const [{ error: destroyAppError }, destroyApp] = useDestroyAppMutation()
-	const hostname = `https://${app.name}.staging.freshlyservices.net/`
+	const hostname = `https://${app.name}.${clusterName}.freshlyservices.net/`
 
 	const [{ error: racEnableError }, setEnabled] = useSetRacEnabledMutation()
 
@@ -133,6 +134,9 @@ const ShowApp = () => {
 						keyName="imageTag"
 						className="min-w-300px"
 					/>
+
+					<div>Cluster Link</div>
+					<div>{hostname}</div>
 				</div>
 			</Card>
 		</section>

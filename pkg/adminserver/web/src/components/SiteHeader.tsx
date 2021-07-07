@@ -2,7 +2,6 @@ import React, { Suspense } from 'react'
 import Link from 'next/link'
 import { useGetClusterInfoQuery } from '../generated/graphql'
 
-
 const ClusterInfo = () => {
 	const [{ data, error }] = useGetClusterInfoQuery()
 
@@ -15,7 +14,7 @@ const ClusterInfo = () => {
 }
 
 export const SiteHeader = () => {
-	return <div className="bg-gray-100 dark:bg-gray-800">
+	return <nav className="bg-gray-100 dark:bg-gray-800">
 		<div className="container mx-auto px-6 py-3">
 			<h1 className="inline"><Link href="/"><a>Tuber Dashboard</a></Link></h1>
 
@@ -23,5 +22,5 @@ export const SiteHeader = () => {
 				<ClusterInfo />
 			</Suspense>}
 		</div>
-	</div>
+	</nav>
 }
