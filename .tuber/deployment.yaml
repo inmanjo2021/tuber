@@ -29,10 +29,10 @@ spec:
           resources:
             requests:
               memory: "128Mi"
-              cpu: "1"
+              cpu: "2"
             limits:
               memory: "256Mi"
-              cpu: "1"
+              cpu: "2"
           volumeMounts:
             - name: tuber-credentials
               readOnly: true
