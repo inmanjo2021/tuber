@@ -29,6 +29,10 @@ local-image:
     tuber \
     /app/tuber adminserver -y
 
+release *version:
+  git tag -a {{version}} -m "{{version}}"
+  goreleaser --rm-dist
+
 remove-tag *version:
   git tag -d {{version}}
   git push origin :{{version}}
