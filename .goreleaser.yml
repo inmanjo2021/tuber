@@ -39,7 +39,7 @@ scoop:
   url_template: "http://github.com/freshly/tuber/releases/{{ .Tag }}/{{ .ArtifactName }}"
   bucket:
     owner: Freshly
-    name: tuber
-  folder: scoops
+    name: scoops
+  folder: bucket
   homepage: https://github.com/Freshly/tuber
   description: 🥔
