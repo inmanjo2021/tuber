@@ -30,3 +30,11 @@ brews:
     description: 🥔
     test: |
       system "#{bin}/tuber -v"
+scoop:
+  url_template: "http://github.com/freshly/tuber/releases/{{ .Tag }}/{{ .ArtifactName }}"
+  bucket:
+    owner: freshly
+    name: tuber-bucket
+  folder: Scoops
+  homepage: https://github.com/Freshly/tuber
+  description: 🥔
