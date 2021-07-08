@@ -30,17 +30,17 @@ changelog:
     exclude:
     - '^docs:'
     - '^test:'
-# brews:
-#   - tap:
-#       owner: Freshly
-#       name: homebrew-taps
-#     folder: Formula
-#     homepage: https://github.com/Freshly/tuber
-#     description: 🥔
-#     test: |
-#       system "#{bin}/tuber -v"
+brews:
+  - tap:
+      owner: Freshly
+      name: homebrew-taps
+    folder: Formula
+    homepage: https://github.com/Freshly/tuber
+    description: 🥔
+    test: |
+      system "#{bin}/tuber -v"
 scoop:
-  url_template: "http://github.com/freshly/tuber/releases/{{ .Tag }}/{{ .ArtifactName }}"
+  url_template: "http://github.com/freshly/tuber/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
   bucket:
     owner: Freshly
     name: scoops
