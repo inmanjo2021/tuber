@@ -43,7 +43,12 @@ func SwapTags(imageTag string, tag string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return ref.Context().Tag(tag).String(), nil
+	newTag := ref.Context().Tag(tag).String()
+	_, err = name.ParseReference(newTag)
+	if err != nil {
+		return "", err
+	}
+	return newTag, nil
 }
 
 func TagFromRef(imageTag string) (string, error) {
