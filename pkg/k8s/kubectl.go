@@ -25,7 +25,7 @@ func runKubectl(cmd *exec.Cmd) ([]byte, error) {
 
 	if err != nil {
 		err = newK8sError(out, err)
-		return nil, fmt.Errorf("failed to execute command: %v", err)
+		return nil, fmt.Errorf("failed to execute command, exit code %d: %v", cmd.ProcessState.ExitCode(), err)
 	}
 
 	exitCode := cmd.ProcessState.ExitCode()
