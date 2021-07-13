@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -22,9 +23,15 @@ func runKubectl(cmd *exec.Cmd) ([]byte, error) {
 
 	out, err := cmd.CombinedOutput()
 
-	if err != nil || cmd.ProcessState.ExitCode() != 0 {
+	if err != nil {
 		err = newK8sError(out, err)
-		return nil, err
+		return nil, fmt.Errorf("failed to execute command: %v", err)
+	}
+
+	exitCode := cmd.ProcessState.ExitCode()
+	if exitCode != 0 {
+		err = newK8sError(out, err)
+		return nil, fmt.Errorf("commanded exited with non-zero code (%d): %v", exitCode, err)
 	}
 
 	if viper.GetBool("TUBER_DEBUG") {
@@ -69,12 +76,12 @@ func pipeToKubectl(data []byte, args ...string) (out []byte, err error) {
 
 	_, err = stdin.Write(data)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed to write to stdin: %v", err)
 	}
 
 	err = stdin.Close()
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed to close stdin: %v", err)
 	}
 
 	return runKubectl(cmd)
