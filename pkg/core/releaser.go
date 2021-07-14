@@ -112,7 +112,7 @@ func (r releaser) release() error {
 	if len(rr.Prerelease) > 0 {
 		r.logger.Debug("prerelease starting")
 
-		err = RunPrerelease(rr.Prerelease, r.app)
+		err = RunPrerelease(r.logger, rr.Prerelease, r.app)
 		if err != nil {
 			return ErrorContext{context: "prerelease", err: err}
 		}
