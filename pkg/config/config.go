@@ -12,7 +12,7 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
-type tuberConfig struct {
+type TuberConfig struct {
 	ActiveClusterName string `yaml:"active_cluster_name"`
 	ConfigSourceUrl   string `yaml:"config_source_url"`
 	Clusters          []*cluster
@@ -34,7 +34,7 @@ type cluster struct {
 	Auth      *auth  `yaml:"auth"`
 }
 
-func (c *tuberConfig) SetActive(cl *cluster) error {
+func (c *TuberConfig) SetActive(cl *cluster) error {
 	c.ActiveClusterName = cl.Name
 	err := Save(c)
 	if err != nil {
@@ -43,7 +43,7 @@ func (c *tuberConfig) SetActive(cl *cluster) error {
 	return nil
 }
 
-func (c *tuberConfig) CurrentClusterConfig() (*cluster, error) {
+func (c *TuberConfig) CurrentClusterConfig() (*cluster, error) {
 	k8sCheckErr := exec.Command("kubectl", "version", "--client").Run()
 	k8sPresent := k8sCheckErr == nil
 
@@ -90,7 +90,7 @@ func (c *tuberConfig) CurrentClusterConfig() (*cluster, error) {
 	return cl, nil
 }
 
-func (c *tuberConfig) FindByShortName(name string) (*cluster, error) {
+func (c *TuberConfig) FindByShortName(name string) (*cluster, error) {
 	if name == "" {
 		return nil, fmt.Errorf("shorthand empty")
 	}
@@ -104,7 +104,17 @@ func (c *tuberConfig) FindByShortName(name string) (*cluster, error) {
 	return nil, fmt.Errorf("cluster not found in config")
 }
 
-func (c *tuberConfig) FindByName(name string) (*cluster, error) {
+func (c *TuberConfig) Print() error {
+	out, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(out))
+	return nil
+}
+
+func (c *TuberConfig) FindByName(name string) (*cluster, error) {
 	if name == "" {
 		return nil, fmt.Errorf("name empty")
 	}
@@ -118,7 +128,7 @@ func (c *tuberConfig) FindByName(name string) (*cluster, error) {
 	return nil, fmt.Errorf("cluster not found in config")
 }
 
-func Load() (*tuberConfig, error) {
+func Load() (*TuberConfig, error) {
 	path, err := Path()
 	if err != nil {
 		return nil, fmt.Errorf("tuber config not found, please run `tuber config`")
@@ -129,7 +139,7 @@ func Load() (*tuberConfig, error) {
 		return nil, fmt.Errorf("tuber config not readable, please run `tuber config`")
 	}
 
-	var t tuberConfig
+	var t TuberConfig
 	err = yaml.Unmarshal(raw, &t)
 	if err != nil {
 		return nil, fmt.Errorf("tuber config invalid, please run `tuber config`")
@@ -148,7 +158,7 @@ func Load() (*tuberConfig, error) {
 	return &t, nil
 }
 
-func Save(config *tuberConfig) error {
+func Save(config *TuberConfig) error {
 	path, err := Path()
 	if err != nil {
 		return nil

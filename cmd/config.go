@@ -45,12 +45,11 @@ func configGetFromUrl(url string) ([]byte, error) {
 }
 
 func runConfigCmd(cmd *cobra.Command, args []string) error {
-	configPath, pathNotFoundErr := config.Path()
-	if pathNotFoundErr != nil {
-		return pathNotFoundErr
+	configPath, err := config.Path()
+	if err != nil {
+		return err
 	}
 
-	var err error
 	var configFromUrl []byte
 	if configFromUrlFlag != "" {
 		configFromUrl, err = configGetFromUrl(configFromUrlFlag)
@@ -59,8 +58,9 @@ func runConfigCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	conf, loadErr := config.Load()
-	if loadErr != nil {
+	var conf *config.TuberConfig
+	conf, err = config.Load()
+	if err != nil {
 		var dir string
 		dir, err = config.Dir()
 		if err != nil {
@@ -96,44 +96,52 @@ func runConfigCmd(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		_, err = config.Load()
+		conf, err = config.Load()
 		if err != nil {
 			return err
 		}
-		return nil
 	}
 
-	var command *exec.Cmd
-
-	fmt.Println("opening " + configPath + " in your default editor (or vscode if that doesn't work)...")
-	switch currentOS := runtime.GOOS; currentOS {
-	case "darwin":
-		command = exec.Command("open", configPath)
-	case "linux":
-		command = exec.Command("xdg-open", configPath)
-	case "windows":
-		psCommand := fmt.Sprintf("start %v", configPath)
-		command = exec.Command("cmd", "/c", psCommand, "/w")
-	default:
-		return fmt.Errorf("unsupported os for auto-open, tuber config located at %v", configPath)
-	}
-
-	err = command.Run()
-	if err != nil {
-		vsCodeFallbackErr := exec.Command("code", configPath).Run()
-		if vsCodeFallbackErr == nil {
-			return nil
+	if configPrintFlag {
+		if err := conf.Print(); err != nil {
+			return fmt.Errorf("could not print config: %v", err)
 		}
-		return fmt.Errorf("\nauto-open with `%s` and `code` failed; tuber config located at %v", command.Path, configPath)
+	} else {
+		var command *exec.Cmd
+
+		fmt.Println("opening " + configPath + " in your default editor (or vscode if that doesn't work)...")
+		switch currentOS := runtime.GOOS; currentOS {
+		case "darwin":
+			command = exec.Command("open", configPath)
+		case "linux":
+			command = exec.Command("xdg-open", configPath)
+		case "windows":
+			psCommand := fmt.Sprintf("start %v", configPath)
+			command = exec.Command("cmd", "/c", psCommand, "/w")
+		default:
+			return fmt.Errorf("unsupported os for auto-open, tuber config located at %v", configPath)
+		}
+
+		err = command.Run()
+		if err != nil {
+			vsCodeFallbackErr := exec.Command("code", configPath).Run()
+			if vsCodeFallbackErr == nil {
+				return nil
+			}
+			return fmt.Errorf("\nauto-open with `%s` and `code` failed; tuber config located at %v", command.Path, configPath)
+		}
 	}
+
 	return nil
 }
 
 var configFromUrlFlag string
 var configUpdateFlag bool
+var configPrintFlag bool
 
 func init() {
 	configCmd.Flags().StringVar(&configFromUrlFlag, "from-url", "", "pass in a url we'll curl for config contents")
 	configCmd.Flags().BoolVar(&configUpdateFlag, "update", false, "re-pull config from the url you created it with, using --from-url")
+	configCmd.Flags().BoolVarP(&configPrintFlag, "print", "p", false, "print the current config contents instead of opening editor")
 	rootCmd.AddCommand(configCmd)
 }
