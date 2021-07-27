@@ -220,13 +220,11 @@ func envList(cmd *cobra.Command, args []string) error {
 		for k, v := range m {
 			output = append(output, []byte(fmt.Sprintf("%s = \"%s\"\n", k, v))...)
 		}
-
 	case "json":
 		output, err = json.Marshal(m)
 		if err != nil {
 			return err
 		}
-
 	default:
 		output, err = yaml.Marshal(m)
 		if err != nil {
@@ -288,6 +286,6 @@ func init() {
 	envGetCmd.Flags().StringVarP(&appNameFlag, "app", "a", "", "app name")
 	envCmd.AddCommand(envGetCmd)
 	envListCmd.Flags().StringVarP(&appNameFlag, "app", "a", "", "app name")
-	envListCmd.Flags().StringVarP(&listFmtFlag, "output", "o", "yaml", "output format to display environment variables")
+	envListCmd.Flags().StringVarP(&listFmtFlag, "output", "o", "", "output format to display environment variables")
 	envCmd.AddCommand(envListCmd)
 }
