@@ -50,7 +50,6 @@ type oauthCtxKey string
 var accessTokenCtxKey oauthCtxKey = "accessToken"
 var refreshTokenCtxKey oauthCtxKey = "refreshToken"
 var accessTokenExpirationCtxKey oauthCtxKey = "accessTokenExpiration"
-var accessTokenRefreshed oauthCtxKey = "accessTokenRefreshed"
 var expirationTimeFormat = time.RFC3339
 
 func GetAccessToken(ctx context.Context) (string, error) {
