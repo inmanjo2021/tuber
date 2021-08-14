@@ -229,13 +229,13 @@ const ShowApp = () => {
 
 		<Card className="shadow-dark-50 shadow">
 			<CollapsedAsyncTextInputGroup 
-			tableHeading={'Environment Variables'} 
-			appName={app.name}
-			queryDocument={GetAppEnvDocument}
-			queryVars={{ name: app.name }}
-			queryData={function(data) { return data.getAppEnv}}
-			setMutation={useSetAppEnvMutation}
-			unsetMutation={useUnsetAppEnvMutation}
+				tableHeading={'Environment Variables'} 
+				appName={app.name}
+				queryDocument={GetAppEnvDocument}
+				queryVars={{ name: app.name }}
+				queryData={function(data) { return data.getAppEnv}}
+				setMutation={useSetAppEnvMutation}
+				unsetMutation={useUnsetAppEnvMutation}
 			></CollapsedAsyncTextInputGroup>
 		</Card>
 	</div>
