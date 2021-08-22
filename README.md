@@ -53,10 +53,61 @@ So, welcome to "kubectl as a service" :tada:
 
 &nbsp;
 
+# Design Mentality
+
+Tuber is built on a few core principles that will be helpful to understand.
+
+### Prod is Prod
+While many pipeline solutions offer support for running staging versions alongside prod versions on the same cluster, Tuber intentionally does not. 
+
+Network security and permissions are alone enough reason to keep things separated not only by cluster, but by project. 
+
+The multi-cluster solutions designed to stay true to the "dashboard with a pipeline" look also typically depend on CD control existing on a 3rd, operations cluster to coordinate. 
+
+Tuber foregoes that look to encourage this separation, under the goal of "prod is prod". 
+
+As a result, "deploying to prod" with Tuber will never be an action of "promotion" - rather, it's a separate process dedicated to prod, and guided by VC.
+
+&nbsp;
+
+### Subtractive Staging Environments
+Many platforms we've looked at fall into what we call "additive" environments, where the resources an app needs are added to it in each separate environment.
+
+Examples include Addons and Dynos on heroku, or even the separate directories of resources on a typical Helm solution
+
+This inevitably leans towards drift, and controlling the drift usually becomes an issue.
+
+Tuber instead follows what we call "subtractive" staging environments, where production configuration is put forth as official, and staging environments can _trim down or edit down_ from there.
+
+&nbsp;
+
+### Review Apps First
+For apps that are complicated and quickly changing, local testing is a tough proof of success. Automated testing is a separate question entirely.
+
+Much of Tuber's architecture is based around supporting Review Apps to solve this problem.
+
+Tuber offers isolated, ephemeral test apps that are every bit as valid as the standard staging app they're created from.
+
+&nbsp;
+
+### Keep it simple
+
+It's often tough to see just what a deployment pipeline is doing while it's doing it. It's also tough to see the real footprint of an app when deployed through a pipeline.
+
+Many solutions rely on CRDs to power the configuration. 
+
+Tuber's take is that CRDs are fine _if built-in resources are insufficient_, and in the case of _deploying an app to a cluster_, built-in's were of course just fine.
+
+This means 2 major things - no esoteric rules to perfect a yaml to tuber's satisfaction, and a tuber app's footprint stays _identical_ to if it was manually deployed.
+
+&nbsp;
+
+&nbsp;
+
 # Project Status
 We are pushing for Tuber to be more generally applicable, but it currently makes too many assumptions about how things _outside_ your cluster are configured.
 
-Until then, Tuber remains closer to "open code" than an "open source solution".
+&nbsp;
 
 &nbsp;
 
