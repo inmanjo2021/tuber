@@ -66,7 +66,7 @@ The multi-cluster solutions designed to stay true to the "dashboard with a pipel
 
 Tuber foregoes that look to encourage this separation, under the goal of "prod is prod". 
 
-As a result, "deploying to prod" with Tuber will never be an action of "promotion" - rather, it's a separate process dedicated to prod, and guided by VC.
+As a result, "deploying to prod" with Tuber will never be an action of "promotion" - rather, it's a separate process dedicated to prod, and guided by VC, and a tuber server will never cross clusters or projects -- that's what pubsub's for.
 
 &nbsp;
 
@@ -98,7 +98,7 @@ Many solutions rely on CRDs to power the configuration.
 
 Tuber's take is that CRDs are fine _if built-in resources are insufficient_, and in the case of _deploying an app to a cluster_, built-in's were of course just fine.
 
-This means 2 major things - no esoteric rules to perfect a yaml to tuber's satisfaction, and a tuber app's footprint stays _identical_ to if it was manually deployed.
+This means 3 major things - no esoteric rules to perfect a yaml to tuber's satisfaction, a tuber app's footprint stays _identical_ to if it was manually deployed, and steps it takes when interacting with the cluster are exceptionally easy to track.
 
 &nbsp;
 
