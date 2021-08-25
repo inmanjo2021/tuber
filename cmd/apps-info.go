@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var appsInfoJsonFlag bool
+
 var appsInfoCmd = &cobra.Command{
 	SilenceUsage:  true,
 	SilenceErrors: true,
@@ -28,7 +30,7 @@ func runAppsInfoCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if jsonOutput {
+	if appsInfoJsonFlag {
 		out, err := json.Marshal(app)
 		if err != nil {
 			return err
@@ -102,6 +104,6 @@ func runAppsInfoCmd(cmd *cobra.Command, args []string) error {
 }
 
 func init() {
-	appsInfoCmd.Flags().BoolVar(&jsonOutput, "json", false, "output as json")
+	appsInfoCmd.Flags().BoolVar(&appsInfoJsonFlag, "json", false, "output as json")
 	appsCmd.AddCommand(appsInfoCmd)
 }
