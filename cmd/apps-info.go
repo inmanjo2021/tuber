@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -25,6 +26,16 @@ func runAppsInfoCmd(cmd *cobra.Command, args []string) error {
 	app, err := getApp(appName)
 	if err != nil {
 		return err
+	}
+
+	if jsonOutput {
+		out, err := json.Marshal(app)
+		if err != nil {
+			return err
+		}
+
+		os.Stdout.Write(out)
+		return nil
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
@@ -91,5 +102,6 @@ func runAppsInfoCmd(cmd *cobra.Command, args []string) error {
 }
 
 func init() {
+	appsInfoCmd.Flags().BoolVar(&jsonOutput, "json", false, "output as json")
 	appsCmd.AddCommand(appsInfoCmd)
 }
