@@ -120,7 +120,7 @@ func (s server) requireAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		http.Redirect(w, r, s.authenticator.RefreshTokenConsentUrl(), http.StatusUnauthorized)
+		w.Header().Add("TUBER_AUTH_REDIRECT", s.authenticator.RefreshTokenConsentUrl())
 	})
 }
 
