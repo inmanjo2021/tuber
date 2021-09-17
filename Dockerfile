@@ -1,5 +1,4 @@
 FROM bitnami/kubectl:1.19
-
 FROM golang:1.16.5-alpine3.13
 
 COPY --from=0 /opt/bitnami/kubectl/bin/kubectl /usr/bin/kubectl
