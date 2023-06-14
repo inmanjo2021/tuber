@@ -1,5 +1,5 @@
 FROM bitnami/kubectl:1.19
-FROM golang:1.16-buster
+FROM golang:1.19.10-buster
 
 COPY --from=0 /opt/bitnami/kubectl/bin/kubectl /usr/bin/kubectl
 
